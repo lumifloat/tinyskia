@@ -9,9 +9,9 @@
 package path
 
 import (
-	"math"
 	"testing"
 
+	"github.com/chewxy/math32"
 	"github.com/lumifloat/tinyskia/internal/helper"
 )
 
@@ -75,11 +75,11 @@ func TestCubic1(t *testing.T) {
 
 func TestCubic2(t *testing.T) {
 	pb := NewPathBuilder()
-	pb.MoveTo(math.Float32frombits(0x424c1086), math.Float32frombits(0x44bcf0cb)) // 51.0161362, 1511.52478
+	pb.MoveTo(math32.Float32frombits(0x424c1086), math32.Float32frombits(0x44bcf0cb)) // 51.0161362, 1511.52478
 	pb.CubicTo(
-		math.Float32frombits(0x424c107c), math.Float32frombits(0x44bcf0cb), // 51.0160980, 1511.52478
-		math.Float32frombits(0x424c10c2), math.Float32frombits(0x44bcf0cb), // 51.0163651, 1511.52478
-		math.Float32frombits(0x424c1119), math.Float32frombits(0x44bcf0ca), // 51.0166969, 1511.52466
+		math32.Float32frombits(0x424c107c), math32.Float32frombits(0x44bcf0cb), // 51.0160980, 1511.52478
+		math32.Float32frombits(0x424c10c2), math32.Float32frombits(0x44bcf0cb), // 51.0163651, 1511.52478
+		math32.Float32frombits(0x424c1119), math32.Float32frombits(0x44bcf0ca), // 51.0166969, 1511.52466
 	)
 	path := pb.Finish()
 
@@ -97,11 +97,11 @@ func TestBig(t *testing.T) {
 	// Skia uses `kStrokeAndFill_Style` here, but we do not support it.
 
 	pb := NewPathBuilder()
-	pb.MoveTo(math.Float32frombits(0x46380000), math.Float32frombits(0xc6380000)) // 11776, -11776
-	pb.LineTo(math.Float32frombits(0x46a00000), math.Float32frombits(0xc6a00000)) // 20480, -20480
-	pb.LineTo(math.Float32frombits(0x468c0000), math.Float32frombits(0xc68c0000)) // 17920, -17920
-	pb.LineTo(math.Float32frombits(0x46100000), math.Float32frombits(0xc6100000)) // 9216, -9216
-	pb.LineTo(math.Float32frombits(0x46380000), math.Float32frombits(0xc6380000)) // 11776, -11776
+	pb.MoveTo(math32.Float32frombits(0x46380000), math32.Float32frombits(0xc6380000)) // 11776, -11776
+	pb.LineTo(math32.Float32frombits(0x46a00000), math32.Float32frombits(0xc6a00000)) // 20480, -20480
+	pb.LineTo(math32.Float32frombits(0x468c0000), math32.Float32frombits(0xc68c0000)) // 17920, -17920
+	pb.LineTo(math32.Float32frombits(0x46100000), math32.Float32frombits(0xc6100000)) // 9216, -9216
+	pb.LineTo(math32.Float32frombits(0x46380000), math32.Float32frombits(0xc6380000)) // 11776, -11776
 	pb.Close()
 	path := pb.Finish()
 
@@ -117,10 +117,10 @@ func TestBig(t *testing.T) {
 
 func TestQuadStrokerOneOff(t *testing.T) {
 	pb := NewPathBuilder()
-	pb.MoveTo(math.Float32frombits(0x43c99223), math.Float32frombits(0x42b7417e))
+	pb.MoveTo(math32.Float32frombits(0x43c99223), math32.Float32frombits(0x42b7417e))
 	pb.QuadTo(
-		math.Float32frombits(0x4285d839), math.Float32frombits(0x43ed6645),
-		math.Float32frombits(0x43c941c8), math.Float32frombits(0x42b3ace3),
+		math32.Float32frombits(0x4285d839), math32.Float32frombits(0x43ed6645),
+		math32.Float32frombits(0x43c941c8), math32.Float32frombits(0x42b3ace3),
 	)
 	path := pb.Finish()
 
@@ -136,11 +136,11 @@ func TestQuadStrokerOneOff(t *testing.T) {
 
 func TestCubicStrokerOneOff(t *testing.T) {
 	pb := NewPathBuilder()
-	pb.MoveTo(math.Float32frombits(0x433f5370), math.Float32frombits(0x43d1f4b3))
+	pb.MoveTo(math32.Float32frombits(0x433f5370), math32.Float32frombits(0x43d1f4b3))
 	pb.CubicTo(
-		math.Float32frombits(0x4331cb76), math.Float32frombits(0x43ea3340),
-		math.Float32frombits(0x4388f498), math.Float32frombits(0x42f7f08d),
-		math.Float32frombits(0x43f1cd32), math.Float32frombits(0x42802ec1),
+		math32.Float32frombits(0x4331cb76), math32.Float32frombits(0x43ea3340),
+		math32.Float32frombits(0x4388f498), math32.Float32frombits(0x42f7f08d),
+		math32.Float32frombits(0x43f1cd32), math32.Float32frombits(0x42802ec1),
 	)
 	path := pb.Finish()
 

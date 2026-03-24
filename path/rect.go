@@ -117,6 +117,14 @@ func (r IntRect) ToRect() Rect {
 	return rect
 }
 
+// ToScreenIntRect converts into ScreenIntRect.
+func (r IntRect) ToScreenIntRect() (ScreenIntRect, bool) {
+	if r.X() < 0 || r.Y() < 0 {
+		return ScreenIntRect{}, false
+	}
+	return NewScreenIntRectFromXYWH(uint32(r.X()), uint32(r.Y()), uint32(r.Width()), uint32(r.Height()))
+}
+
 // Rect is a rectangle defined by left, top, right and bottom edges.
 type Rect struct {
 	left, top, right, bottom float32

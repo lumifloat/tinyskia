@@ -78,6 +78,10 @@ func (s IntSize) ToIntRect(x, y int32) IntRect {
 	return r
 }
 
+func (s IntSize) ToScreenIntRect(x, y uint32) ScreenIntRect {
+	return NewScreenIntRectFromXYWHSafe(x, y, uint32(s.width), uint32(s.height))
+}
+
 func intSizeScale(s1, s2 IntSize, expand bool) IntSize {
 	rw := uint32(math32.Ceil(float32(s2.height) * float32(s1.width) / float32(s1.height)))
 	withH := false

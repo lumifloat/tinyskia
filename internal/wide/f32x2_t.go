@@ -1,7 +1,7 @@
 package wide
 
 import (
-	"math"
+	"github.com/chewxy/math32"
 )
 
 type F32x2 [2]float32
@@ -27,34 +27,34 @@ func (v F32x2) Floor() F32x2 {
 
 func (v F32x2) Abs() F32x2 {
 	return F32x2{
-		float32(math.Abs(float64(v[0]))),
-		float32(math.Abs(float64(v[1]))),
+		math32.Abs(v[0]),
+		math32.Abs(v[1]),
 	}
 }
 
 func (v F32x2) Max(rhs F32x2) F32x2 {
 	return F32x2{
-		float32(math.Max(float64(v[0]), float64(rhs[0]))),
-		float32(math.Max(float64(v[1]), float64(rhs[1]))),
+		math32.Max(v[0], rhs[0]),
+		math32.Max(v[1], rhs[1]),
 	}
 }
 
 func (v F32x2) Min(rhs F32x2) F32x2 {
 	return F32x2{
-		float32(math.Min(float64(v[0]), float64(rhs[0]))),
-		float32(math.Min(float64(v[1]), float64(rhs[1]))),
+		math32.Min(v[0], rhs[0]),
+		math32.Min(v[1], rhs[1]),
 	}
 }
 
 func (v F32x2) CmpEq(rhs F32x2) F32x2 {
 	var res F32x2
 	if v[0] == rhs[0] {
-		res[0] = math.MaxUint32
+		res[0] = math32.MaxUint32
 	} else {
 		res[0] = 0.0
 	}
 	if v[1] == rhs[1] {
-		res[1] = math.MaxUint32
+		res[1] = math32.MaxUint32
 	} else {
 		res[1] = 0.0
 	}
@@ -64,12 +64,12 @@ func (v F32x2) CmpEq(rhs F32x2) F32x2 {
 func (v F32x2) CmpNe(rhs F32x2) F32x2 {
 	var res F32x2
 	if v[0] != rhs[0] {
-		res[0] = math.MaxUint32
+		res[0] = math32.MaxUint32
 	} else {
 		res[0] = 0.0
 	}
 	if v[1] != rhs[1] {
-		res[1] = math.MaxUint32
+		res[1] = math32.MaxUint32
 	} else {
 		res[1] = 0.0
 	}
@@ -79,12 +79,12 @@ func (v F32x2) CmpNe(rhs F32x2) F32x2 {
 func (v F32x2) CmpGe(rhs F32x2) F32x2 {
 	var res F32x2
 	if v[0] >= rhs[0] {
-		res[0] = math.MaxUint32
+		res[0] = math32.MaxUint32
 	} else {
 		res[0] = 0.0
 	}
 	if v[1] >= rhs[1] {
-		res[1] = math.MaxUint32
+		res[1] = math32.MaxUint32
 	} else {
 		res[1] = 0.0
 	}
@@ -94,12 +94,12 @@ func (v F32x2) CmpGe(rhs F32x2) F32x2 {
 func (v F32x2) CmpGt(rhs F32x2) F32x2 {
 	var res F32x2
 	if v[0] > rhs[0] {
-		res[0] = math.MaxUint32
+		res[0] = math32.MaxUint32
 	} else {
 		res[0] = 0.0
 	}
 	if v[1] > rhs[1] {
-		res[1] = math.MaxUint32
+		res[1] = math32.MaxUint32
 	} else {
 		res[1] = 0.0
 	}
@@ -109,12 +109,12 @@ func (v F32x2) CmpGt(rhs F32x2) F32x2 {
 func (v F32x2) CmpLe(rhs F32x2) F32x2 {
 	var res F32x2
 	if v[0] <= rhs[0] {
-		res[0] = math.MaxUint32
+		res[0] = math32.MaxUint32
 	} else {
 		res[0] = 0.0
 	}
 	if v[1] <= rhs[1] {
-		res[1] = math.MaxUint32
+		res[1] = math32.MaxUint32
 	} else {
 		res[1] = 0.0
 	}
@@ -124,12 +124,12 @@ func (v F32x2) CmpLe(rhs F32x2) F32x2 {
 func (v F32x2) CmpLt(rhs F32x2) F32x2 {
 	var res F32x2
 	if v[0] < rhs[0] {
-		res[0] = math.MaxUint32
+		res[0] = math32.MaxUint32
 	} else {
 		res[0] = 0.0
 	}
 	if v[1] < rhs[1] {
-		res[1] = math.MaxUint32
+		res[1] = math32.MaxUint32
 	} else {
 		res[1] = 0.0
 	}
@@ -145,8 +145,8 @@ func (v F32x2) Blend(t, f F32x2) F32x2 {
 
 func (v F32x2) Round() F32x2 {
 	return F32x2{
-		float32(math.RoundToEven(float64(v[0]))),
-		float32(math.RoundToEven(float64(v[1]))),
+		math32.Round(v[0]),
+		math32.Round(v[1]),
 	}
 }
 
@@ -175,15 +175,15 @@ func (v F32x2) RecipFast() F32x2 {
 
 func (v F32x2) RecipSqrt() F32x2 {
 	return F32x2{
-		1.0 / float32(math.Sqrt(float64(v[0]))),
-		1.0 / float32(math.Sqrt(float64(v[1]))),
+		1.0 / math32.Sqrt(v[0]),
+		1.0 / math32.Sqrt(v[1]),
 	}
 }
 
 func (v F32x2) Sqrt() F32x2 {
 	return F32x2{
-		float32(math.Sqrt(float64(v[0]))),
-		float32(math.Sqrt(float64(v[1]))),
+		math32.Sqrt(v[0]),
+		math32.Sqrt(v[1]),
 	}
 }
 
@@ -205,22 +205,22 @@ func (v F32x2) Div(rhs F32x2) F32x2 {
 
 func (v F32x2) BitAnd(rhs F32x2) F32x2 {
 	return F32x2{
-		math.Float32frombits(math.Float32bits(v[0]) & math.Float32bits(rhs[0])),
-		math.Float32frombits(math.Float32bits(v[1]) & math.Float32bits(rhs[1])),
+		math32.Float32frombits(math32.Float32bits(v[0]) & math32.Float32bits(rhs[0])),
+		math32.Float32frombits(math32.Float32bits(v[1]) & math32.Float32bits(rhs[1])),
 	}
 }
 
 func (v F32x2) BitOr(rhs F32x2) F32x2 {
 	return F32x2{
-		math.Float32frombits(math.Float32bits(v[0]) | math.Float32bits(rhs[0])),
-		math.Float32frombits(math.Float32bits(v[1]) | math.Float32bits(rhs[1])),
+		math32.Float32frombits(math32.Float32bits(v[0]) | math32.Float32bits(rhs[0])),
+		math32.Float32frombits(math32.Float32bits(v[1]) | math32.Float32bits(rhs[1])),
 	}
 }
 
 func (v F32x2) BitXor(rhs F32x2) F32x2 {
 	return F32x2{
-		math.Float32frombits(math.Float32bits(v[0]) ^ math.Float32bits(rhs[0])),
-		math.Float32frombits(math.Float32bits(v[1]) ^ math.Float32bits(rhs[1])),
+		math32.Float32frombits(math32.Float32bits(v[0]) ^ math32.Float32bits(rhs[0])),
+		math32.Float32frombits(math32.Float32bits(v[1]) ^ math32.Float32bits(rhs[1])),
 	}
 }
 
@@ -233,8 +233,8 @@ func (v F32x2) Neg() F32x2 {
 
 func (v F32x2) Not() F32x2 {
 	return F32x2{
-		math.Float32frombits(math.Float32bits(v[0]) ^ math.MaxUint8),
-		math.Float32frombits(math.Float32bits(v[1]) ^ math.MaxUint8),
+		math32.Float32frombits(math32.Float32bits(v[0]) ^ math32.MaxUint8),
+		math32.Float32frombits(math32.Float32bits(v[1]) ^ math32.MaxUint8),
 	}
 }
 

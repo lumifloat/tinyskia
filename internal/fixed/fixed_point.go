@@ -10,7 +10,7 @@
 package fixed
 
 import (
-	"math"
+	"github.com/chewxy/math32"
 )
 
 // FDot6 is a 26.6 fixed point.
@@ -63,18 +63,18 @@ func (n FDot6) DivToFDot16(o FDot6) FDot16 {
 		return FDot16((int32(uint32(n) << 16)) / int32(o))
 	}
 	v := (int64(uint64(n) << 16)) / int64(o)
-	if v < int64(math.MinInt32) {
-		return FDot16(math.MinInt32)
+	if v < int64(math32.MinInt32) {
+		return FDot16(math32.MinInt32)
 	}
-	if v > int64(math.MaxInt32) {
-		return FDot16(math.MaxInt32)
+	if v > int64(math32.MaxInt32) {
+		return FDot16(math32.MaxInt32)
 	}
 	return FDot16(v)
 }
 
 // CanConvertToFDot16 checks if FDot6 can be converted to FDot16 without overflow.
 func (n FDot6) CanConvertToFDot16() bool {
-	maxDot6 := int32(math.MaxInt32 >> (16 - 6))
+	maxDot6 := int32(math32.MaxInt32 >> (16 - 6))
 	absN := n
 	if absN < 0 {
 		absN = -absN
@@ -100,11 +100,11 @@ const (
 
 // NewFDot16FromF32 converts float32 to FDot16.
 func NewFDot16FromF32(x float32) FDot16 {
-	if x < float32(math.MinInt32) {
-		return FDot16(math.MinInt32)
+	if x < float32(math32.MinInt32) {
+		return FDot16(math32.MinInt32)
 	}
-	if x > float32(math.MaxInt32) {
-		return FDot16(math.MaxInt32)
+	if x > float32(math32.MaxInt32) {
+		return FDot16(math32.MaxInt32)
 	}
 	return FDot16(int32(x * float32(FDot16One)))
 }
