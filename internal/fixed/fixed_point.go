@@ -14,13 +14,13 @@ import (
 )
 
 // FDot6 is a 26.6 fixed point.
-type FDot6 int32
+type FDot6 = int32
 
 // FDot8 is a 24.8 fixed point.
-type FDot8 int32
+type FDot8 = int32
 
 // FDot16 is a 16.16 fixed point.
-type FDot16 int32
+type FDot16 = int32
 
 // FDot6 constants and functions
 const (
@@ -37,28 +37,28 @@ func NewFDot6FromF32(n float32) FDot6 {
 	return FDot6(n * 64.0)
 }
 
-// Floor returns the floor of FDot6.
-func (n FDot6) Floor() FDot6 {
+// FDot6Floor returns the floor of FDot6.
+func FDot6Floor(n FDot6) FDot6 {
 	return FDot6(n >> 6)
 }
 
-// Ceil returns the ceiling of FDot6.
-func (n FDot6) Ceil() FDot6 {
+// FDot6Ceil returns the ceiling of FDot6.
+func FDot6Ceil(n FDot6) FDot6 {
 	return FDot6((n + 63) >> 6)
 }
 
-// Round returns the rounded value of FDot6.
-func (n FDot6) Round() FDot6 {
+// FDot6Round returns the rounded value of FDot6.
+func FDot6Round(n FDot6) FDot6 {
 	return FDot6((n + 32) >> 6)
 }
 
-// ToFDot16 converts FDot6 to FDot16.
-func (n FDot6) ToFDot16() FDot16 {
+// FDot6ToFDot16 converts FDot6 to FDot16.
+func FDot6ToFDot16(n FDot6) FDot16 {
 	return FDot16(int32(uint32(n) << 10))
 }
 
-// DivToFDot16 divides two FDot6 values and returns FDot16.
-func (n FDot6) DivToFDot16(o FDot6) FDot16 {
+// FDot6DivToFDot16 divides two FDot6 values and returns FDot16.
+func FDot6DivToFDot16(n FDot6, o FDot6) FDot16 {
 	if FDot6(int32(int16(n))) == n {
 		return FDot16((int32(uint32(n) << 16)) / int32(o))
 	}
@@ -72,8 +72,8 @@ func (n FDot6) DivToFDot16(o FDot6) FDot16 {
 	return FDot16(v)
 }
 
-// CanConvertToFDot16 checks if FDot6 can be converted to FDot16 without overflow.
-func (n FDot6) CanConvertToFDot16() bool {
+// FDot6CanConvertToFDot16 checks if FDot6 can be converted to FDot16 without overflow.
+func FDot6CanConvertToFDot16(n FDot6) bool {
 	maxDot6 := int32(math32.MaxInt32 >> (16 - 6))
 	absN := n
 	if absN < 0 {
@@ -82,8 +82,8 @@ func (n FDot6) CanConvertToFDot16() bool {
 	return int32(absN) <= maxDot6
 }
 
-// SmallScale performs small scale multiplication.
-func (n FDot6) SmallScale(value uint8) uint8 {
+// FDot6SmallScale performs small scale multiplication.
+func FDot6SmallScale(value uint8, n FDot6) uint8 {
 	return uint8((int32(value)*int32(n))>>6) & 0xFF
 }
 
@@ -109,22 +109,22 @@ func NewFDot16FromF32(x float32) FDot16 {
 	return FDot16(int32(x * float32(FDot16One)))
 }
 
-// FloorToI32 returns the floor of FDot16 as int32.
-func (n FDot16) FloorToI32() int32 {
+// FDot16FloorToI32 returns the floor of FDot16 as int32.
+func FDot16FloorToI32(n FDot16) int32 {
 	return int32(n >> 16)
 }
 
-// CeilToI32 returns the ceiling of FDot16 as int32.
-func (n FDot16) CeilToI32() int32 {
+// FDot16CeilToI32 returns the ceiling of FDot16 as int32.
+func FDot16CeilToI32(n FDot16) int32 {
 	return int32(n+FDot16One-1) >> 16
 }
 
-// RoundToI32 returns the rounded value of FDot16 as int32.
-func (n FDot16) RoundToI32() int32 {
+// FDot16RoundToI32 returns the rounded value of FDot16 as int32.
+func FDot16RoundToI32(n FDot16) int32 {
 	return int32(n+FDot16Half) >> 16
 }
 
-// Mul multiplies two FDot16 values.
-func (n FDot16) Mul(o FDot16) FDot16 {
+// FDot16Mul multiplies two FDot16 values.
+func FDot16Mul(n FDot16, o FDot16) FDot16 {
 	return FDot16((int64(n) * int64(o)) >> 16)
 }
