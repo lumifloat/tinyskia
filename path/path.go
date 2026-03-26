@@ -269,6 +269,11 @@ func (iter *PathSegmentsIter) NextVerb() PathVerb {
 	return iter.path.verbs[iter.verbIndex]
 }
 
+// HasNext returns true if there are more verbs to iterate.
+func (iter *PathSegmentsIter) HasNext() bool {
+	return iter.verbIndex < len(iter.path.verbs)
+}
+
 func (iter *PathSegmentsIter) Next() interface{} {
 	if iter.verbIndex >= len(iter.path.verbs) {
 		return nil

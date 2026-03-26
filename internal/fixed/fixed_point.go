@@ -37,6 +37,14 @@ func NewFDot6FromF32(n float32) FDot6 {
 	return FDot6(n * 64.0)
 }
 
+// FDot6Abs returns the absolute value of FDot6.
+func FDot6Abs(n FDot6) FDot6 {
+	if n < 0 {
+		return -n
+	}
+	return n
+}
+
 // FDot6Floor returns the floor of FDot6.
 func FDot6Floor(n FDot6) FDot6 {
 	return FDot6(n >> 6)
