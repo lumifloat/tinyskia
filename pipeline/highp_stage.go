@@ -1,4 +1,4 @@
-// Copyright 2016 Google Inc.
+﻿// Copyright 2016 Google Inc.
 // Copyright 2020 Yevhenii Reizner
 // Copyright 2026 LumiFloat
 //
@@ -1181,7 +1181,7 @@ func (p *HighPipeline) Gradient() {
 
 		idx := uint32(0)
 		for j := 1; j < ctx.Len; j++ {
-			if t >= ctx.TValues[j] {
+			if t >= ctx.TValues[j].Get() {
 				idx++
 			}
 		}

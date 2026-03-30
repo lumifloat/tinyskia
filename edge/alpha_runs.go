@@ -93,6 +93,11 @@ func (r *AlphaRuns) Add(x uint32, startAlpha uint8, middleCount int, stopAlpha u
 
 			n := int(r.Runs[runsOffset])
 
+			if n == 0 {
+				// Safety check: prevent infinite loop if run length is 0
+				break
+			}
+
 			alphaOffset += n
 			runsOffset += n
 			middleCount -= n
@@ -126,6 +131,11 @@ func BreakRun(runs []uint16, alpha []uint8, x int, count int) {
 	for x > 0 {
 		n := int(runs[runsOffset])
 
+		if n == 0 {
+			// Safety check: prevent infinite loop if run length is 0
+			break
+		}
+
 		if x < n {
 			alpha[alphaOffset+x] = alpha[alphaOffset]
 			runs[runsOffset+0] = uint16(x)
@@ -143,6 +153,11 @@ func BreakRun(runs []uint16, alpha []uint8, x int, count int) {
 
 	for {
 		n := int(runs[runsOffset])
+
+		if n == 0 {
+			// Safety check: prevent infinite loop if run length is 0
+			break
+		}
 
 		if x < n {
 			alpha[alphaOffset+x] = alpha[alphaOffset]

@@ -1602,7 +1602,7 @@ func (p *LowPipeline) Gradient() {
 			idx := uint16(0)
 			// Find the stop index where t >= stop.t
 			for j := 1; j < ctx.Len; j++ {
-				if ti >= ctx.TValues[j] {
+				if ti >= ctx.TValues[j].Get() {
 					idx = uint16(j)
 				}
 			}

@@ -184,15 +184,16 @@ func (g *Gradient) PushStages(
 		}
 
 		tL := g.stops[firstStop].position.Get()
-		cL := pipeline.GradientColor{R: cs.ExpandColor(g.stops[firstStop].color).Red(), G: cs.ExpandColor(g.stops[firstStop].color).Green(), B: cs.ExpandColor(g.stops[firstStop].color).Blue(), A: cs.ExpandColor(g.stops[firstStop].color).Alpha()}
+		cLExpanded := cs.ExpandColor(g.stops[firstStop].color)
+		cL := pipeline.GradientColor{R: cLExpanded.Red(), G: cLExpanded.Green(), B: cLExpanded.Blue(), A: cLExpanded.Alpha()}
 		ctx.PushConstColor(cL)
-		ctx.TValues[0] = 0.0
-		ctx.Len = 1
+		ctx.TValues = append(ctx.TValues, 0.0)
 
 		// N.B. lastStop is the index of the last stop, not one after.
 		for i := firstStop; i < lastStop; i++ {
 			tR := g.stops[i+1].position.Get()
-			cR := pipeline.GradientColor{R: cs.ExpandColor(g.stops[i+1].color).Red(), G: cs.ExpandColor(g.stops[i+1].color).Green(), B: cs.ExpandColor(g.stops[i+1].color).Blue(), A: cs.ExpandColor(g.stops[i+1].color).Alpha()}
+			cRExpanded := cs.ExpandColor(g.stops[i+1].color)
+			cR := pipeline.GradientColor{R: cRExpanded.Red(), G: cRExpanded.Green(), B: cRExpanded.Blue(), A: cRExpanded.Alpha()}
 
 			if tL < tR {
 				// For each stop we calculate a bias B and a scale factor F, such that
@@ -204,17 +205,17 @@ func (g *Gradient) PushStages(
 					(cR.B-cL.B)*invT,
 					(cR.A-cL.A)*invT,
 				)
-				ctx.Factors[ctx.Len] = f
 
-				ctx.Biases[ctx.Len] = pipeline.NewGradientColor(
+				ctx.Factors = append(ctx.Factors, f)
+
+				ctx.Biases = append(ctx.Biases, pipeline.NewGradientColor(
 					cL.R-f.R*tL,
 					cL.G-f.G*tL,
 					cL.B-f.B*tL,
 					cL.A-f.A*tL,
-				)
+				))
 
-				ctx.TValues[ctx.Len] = tL
-				ctx.Len++
+				ctx.TValues = append(ctx.TValues, normalized.NewNormalizedF32WithClamped(tL))
 			}
 
 			tL = tR
@@ -222,14 +223,17 @@ func (g *Gradient) PushStages(
 		}
 
 		ctx.PushConstColor(cL)
-		ctx.TValues[ctx.Len] = tL
-		ctx.Len++
+		ctx.TValues = append(ctx.TValues, normalized.NewNormalizedF32WithClamped(tL))
+
+		ctx.Len = len(ctx.Factors)
 
 		// Fill with zeros until we have enough data.
-		for ctx.Len < 16 {
-			ctx.Factors[ctx.Len] = pipeline.GradientColor{}
-			ctx.Biases[ctx.Len] = pipeline.GradientColor{}
-			ctx.Len++
+		// Note: TValues for padding stops are set to 1.0 to prevent accidental matches
+		for len(ctx.Factors) < 16 {
+			ctx.Factors = append(ctx.Factors, pipeline.GradientColor{})
+			ctx.Biases = append(ctx.Biases, pipeline.GradientColor{})
+			//ctx.TValues[ctx.Len] = 1.0
+			//ctx.Len++
 		}
 
 		p.Push(pipeline.StageGradient)

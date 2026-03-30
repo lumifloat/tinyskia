@@ -1,4 +1,4 @@
-// Copyright 2016 Google Inc.
+﻿// Copyright 2016 Google Inc.
 // Copyright 2020 Yevhenii Reizner
 // Copyright 2026 LumiFloat
 //
@@ -8,6 +8,7 @@ package pipeline
 
 import (
 	"github.com/lumifloat/tinyskia/color"
+	"github.com/lumifloat/tinyskia/internal/normalized"
 	"github.com/lumifloat/tinyskia/path"
 )
 
@@ -191,18 +192,14 @@ type EvenlySpaced2StopGradientCtx struct {
 
 type GradientCtx struct {
 	Len     int
-	Factors [16]GradientColor
-	Biases  [16]GradientColor
-	TValues [16]float32 // NormalizedF32
+	Factors []GradientColor
+	Biases  []GradientColor
+	TValues []normalized.NormalizedF32
 }
 
 func (g *GradientCtx) PushConstColor(color GradientColor) {
-	if g.Len < 16 {
-		g.Factors[g.Len] = NewGradientColor(0, 0, 0, 0)
-		g.Biases[g.Len] = color
-		g.TValues[g.Len] = 0
-		g.Len++
-	}
+	g.Factors = append(g.Factors, NewGradientColor(0, 0, 0, 0))
+	g.Biases = append(g.Biases, color)
 }
 
 type TwoPointConicalGradientCtx struct {

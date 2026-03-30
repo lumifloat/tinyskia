@@ -30,16 +30,18 @@ const (
 //
 // Essentially a SkImageShader.
 type Pattern struct {
-	size      path.IntSize
+	Data      []uint8
+	Size      path.IntSize
 	quality   FilterQuality
 	spread    SpreadMode
 	opacity   normalized.NormalizedF32
 	transform path.Transform
 }
 
-func NewPattern(size path.IntSize, spread SpreadMode, quality FilterQuality, opacity float32, transform path.Transform) Shader {
+func NewPattern(data []uint8, size path.IntSize, spread SpreadMode, quality FilterQuality, opacity float32, transform path.Transform) Shader {
 	return &Pattern{
-		size:      size,
+		Data:      data,
+		Size:      size,
 		quality:   quality,
 		spread:    spread,
 		opacity:   normalized.NewNormalizedF32WithClamped(opacity),
@@ -79,13 +81,13 @@ func (p *Pattern) PushStages(cs color.ColorSpace, builder *pipeline.RasterPipeli
 	switch quality {
 	case FilterQualityNearest:
 		builder.Ctx.LimitX = pipeline.TileCtx{
-			Scale:    float32(p.size.Width()),
-			InvScale: 1.0 / float32(p.size.Width()),
+			Scale:    float32(p.Size.Width()),
+			InvScale: 1.0 / float32(p.Size.Width()),
 		}
 
 		builder.Ctx.LimitY = pipeline.TileCtx{
-			Scale:    float32(p.size.Height()),
-			InvScale: 1.0 / float32(p.size.Height()),
+			Scale:    float32(p.Size.Height()),
+			InvScale: 1.0 / float32(p.Size.Height()),
 		}
 
 		switch p.spread {
@@ -102,16 +104,16 @@ func (p *Pattern) PushStages(cs color.ColorSpace, builder *pipeline.RasterPipeli
 	case FilterQualityBilinear:
 		builder.Ctx.Sampler = pipeline.SamplerCtx{
 			SpreadMode: pipeline.SpreadMode(p.spread),
-			InvWidth:   1.0 / float32(p.size.Width()),
-			InvHeight:  1.0 / float32(p.size.Height()),
+			InvWidth:   1.0 / float32(p.Size.Width()),
+			InvHeight:  1.0 / float32(p.Size.Height()),
 		}
 		builder.Push(pipeline.StageBilinear)
 
 	case FilterQualityBicubic:
 		builder.Ctx.Sampler = pipeline.SamplerCtx{
 			SpreadMode: pipeline.SpreadMode(p.spread),
-			InvWidth:   1.0 / float32(p.size.Width()),
-			InvHeight:  1.0 / float32(p.size.Height()),
+			InvWidth:   1.0 / float32(p.Size.Width()),
+			InvHeight:  1.0 / float32(p.Size.Height()),
 		}
 		builder.Push(pipeline.StageBicubic)
 

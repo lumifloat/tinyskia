@@ -76,28 +76,28 @@ func (m *Mask) Take() []uint8 {
 	return d
 }
 
-func (m *Mask) AsSubMask() SubMask {
-	return SubMask{
+func (m *Mask) AsSubMask() *SubMask {
+	return &SubMask{
 		Data:      m.data,
 		Size:      m.size,
 		RealWidth: uint32(m.size.Width()),
 	}
 }
 
-func (m *Mask) SubMask(rect path.IntRect) (SubMask, bool) {
+func (m *Mask) SubMask(rect path.IntRect) *SubMask {
 	r, ok := m.size.ToIntRect(0, 0).Intersect(rect)
 	if !ok {
-		return SubMask{}, false
+		return nil
 	}
 	rowBytes := m.Width()
 	offset := uint64(r.Top())*uint64(rowBytes) + uint64(r.Left())
 
 	size, _ := path.NewIntSize(r.Width(), r.Height())
-	return SubMask{
+	return &SubMask{
 		Data:      m.data[offset:],
 		Size:      size,
 		RealWidth: uint32(m.size.Width()),
-	}, true
+	}
 }
 
 // Invert inverts the mask.

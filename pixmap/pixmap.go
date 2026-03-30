@@ -283,3 +283,49 @@ func NewSubPixmap(p *Pixmap, x, y, width, height int) (*SubPixmap, error) {
 		RealWidth: int(p.Width()),
 	}, nil
 }
+
+// SubPixmap creates a sub-pixmap from the given pixmap at the specified rect.
+// Returns nil if the rect is invalid or out of bounds.
+func (p *Pixmap) SubPixmap(rect path.IntRect) (*SubPixmap, bool) {
+	x := int(rect.Left())
+	y := int(rect.Top())
+	width := int(rect.Width())
+	height := int(rect.Height())
+
+	if x < 0 || y < 0 || width <= 0 || height <= 0 {
+		return nil, false
+	}
+	if x+width > int(p.Width()) || y+height > int(p.Height()) {
+		return nil, false
+	}
+
+	rowBytes := int(p.Width()) * BYTES_PER_PIXEL
+	offset := y*rowBytes + x*BYTES_PER_PIXEL
+	dataLen := height*rowBytes - (int(p.Width())-width)*BYTES_PER_PIXEL
+
+	size, ok := path.NewIntSize(uint32(width), uint32(height))
+	if !ok {
+		return nil, false
+	}
+
+	return &SubPixmap{
+		Data:      p.data[offset : offset+dataLen],
+		Size:      size,
+		RealWidth: int(p.Width()),
+	}, true
+}
+
+// ToRGBA converts the pixmap to an image.RGBA.
+// Since both use premultiplied RGBA format, this is a zero-copy operation.
+func (p *Pixmap) ToRGBA() *image.RGBA {
+	width := int(p.Width())
+	height := int(p.Height())
+
+	// Create image.RGBA that shares the same underlying data
+	// Both pixmap and image.RGBA use premultiplied RGBA format
+	return &image.RGBA{
+		Pix:    p.data,
+		Stride: width * BYTES_PER_PIXEL,
+		Rect:   image.Rect(0, 0, width, height),
+	}
+}

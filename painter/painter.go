@@ -62,3 +62,14 @@ func (p *Paint) IsSolidColor() bool {
 	_, ok := p.Shader.(*shader.SolidColor)
 	return ok
 }
+
+// Copy creates a deep copy of the Paint.
+func (p *Paint) Copy() Paint {
+	return Paint{
+		Shader:          p.Shader,
+		BlendMode:       p.BlendMode,
+		AntiAlias:       p.AntiAlias,
+		Colorspace:      p.Colorspace,
+		ForceHQPipeline: p.ForceHQPipeline,
+	}
+}

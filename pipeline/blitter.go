@@ -15,14 +15,15 @@ import (
 const BYTES_PER_PIXEL = 4
 
 type RasterPipelineBlitter struct {
-	Mask          *MaskCtx
-	PixmapSrc     *PixmapCtx
-	Pixmap        *SubPixmapCtx
-	Memset2dColor *color.PremultipliedColorU8
-	BlitAntiHRp   RasterPipeline
-	BlitRectRp    RasterPipeline
-	BlitMaskRp    RasterPipeline
-	IsMask        bool
+	Mask             *MaskCtx
+	PixmapSrc        *PixmapCtx
+	Pixmap           *SubPixmapCtx
+	Memset2dColor    color.PremultipliedColorU8
+	UseMemset2dColor bool
+	BlitAntiHRp      RasterPipeline
+	BlitRectRp       RasterPipeline
+	BlitMaskRp       RasterPipeline
+	IsMask           bool
 }
 
 func (b *RasterPipelineBlitter) BlitH(x, y uint32, width uint32) {
@@ -97,8 +98,8 @@ func (b *RasterPipelineBlitter) BlitAntiV2(x, y uint32, alpha0, alpha1 uint8) {
 }
 
 func (b *RasterPipelineBlitter) BlitRect(rect path.ScreenIntRect) {
-	if b.Memset2dColor != nil {
-		c := *b.Memset2dColor
+	if b.UseMemset2dColor {
+		c := b.Memset2dColor
 		if b.IsMask {
 			alpha := c.Alpha()
 			for y := uint32(0); y < rect.Height(); y++ {

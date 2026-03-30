@@ -102,12 +102,12 @@ func TransformFromRow(a, b, c, d, tx, ty float32) Transform {
 
 // IsFinite checks that transform is finite.
 func (t Transform) IsFinite() bool {
-	return math32.IsInf(t.SX, 0) && math32.IsNaN(t.SX) &&
-		math32.IsInf(t.KY, 0) && math32.IsNaN(t.KY) &&
-		math32.IsInf(t.KX, 0) && math32.IsNaN(t.KX) &&
-		math32.IsInf(t.SY, 0) && math32.IsNaN(t.SY) &&
-		math32.IsInf(t.TX, 0) && math32.IsNaN(t.TX) &&
-		math32.IsInf(t.TY, 0) && math32.IsNaN(t.TY)
+	return !math32.IsInf(t.SX, 0) && !math32.IsNaN(t.SX) &&
+		!math32.IsInf(t.KY, 0) && !math32.IsNaN(t.KY) &&
+		!math32.IsInf(t.KX, 0) && !math32.IsNaN(t.KX) &&
+		!math32.IsInf(t.SY, 0) && !math32.IsNaN(t.SY) &&
+		!math32.IsInf(t.TX, 0) && !math32.IsNaN(t.TX) &&
+		!math32.IsInf(t.TY, 0) && !math32.IsNaN(t.TY)
 }
 
 // IsValid checks that transform is finite and has non-zero scale.
