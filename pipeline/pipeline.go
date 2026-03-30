@@ -1,4 +1,4 @@
-﻿// Copyright 2016 Google Inc.
+// Copyright 2016 Google Inc.
 // Copyright 2020 Yevhenii Reizner
 // Copyright 2026 LumiFloat
 //
@@ -269,47 +269,11 @@ func (r RasterPipelineHigh) isRasterPipelineKind() {}
 
 type RasterPipelineLow []Stage
 
-type RasterBatchLow struct {
-	Functions []LowpStageFn
-}
-
 func (r RasterPipelineLow) isRasterPipelineKind() {}
 
 type RasterPipeline struct {
 	Kind RasterPipelineKind
 	Ctx  Context
-}
-
-// HighpStageFn and LowpStageFn would be defined in highp and lowp packages
-type HighpStageFn func()
-type LowpStageFn func(p *LowPipeline)
-
-// GetHighpStage returns the highp stage function for a given stage.
-// This is a placeholder - actual implementation would be in highp package.
-func GetHighpStage(s Stage) HighpStageFn {
-	// TODO: Implement stage function lookup
-	return nil
-}
-
-// GetHighpTailVariant returns the tail variant of a highp stage function.
-// This is a placeholder - actual implementation would be in highp package.
-func GetHighpTailVariant(fn HighpStageFn) HighpStageFn {
-	// TODO: Implement tail variant lookup
-	return fn
-}
-
-// GetLowpStage returns the lowp stage function for a given stage.
-// This is a placeholder - actual implementation would be in lowp package.
-func GetLowpStage(s Stage) LowpStageFn {
-	// TODO: Implement stage function lookup
-	return nil
-}
-
-// GetLowpTailVariant returns the tail variant of a lowp stage function.
-// This is a placeholder - actual implementation would be in lowp package.
-func GetLowpTailVariant(fn LowpStageFn) LowpStageFn {
-	// TODO: Implement tail variant lookup
-	return fn
 }
 
 func (b *RasterPipelineBuilder) Compile() *RasterPipeline {
@@ -320,28 +284,96 @@ func (b *RasterPipelineBuilder) Compile() *RasterPipeline {
 		}
 	}
 
-	// In Go, we'd typically look up function implementations from a registry
-	// This mirrors the logic of checking lowp compatibility and cloning for tail functions
 	isLowpCompatible := true
-	// for _, s := range b.Stages {
-	// 	if GetLowpStage(s) == nil {
-	// 		isLowpCompatible = false
-	// 		break
-	// 	}
-	// }
+	for _, s := range b.Stages {
+		var table = map[Stage]bool{
+			StageMoveSourceToDestination:        true,
+			StageMoveDestinationToSource:        true,
+			StageClamp0:                         false,
+			StageClampA:                         false,
+			StagePremultiply:                    true,
+			StageUniformColor:                   true,
+			StageSeedShader:                     true,
+			StageLoadDestination:                true,
+			StageStore:                          true,
+			StageLoadDestinationU8:              true,
+			StageStoreU8:                        true,
+			StageGather:                         false,
+			StageLoadMaskU8:                     true,
+			StageMaskU8:                         true,
+			StageScaleU8:                        true,
+			StageLerpU8:                         true,
+			StageScale1Float:                    true,
+			StageLerp1Float:                     true,
+			StageDestinationAtop:                true,
+			StageDestinationIn:                  true,
+			StageDestinationOut:                 true,
+			StageDestinationOver:                true,
+			StageSourceAtop:                     true,
+			StageSourceIn:                       true,
+			StageSourceOut:                      true,
+			StageSourceOver:                     true,
+			StageClear:                          true,
+			StageModulate:                       true,
+			StageMultiply:                       true,
+			StagePlus:                           true,
+			StageScreen:                         true,
+			StageXor:                            true,
+			StageColorBurn:                      false,
+			StageColorDodge:                     false,
+			StageDarken:                         true,
+			StageDifference:                     true,
+			StageExclusion:                      true,
+			StageHardLight:                      true,
+			StageLighten:                        true,
+			StageOverlay:                        true,
+			StageSoftLight:                      false,
+			StageHue:                            false,
+			StageSaturation:                     false,
+			StageColor:                          false,
+			StageLuminosity:                     false,
+			StageSourceOverRgba:                 true,
+			StageTransform:                      true,
+			StageReflect:                        false,
+			StageRepeat:                         false,
+			StageBilinear:                       false,
+			StageBicubic:                        false,
+			StagePadX1:                          true,
+			StageReflectX1:                      true,
+			StageRepeatX1:                       true,
+			StageGradient:                       true,
+			StageEvenlySpaced2StopGradient:      true,
+			StageXYToUnitAngle:                  false,
+			StageXYToRadius:                     false,
+			StageXYTo2PtConicalFocalOnCircle:    false,
+			StageXYTo2PtConicalWellBehaved:      false,
+			StageXYTo2PtConicalSmaller:          false,
+			StageXYTo2PtConicalGreater:          false,
+			StageXYTo2PtConicalStrip:            false,
+			StageMask2PtConicalNan:              false,
+			StageMask2PtConicalDegenerates:      false,
+			StageApplyVectorMask:                false,
+			StageAlter2PtConicalCompensateFocal: false,
+			StageAlter2PtConicalUnswap:          false,
+			StageNegateX:                        false,
+			StageApplyConcentricScaleBias:       false,
+			StageGammaExpand2:                   false,
+			StageGammaExpandDestination2:        false,
+			StageGammaCompress2:                 false,
+			StageGammaExpand22:                  false,
+			StageGammaExpandDestination22:       false,
+			StageGammaCompress22:                false,
+			StageGammaExpandSrgb:                false,
+			StageGammaExpandDestinationSrgb:     false,
+			StageGammaCompressSrgb:              false,
+		}
+		if !table[s] {
+			isLowpCompatible = false
+			break
+		}
+	}
 
 	if b.ForceHqPipeline || !isLowpCompatible {
-		fns := make([]HighpStageFn, len(b.Stages))
-		for i, s := range b.Stages {
-			fns[i] = GetHighpStage(s)
-		}
-		// Tail logic would involve replacing specific stages with their _tail variants
-		tailFns := make([]HighpStageFn, len(fns))
-		copy(tailFns, fns)
-		for i, fn := range tailFns {
-			tailFns[i] = GetHighpTailVariant(fn)
-		}
-
 		return &RasterPipeline{
 			Kind: RasterPipelineHigh(b.Stages),
 			Ctx:  b.Ctx,
@@ -363,7 +395,6 @@ func (p *RasterPipeline) Run(
 ) {
 	switch k := p.Kind.(type) {
 	case RasterPipelineHigh:
-		// TODO: Implement highp pipeline execution
 		StartHighPipeline(k, rect, aaMaskCtx, maskCtx, &p.Ctx, pixmapSrc, pixmapDst)
 	case RasterPipelineLow:
 		StartLowPipeline(k, rect, aaMaskCtx, maskCtx, &p.Ctx, pixmapDst)

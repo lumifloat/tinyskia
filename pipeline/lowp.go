@@ -285,6 +285,7 @@ func StartLowPipeline(
 					p.XYToUnitAngle()
 
 				case StageXYToRadius:
+					// xy_to_radius
 					p.XYToRadius()
 
 				case StageXYTo2PtConicalFocalOnCircle, StageXYTo2PtConicalWellBehaved,
@@ -541,6 +542,7 @@ func StartLowPipeline(
 					p.XYToUnitAngle()
 
 				case StageXYToRadius:
+					// xy_to_radius
 					p.XYToRadius()
 
 				case StageXYTo2PtConicalFocalOnCircle, StageXYTo2PtConicalWellBehaved,

@@ -837,18 +837,71 @@ func (p *HighPipeline) SoftLight() {
 
 //go:fix inline
 func (p *HighPipeline) Hue() {
+	sat := func(r, g, b float32) float32 {
+		return f32max(r, f32max(g, b)) - f32min(r, f32min(g, b))
+	}
+	lum := func(r, g, b float32) float32 {
+		return r*0.30 + g*0.59 + b*0.11
+	}
+	setsat := func(r, g, b, s float32) (float32, float32, float32) {
+		mn := f32min(r, f32min(g, b))
+		mx := f32max(r, f32max(g, b))
+		satVal := mx - mn
+
+		scale := func(c float32) float32 {
+			if satVal == 0 {
+				return 0
+			}
+			return (c - mn) * s / satVal
+		}
+
+		return scale(r), scale(g), scale(b)
+	}
+	setlum := func(r, g, b, l float32) (float32, float32, float32) {
+		diff := l - lum(r, g, b)
+		return r + diff, g + diff, b + diff
+	}
+	clipcolor := func(r, g, b, a float32) (float32, float32, float32) {
+		mn := f32min(r, f32min(g, b))
+		mx := f32max(r, f32max(g, b))
+		l := lum(r, g, b)
+
+		clip := func(c float32) float32 {
+			// If mx >= 0, keep c; otherwise adjust
+			if mx < 0 {
+				if l != mn {
+					c = l + (c-l)*l/(l-mn)
+				} else {
+					c = l
+				}
+			}
+			// If mx > a, adjust; otherwise keep c
+			if mx > a {
+				if mx != l {
+					c = l + (c-l)*(a-l)/(mx-l)
+				} else {
+					c = l
+				}
+			}
+			return f32max(c, 0)
+		}
+
+		return clip(r), clip(g), clip(b)
+	}
+
 	for i := 0; i < HIGH_STAGE_WIDTH; i++ {
 		invSa, invDa := 1.0-p.a[i], 1.0-p.da[i]
 
 		rr, gg, bb := p.r[i]*p.a[i], p.g[i]*p.a[i], p.b[i]*p.a[i]
 
-		mn, mx := f32minmax(rr, gg, bb)
-		mnd, mxd := f32minmax(p.dr[i], p.dg[i], p.db[i])
-		lum, lumd := rr*0.30+gg*0.59+bb*0.11, p.dr[i]*0.30+p.dg[i]*0.59+p.db[i]*0.11
+		// Apply hue blend mode using the closure functions
+		satVal := sat(p.dr[i], p.dg[i], p.db[i]) * p.a[i]
+		rlum := lum(p.dr[i], p.dg[i], p.db[i]) * p.a[i]
+		a_da := p.a[i] * p.da[i]
 
-		rr, gg, bb = f32sat(rr, gg, bb, p.a[i], mn, mx, mnd, mxd)
-		rr, gg, bb = f32lum(rr, gg, bb, p.a[i], lum, lumd)
-		rr, gg, bb = f32clip(rr, gg, bb, p.a[i]*p.da[i], mn, mx, lum)
+		rr, gg, bb = setsat(rr, gg, bb, satVal)
+		rr, gg, bb = setlum(rr, gg, bb, rlum)
+		rr, gg, bb = clipcolor(rr, gg, bb, a_da)
 
 		p.r[i] = p.r[i]*invDa + p.dr[i]*invSa + f32max(rr, 0)
 		p.g[i] = p.g[i]*invDa + p.dg[i]*invSa + f32max(gg, 0)
@@ -859,18 +912,71 @@ func (p *HighPipeline) Hue() {
 
 //go:fix inline
 func (p *HighPipeline) Saturation() {
+	sat := func(r, g, b float32) float32 {
+		return f32max(r, f32max(g, b)) - f32min(r, f32min(g, b))
+	}
+	lum := func(r, g, b float32) float32 {
+		return r*0.30 + g*0.59 + b*0.11
+	}
+	setsat := func(r, g, b, s float32) (float32, float32, float32) {
+		mn := f32min(r, f32min(g, b))
+		mx := f32max(r, f32max(g, b))
+		satVal := mx - mn
+
+		scale := func(c float32) float32 {
+			if satVal == 0 {
+				return 0
+			}
+			return (c - mn) * s / satVal
+		}
+
+		return scale(r), scale(g), scale(b)
+	}
+	setlum := func(r, g, b, l float32) (float32, float32, float32) {
+		diff := l - lum(r, g, b)
+		return r + diff, g + diff, b + diff
+	}
+	clipcolor := func(r, g, b, a float32) (float32, float32, float32) {
+		mn := f32min(r, f32min(g, b))
+		mx := f32max(r, f32max(g, b))
+		l := lum(r, g, b)
+
+		clip := func(c float32) float32 {
+			// If mx >= 0, keep c; otherwise adjust
+			if mx < 0 {
+				if l != mn {
+					c = l + (c-l)*l/(l-mn)
+				} else {
+					c = l
+				}
+			}
+			// If mx > a, adjust; otherwise keep c
+			if mx > a {
+				if mx != l {
+					c = l + (c-l)*(a-l)/(mx-l)
+				} else {
+					c = l
+				}
+			}
+			return f32max(c, 0)
+		}
+
+		return clip(r), clip(g), clip(b)
+	}
+
 	for i := 0; i < HIGH_STAGE_WIDTH; i++ {
 		invSa, invDa := 1.0-p.a[i], 1.0-p.da[i]
 
 		rr, gg, bb := p.dr[i]*p.a[i], p.dg[i]*p.a[i], p.db[i]*p.a[i]
 
-		mn, mx := f32minmax(rr, gg, bb)
-		mnd, mxd := f32minmax(p.r[i], p.g[i], p.b[i])
-		lum, lumd := rr*0.30+gg*0.59+bb*0.11, p.dr[i]*0.30+p.dg[i]*0.59+p.db[i]*0.11
+		// Apply saturation blend mode using the closure functions
+		satVal := sat(p.r[i], p.g[i], p.b[i]) * p.da[i]
+		rlum := lum(p.dr[i], p.dg[i], p.db[i]) * p.a[i]
+		a_da := p.a[i] * p.da[i]
 
-		rr, gg, bb = f32sat(rr, gg, bb, p.a[i], mn, mx, mnd, mxd)
-		rr, gg, bb = f32lum(rr, gg, bb, p.a[i], lum, lumd)
-		rr, gg, bb = f32clip(rr, gg, bb, p.a[i]*p.da[i], mn, mx, lum)
+		rr, gg, bb = setsat(rr, gg, bb, satVal)
+		rr, gg, bb = setlum(rr, gg, bb, rlum)
+		rr, gg, bb = clipcolor(rr, gg, bb, a_da)
 
 		p.r[i] = p.r[i]*invDa + p.dr[i]*invSa + f32max(rr, 0)
 		p.g[i] = p.g[i]*invDa + p.dg[i]*invSa + f32max(gg, 0)
@@ -881,16 +987,52 @@ func (p *HighPipeline) Saturation() {
 
 //go:fix inline
 func (p *HighPipeline) Color() {
+	lum := func(r, g, b float32) float32 {
+		return r*0.30 + g*0.59 + b*0.11
+	}
+	setlum := func(r, g, b, l float32) (float32, float32, float32) {
+		diff := l - lum(r, g, b)
+		return r + diff, g + diff, b + diff
+	}
+	clipcolor := func(r, g, b, a float32) (float32, float32, float32) {
+		mn := f32min(r, f32min(g, b))
+		mx := f32max(r, f32max(g, b))
+		l := lum(r, g, b)
+
+		clip := func(c float32) float32 {
+			// If mx >= 0, keep c; otherwise adjust
+			if mx < 0 {
+				if l != mn {
+					c = l + (c-l)*l/(l-mn)
+				} else {
+					c = l
+				}
+			}
+			// If mx > a, adjust; otherwise keep c
+			if mx > a {
+				if mx != l {
+					c = l + (c-l)*(a-l)/(mx-l)
+				} else {
+					c = l
+				}
+			}
+			return f32max(c, 0)
+		}
+
+		return clip(r), clip(g), clip(b)
+	}
+
 	for i := 0; i < HIGH_STAGE_WIDTH; i++ {
 		invSa, invDa := 1.0-p.a[i], 1.0-p.da[i]
 
 		rr, gg, bb := p.r[i]*p.da[i], p.g[i]*p.da[i], p.b[i]*p.da[i]
 
-		mn, mx := f32minmax(rr, gg, bb)
-		lum, lumd := rr*0.30+gg*0.59+bb*0.11, p.dr[i]*0.30+p.dg[i]*0.59+p.db[i]*0.11
+		// Apply color blend mode using the closure functions
+		rlum := lum(p.dr[i], p.dg[i], p.db[i]) * p.a[i]
+		a_da := p.a[i] * p.da[i]
 
-		rr, gg, bb = f32lum(rr, gg, bb, p.da[i], lum, lumd)
-		rr, gg, bb = f32clip(rr, gg, bb, p.a[i]*p.da[i], mn, mx, lum)
+		rr, gg, bb = setlum(rr, gg, bb, rlum)
+		rr, gg, bb = clipcolor(rr, gg, bb, a_da)
 
 		p.r[i] = p.r[i]*invDa + p.dr[i]*invSa + f32max(rr, 0)
 		p.g[i] = p.g[i]*invDa + p.dg[i]*invSa + f32max(gg, 0)
@@ -901,16 +1043,52 @@ func (p *HighPipeline) Color() {
 
 //go:fix inline
 func (p *HighPipeline) Luminosity() {
+	lum := func(r, g, b float32) float32 {
+		return r*0.30 + g*0.59 + b*0.11
+	}
+	setlum := func(r, g, b, l float32) (float32, float32, float32) {
+		diff := l - lum(r, g, b)
+		return r + diff, g + diff, b + diff
+	}
+	clipcolor := func(r, g, b, a float32) (float32, float32, float32) {
+		mn := f32min(r, f32min(g, b))
+		mx := f32max(r, f32max(g, b))
+		l := lum(r, g, b)
+
+		clip := func(c float32) float32 {
+			// If mx >= 0, keep c; otherwise adjust
+			if mx < 0 {
+				if l != mn {
+					c = l + (c-l)*l/(l-mn)
+				} else {
+					c = l
+				}
+			}
+			// If mx > a, adjust; otherwise keep c
+			if mx > a {
+				if mx != l {
+					c = l + (c-l)*(a-l)/(mx-l)
+				} else {
+					c = l
+				}
+			}
+			return f32max(c, 0)
+		}
+
+		return clip(r), clip(g), clip(b)
+	}
+
 	for i := 0; i < HIGH_STAGE_WIDTH; i++ {
 		invSa, invDa := 1.0-p.a[i], 1.0-p.da[i]
 
 		rr, gg, bb := p.dr[i]*p.a[i], p.dg[i]*p.a[i], p.db[i]*p.a[i]
 
-		mn, mx := f32minmax(rr, gg, bb)
-		lum, lumd := rr*0.30+gg*0.59+bb*0.11, p.r[i]*0.30+p.g[i]*0.59+p.b[i]*0.11
+		// Apply luminosity blend mode using the closure functions
+		rlum := lum(p.r[i], p.g[i], p.b[i]) * p.da[i]
+		a_da := p.a[i] * p.da[i]
 
-		rr, gg, bb = f32lum(rr, gg, bb, p.da[i], lum, lumd)
-		rr, gg, bb = f32clip(rr, gg, bb, p.a[i]*p.da[i], mn, mx, lum)
+		rr, gg, bb = setlum(rr, gg, bb, rlum)
+		rr, gg, bb = clipcolor(rr, gg, bb, a_da)
 
 		p.r[i] = p.r[i]*invDa + p.dr[i]*invSa + f32max(rr, 0)
 		p.g[i] = p.g[i]*invDa + p.dg[i]*invSa + f32max(gg, 0)
@@ -1674,51 +1852,6 @@ func f32min(a, b float32) float32 {
 		return a
 	}
 	return b
-}
-
-func f32minmax(r, g, b float32) (float32, float32) {
-	mn, mx := r, r
-	if g < mn {
-		mn = g
-	} else if g > mx {
-		mx = g
-	}
-	if b < mn {
-		mn = b
-	} else if b > mx {
-		mx = b
-	}
-	return mn, mx
-}
-
-func f32sat(r, g, b, a, mna, mxa, mnb, mxb float32) (float32, float32, float32) {
-	sat := mxa - mna
-	if sat == 0 {
-		return 0, 0, 0
-	}
-	invSat := (mxb - mnb) * a / sat
-	return (r - mna) * invSat, (g - mna) * invSat, (b - mna) * invSat
-}
-
-func f32lum(r, g, b, a, luma, lumb float32) (float32, float32, float32) {
-	diff := lumb*a - luma
-	return r + diff, g + diff, b + diff
-}
-
-func f32clip(r, g, b, a, mn, mx, lum float32) (float32, float32, float32) {
-	s1 := float32(1)
-	if mn < 0 && lum != mn {
-		s1 = lum / (lum - mn)
-	}
-	s2 := float32(1)
-	if mx > a && mx != lum {
-		s2 = (a - lum) / (mx - lum)
-	}
-	scale := s1 * s2
-	r = lum + (r-lum)*scale
-	g = lum + (g-lum)*scale
-	b = lum + (b-lum)*scale
-	return r, g, b
 }
 
 func exclusiveReflect(v, limit, invLimit float32) float32 {

@@ -8,6 +8,7 @@ package pipeline
 
 import (
 	"math"
+	"unsafe"
 )
 
 //go:fix inline
@@ -38,83 +39,84 @@ func (p *LowPipeline) ClampA() {
 
 //go:fix inline
 func (p *LowPipeline) Premultiply() {
-	for i := 0; i < LOW_STAGE_WIDTH; i += 8 {
-		p.r[i] = uint16(((uint32(p.r[i]) * uint32(p.a[i])) + 255) >> 8)
-		p.r[i+1] = uint16(((uint32(p.r[i+1]) * uint32(p.a[i+1])) + 255) >> 8)
-		p.r[i+2] = uint16(((uint32(p.r[i+2]) * uint32(p.a[i+2])) + 255) >> 8)
-		p.r[i+3] = uint16(((uint32(p.r[i+3]) * uint32(p.a[i+3])) + 255) >> 8)
-		p.r[i+4] = uint16(((uint32(p.r[i+4]) * uint32(p.a[i+4])) + 255) >> 8)
-		p.r[i+5] = uint16(((uint32(p.r[i+5]) * uint32(p.a[i+5])) + 255) >> 8)
-		p.r[i+6] = uint16(((uint32(p.r[i+6]) * uint32(p.a[i+6])) + 255) >> 8)
-		p.r[i+7] = uint16(((uint32(p.r[i+7]) * uint32(p.a[i+7])) + 255) >> 8)
+	p.r[0], p.r[1], p.r[2], p.r[3] = (p.r[0]*p.a[0]+255)>>8, (p.r[1]*p.a[1]+255)>>8, (p.r[2]*p.a[2]+255)>>8, (p.r[3]*p.a[3]+255)>>8
+	p.r[4], p.r[5], p.r[6], p.r[7] = (p.r[4]*p.a[4]+255)>>8, (p.r[5]*p.a[5]+255)>>8, (p.r[6]*p.a[6]+255)>>8, (p.r[7]*p.a[7]+255)>>8
+	p.r[8], p.r[9], p.r[10], p.r[11] = (p.r[8]*p.a[8]+255)>>8, (p.r[9]*p.a[9]+255)>>8, (p.r[10]*p.a[10]+255)>>8, (p.r[11]*p.a[11]+255)>>8
+	p.r[12], p.r[13], p.r[14], p.r[15] = (p.r[12]*p.a[12]+255)>>8, (p.r[13]*p.a[13]+255)>>8, (p.r[14]*p.a[14]+255)>>8, (p.r[15]*p.a[15]+255)>>8
 
-		p.g[i] = uint16(((uint32(p.g[i]) * uint32(p.a[i])) + 255) >> 8)
-		p.g[i+1] = uint16(((uint32(p.g[i+1]) * uint32(p.a[i+1])) + 255) >> 8)
-		p.g[i+2] = uint16(((uint32(p.g[i+2]) * uint32(p.a[i+2])) + 255) >> 8)
-		p.g[i+3] = uint16(((uint32(p.g[i+3]) * uint32(p.a[i+3])) + 255) >> 8)
-		p.g[i+4] = uint16(((uint32(p.g[i+4]) * uint32(p.a[i+4])) + 255) >> 8)
-		p.g[i+5] = uint16(((uint32(p.g[i+5]) * uint32(p.a[i+5])) + 255) >> 8)
-		p.g[i+6] = uint16(((uint32(p.g[i+6]) * uint32(p.a[i+6])) + 255) >> 8)
-		p.g[i+7] = uint16(((uint32(p.g[i+7]) * uint32(p.a[i+7])) + 255) >> 8)
+	p.g[0], p.g[1], p.g[2], p.g[3] = (p.g[0]*p.a[0]+255)>>8, (p.g[1]*p.a[1]+255)>>8, (p.g[2]*p.a[2]+255)>>8, (p.g[3]*p.a[3]+255)>>8
+	p.g[4], p.g[5], p.g[6], p.g[7] = (p.g[4]*p.a[4]+255)>>8, (p.g[5]*p.a[5]+255)>>8, (p.g[6]*p.a[6]+255)>>8, (p.g[7]*p.a[7]+255)>>8
+	p.g[8], p.g[9], p.g[10], p.g[11] = (p.g[8]*p.a[8]+255)>>8, (p.g[9]*p.a[9]+255)>>8, (p.g[10]*p.a[10]+255)>>8, (p.g[11]*p.a[11]+255)>>8
+	p.g[12], p.g[13], p.g[14], p.g[15] = (p.g[12]*p.a[12]+255)>>8, (p.g[13]*p.a[13]+255)>>8, (p.g[14]*p.a[14]+255)>>8, (p.g[15]*p.a[15]+255)>>8
 
-		p.b[i] = uint16(((uint32(p.b[i]) * uint32(p.a[i])) + 255) >> 8)
-		p.b[i+1] = uint16(((uint32(p.b[i+1]) * uint32(p.a[i+1])) + 255) >> 8)
-		p.b[i+2] = uint16(((uint32(p.b[i+2]) * uint32(p.a[i+2])) + 255) >> 8)
-		p.b[i+3] = uint16(((uint32(p.b[i+3]) * uint32(p.a[i+3])) + 255) >> 8)
-		p.b[i+4] = uint16(((uint32(p.b[i+4]) * uint32(p.a[i+4])) + 255) >> 8)
-		p.b[i+5] = uint16(((uint32(p.b[i+5]) * uint32(p.a[i+5])) + 255) >> 8)
-		p.b[i+6] = uint16(((uint32(p.b[i+6]) * uint32(p.a[i+6])) + 255) >> 8)
-		p.b[i+7] = uint16(((uint32(p.b[i+7]) * uint32(p.a[i+7])) + 255) >> 8)
-	}
+	p.b[0], p.b[1], p.b[2], p.b[3] = (p.b[0]*p.a[0]+255)>>8, (p.b[1]*p.a[1]+255)>>8, (p.b[2]*p.a[2]+255)>>8, (p.b[3]*p.a[3]+255)>>8
+	p.b[4], p.b[5], p.b[6], p.b[7] = (p.b[4]*p.a[4]+255)>>8, (p.b[5]*p.a[5]+255)>>8, (p.b[6]*p.a[6]+255)>>8, (p.b[7]*p.a[7]+255)>>8
+	p.b[8], p.b[9], p.b[10], p.b[11] = (p.b[8]*p.a[8]+255)>>8, (p.b[9]*p.a[9]+255)>>8, (p.b[10]*p.a[10]+255)>>8, (p.b[11]*p.a[11]+255)>>8
+	p.b[12], p.b[13], p.b[14], p.b[15] = (p.b[12]*p.a[12]+255)>>8, (p.b[13]*p.a[13]+255)>>8, (p.b[14]*p.a[14]+255)>>8, (p.b[15]*p.a[15]+255)>>8
 }
 
 //go:fix inline
 func (p *LowPipeline) UniformColor() {
 	uniformColor := p.ctx.UniformColor
-	r := uint16(uniformColor.RGBA[0])
-	g := uint16(uniformColor.RGBA[1])
-	b := uint16(uniformColor.RGBA[2])
-	a := uint16(uniformColor.RGBA[3])
+	r := uniformColor.RGBA[0]
+	g := uniformColor.RGBA[1]
+	b := uniformColor.RGBA[2]
+	a := uniformColor.RGBA[3]
 
-	for i := 0; i < LOW_STAGE_WIDTH; i += 8 {
-		p.r[i], p.r[i+1], p.r[i+2], p.r[i+3] = r, r, r, r
-		p.r[i+4], p.r[i+5], p.r[i+6], p.r[i+7] = r, r, r, r
-
-		p.g[i], p.g[i+1], p.g[i+2], p.g[i+3] = g, g, g, g
-		p.g[i+4], p.g[i+5], p.g[i+6], p.g[i+7] = g, g, g, g
-
-		p.b[i], p.b[i+1], p.b[i+2], p.b[i+3] = b, b, b, b
-		p.b[i+4], p.b[i+5], p.b[i+6], p.b[i+7] = b, b, b, b
-
-		p.a[i], p.a[i+1], p.a[i+2], p.a[i+3] = a, a, a, a
-		p.a[i+4], p.a[i+5], p.a[i+6], p.a[i+7] = a, a, a, a
-	}
+	p.r[0], p.r[1], p.r[2], p.r[3] = r, r, r, r
+	p.r[4], p.r[5], p.r[6], p.r[7] = r, r, r, r
+	p.r[8], p.r[9], p.r[10], p.r[11] = r, r, r, r
+	p.r[12], p.r[13], p.r[14], p.r[15] = r, r, r, r
+	p.g[0], p.g[1], p.g[2], p.g[3] = g, g, g, g
+	p.g[4], p.g[5], p.g[6], p.g[7] = g, g, g, g
+	p.g[8], p.g[9], p.g[10], p.g[11] = g, g, g, g
+	p.g[12], p.g[13], p.g[14], p.g[15] = g, g, g, g
+	p.b[0], p.b[1], p.b[2], p.b[3] = b, b, b, b
+	p.b[4], p.b[5], p.b[6], p.b[7] = b, b, b, b
+	p.b[8], p.b[9], p.b[10], p.b[11] = b, b, b, b
+	p.b[12], p.b[13], p.b[14], p.b[15] = b, b, b, b
+	p.a[0], p.a[1], p.a[2], p.a[3] = a, a, a, a
+	p.a[4], p.a[5], p.a[6], p.a[7] = a, a, a, a
+	p.a[8], p.a[9], p.a[10], p.a[11] = a, a, a, a
+	p.a[12], p.a[13], p.a[14], p.a[15] = a, a, a, a
 }
 
 //go:fix inline
 func (p *LowPipeline) SeedShader() {
-	// Sets up pixel coordinates for shader processing
-	// x = dx + [0.5, 1.5, 2.5, ..., 15.5]
-	// y = dy + 0.5 (constant for all pixels)
-	iota := [16]float32{0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5, 10.5, 11.5, 12.5, 13.5, 14.5, 15.5}
 	dxFloat := float32(p.dx)
 	dyFloat := float32(p.dy) + 0.5
 
-	// Calculate x coordinates: dx + iota
-	for i := 0; i < 16; i++ {
-		x := dxFloat + iota[i]
-		xBits := math.Float32bits(x)
-		p.r[i] = uint16(xBits & 0xFFFF)
-		p.g[i] = uint16(xBits >> 16)
+	// Calculate x coordinates: dx + [0.5, 1.5, ..., 15.5]
+	x := [16]float32{
+		dxFloat + 0.5, dxFloat + 1.5, dxFloat + 2.5, dxFloat + 3.5,
+		dxFloat + 4.5, dxFloat + 5.5, dxFloat + 6.5, dxFloat + 7.5,
+		dxFloat + 8.5, dxFloat + 9.5, dxFloat + 10.5, dxFloat + 11.5,
+		dxFloat + 12.5, dxFloat + 13.5, dxFloat + 14.5, dxFloat + 15.5,
 	}
 
-	// Calculate y coordinates: dy + 0.5 (constant)
-	yBits := math.Float32bits(dyFloat)
+	// Convert float32 array to uint16 arrays using unsafe pointer casting
+	// This matches Rust's split function: each f32 is split into two u16
+	// The memory layout is preserved exactly (platform-independent)
+	xPtr := (*[16][2]uint16)(unsafe.Pointer(&x[0]))
 	for i := 0; i < 16; i++ {
-		p.b[i] = uint16(yBits & 0xFFFF)
-		p.a[i] = uint16(yBits >> 16)
+		p.r[i] = (*xPtr)[i][0] // Low 16 bits of float32
+		p.g[i] = (*xPtr)[i][1] // High 16 bits of float32
 	}
 
+	// Calculate y coordinates: dy + 0.5 (constant for all pixels)
+	y := [16]float32{
+		dyFloat, dyFloat, dyFloat, dyFloat,
+		dyFloat, dyFloat, dyFloat, dyFloat,
+		dyFloat, dyFloat, dyFloat, dyFloat,
+		dyFloat, dyFloat, dyFloat, dyFloat,
+	}
+
+	// Convert float32 array to uint16 arrays using same approach
+	yPtr := (*[16][2]uint16)(unsafe.Pointer(&y[0]))
+	for i := 0; i < 16; i++ {
+		p.b[i] = (*yPtr)[i][0] // Low 16 bits of float32
+		p.a[i] = (*yPtr)[i][1] // High 16 bits of float32
+	}
 }
 
 //go:fix inline
@@ -122,52 +124,23 @@ func (p *LowPipeline) LoadDestination() {
 	baseIdx := (p.dy*p.pixmap.RealWidth + p.dx) * 4
 	data := p.pixmap.Data[baseIdx : baseIdx+LOW_STAGE_WIDTH*4]
 
-	for i := 0; i < LOW_STAGE_WIDTH; i += 8 {
-		off0 := i * 4
-		off1 := off0 + 4
-		off2 := off0 + 8
-		off3 := off0 + 12
-		off4 := off0 + 16
-		off5 := off0 + 20
-		off6 := off0 + 24
-		off7 := off0 + 28
+	p.dr[0], p.dr[1], p.dr[2], p.dr[3] = uint16(data[0]), uint16(data[4]), uint16(data[8]), uint16(data[12])
+	p.dr[4], p.dr[5], p.dr[6], p.dr[7] = uint16(data[16]), uint16(data[20]), uint16(data[24]), uint16(data[28])
+	p.dg[0], p.dg[1], p.dg[2], p.dg[3] = uint16(data[1]), uint16(data[5]), uint16(data[9]), uint16(data[13])
+	p.dg[4], p.dg[5], p.dg[6], p.dg[7] = uint16(data[17]), uint16(data[21]), uint16(data[25]), uint16(data[29])
+	p.db[0], p.db[1], p.db[2], p.db[3] = uint16(data[2]), uint16(data[6]), uint16(data[10]), uint16(data[14])
+	p.db[4], p.db[5], p.db[6], p.db[7] = uint16(data[18]), uint16(data[22]), uint16(data[26]), uint16(data[30])
+	p.da[0], p.da[1], p.da[2], p.da[3] = uint16(data[3]), uint16(data[7]), uint16(data[11]), uint16(data[15])
+	p.da[4], p.da[5], p.da[6], p.da[7] = uint16(data[19]), uint16(data[23]), uint16(data[27]), uint16(data[31])
 
-		p.dr[i] = uint16(data[off0])
-		p.dr[i+1] = uint16(data[off1])
-		p.dr[i+2] = uint16(data[off2])
-		p.dr[i+3] = uint16(data[off3])
-		p.dr[i+4] = uint16(data[off4])
-		p.dr[i+5] = uint16(data[off5])
-		p.dr[i+6] = uint16(data[off6])
-		p.dr[i+7] = uint16(data[off7])
-
-		p.dg[i] = uint16(data[off0+1])
-		p.dg[i+1] = uint16(data[off1+1])
-		p.dg[i+2] = uint16(data[off2+1])
-		p.dg[i+3] = uint16(data[off3+1])
-		p.dg[i+4] = uint16(data[off4+1])
-		p.dg[i+5] = uint16(data[off5+1])
-		p.dg[i+6] = uint16(data[off6+1])
-		p.dg[i+7] = uint16(data[off7+1])
-
-		p.db[i] = uint16(data[off0+2])
-		p.db[i+1] = uint16(data[off1+2])
-		p.db[i+2] = uint16(data[off2+2])
-		p.db[i+3] = uint16(data[off3+2])
-		p.db[i+4] = uint16(data[off4+2])
-		p.db[i+5] = uint16(data[off5+2])
-		p.db[i+6] = uint16(data[off6+2])
-		p.db[i+7] = uint16(data[off7+2])
-
-		p.da[i] = uint16(data[off0+3])
-		p.da[i+1] = uint16(data[off1+3])
-		p.da[i+2] = uint16(data[off2+3])
-		p.da[i+3] = uint16(data[off3+3])
-		p.da[i+4] = uint16(data[off4+3])
-		p.da[i+5] = uint16(data[off5+3])
-		p.da[i+6] = uint16(data[off6+3])
-		p.da[i+7] = uint16(data[off7+3])
-	}
+	p.dr[8], p.dr[9], p.dr[10], p.dr[11] = uint16(data[32]), uint16(data[36]), uint16(data[40]), uint16(data[44])
+	p.dr[12], p.dr[13], p.dr[14], p.dr[15] = uint16(data[48]), uint16(data[52]), uint16(data[56]), uint16(data[60])
+	p.dg[8], p.dg[9], p.dg[10], p.dg[11] = uint16(data[33]), uint16(data[37]), uint16(data[41]), uint16(data[45])
+	p.dg[12], p.dg[13], p.dg[14], p.dg[15] = uint16(data[49]), uint16(data[53]), uint16(data[57]), uint16(data[61])
+	p.db[8], p.db[9], p.db[10], p.db[11] = uint16(data[34]), uint16(data[38]), uint16(data[42]), uint16(data[46])
+	p.db[12], p.db[13], p.db[14], p.db[15] = uint16(data[50]), uint16(data[54]), uint16(data[58]), uint16(data[62])
+	p.da[8], p.da[9], p.da[10], p.da[11] = uint16(data[35]), uint16(data[39]), uint16(data[43]), uint16(data[47])
+	p.da[12], p.da[13], p.da[14], p.da[15] = uint16(data[51]), uint16(data[55]), uint16(data[59]), uint16(data[63])
 }
 
 //go:fix inline
@@ -186,60 +159,32 @@ func (p *LowPipeline) LoadDestinationTail() {
 //go:fix inline
 func (p *LowPipeline) Store() {
 	baseIdx := (p.dy*p.pixmap.RealWidth + p.dx) * 4
-	data := p.pixmap.Data[baseIdx : baseIdx+p.tail*4]
+	data := p.pixmap.Data[baseIdx : baseIdx+LOW_STAGE_WIDTH*4]
 
-	for i := 0; i < p.tail; i += 8 {
-		off0 := i * 4
-		off1 := off0 + 4
-		off2 := off0 + 8
-		off3 := off0 + 12
-		off4 := off0 + 16
-		off5 := off0 + 20
-		off6 := off0 + 24
-		off7 := off0 + 28
+	data[0], data[4], data[8], data[12] = uint8(p.r[0]), uint8(p.r[1]), uint8(p.r[2]), uint8(p.r[3])
+	data[16], data[20], data[24], data[28] = uint8(p.r[4]), uint8(p.r[5]), uint8(p.r[6]), uint8(p.r[7])
+	data[1], data[5], data[9], data[13] = uint8(p.g[0]), uint8(p.g[1]), uint8(p.g[2]), uint8(p.g[3])
+	data[17], data[21], data[25], data[29] = uint8(p.g[4]), uint8(p.g[5]), uint8(p.g[6]), uint8(p.g[7])
+	data[2], data[6], data[10], data[14] = uint8(p.b[0]), uint8(p.b[1]), uint8(p.b[2]), uint8(p.b[3])
+	data[18], data[22], data[26], data[30] = uint8(p.b[4]), uint8(p.b[5]), uint8(p.b[6]), uint8(p.b[7])
+	data[3], data[7], data[11], data[15] = uint8(p.a[0]), uint8(p.a[1]), uint8(p.a[2]), uint8(p.a[3])
+	data[19], data[23], data[27], data[31] = uint8(p.a[4]), uint8(p.a[5]), uint8(p.a[6]), uint8(p.a[7])
 
-		data[off0] = uint8(p.r[i])
-		data[off1] = uint8(p.r[i+1])
-		data[off2] = uint8(p.r[i+2])
-		data[off3] = uint8(p.r[i+3])
-		data[off4] = uint8(p.r[i+4])
-		data[off5] = uint8(p.r[i+5])
-		data[off6] = uint8(p.r[i+6])
-		data[off7] = uint8(p.r[i+7])
-
-		data[off0+1] = uint8(p.g[i])
-		data[off1+1] = uint8(p.g[i+1])
-		data[off2+1] = uint8(p.g[i+2])
-		data[off3+1] = uint8(p.g[i+3])
-		data[off4+1] = uint8(p.g[i+4])
-		data[off5+1] = uint8(p.g[i+5])
-		data[off6+1] = uint8(p.g[i+6])
-		data[off7+1] = uint8(p.g[i+7])
-
-		data[off0+2] = uint8(p.b[i])
-		data[off1+2] = uint8(p.b[i+1])
-		data[off2+2] = uint8(p.b[i+2])
-		data[off3+2] = uint8(p.b[i+3])
-		data[off4+2] = uint8(p.b[i+4])
-		data[off5+2] = uint8(p.b[i+5])
-		data[off6+2] = uint8(p.b[i+6])
-		data[off7+2] = uint8(p.b[i+7])
-
-		data[off0+3] = uint8(p.a[i])
-		data[off1+3] = uint8(p.a[i+1])
-		data[off2+3] = uint8(p.a[i+2])
-		data[off3+3] = uint8(p.a[i+3])
-		data[off4+3] = uint8(p.a[i+4])
-		data[off5+3] = uint8(p.a[i+5])
-		data[off6+3] = uint8(p.a[i+6])
-		data[off7+3] = uint8(p.a[i+7])
-	}
+	data[32], data[36], data[40], data[44] = uint8(p.r[8]), uint8(p.r[9]), uint8(p.r[10]), uint8(p.r[11])
+	data[48], data[52], data[56], data[60] = uint8(p.r[12]), uint8(p.r[13]), uint8(p.r[14]), uint8(p.r[15])
+	data[33], data[37], data[41], data[45] = uint8(p.g[8]), uint8(p.g[9]), uint8(p.g[10]), uint8(p.g[11])
+	data[49], data[53], data[57], data[61] = uint8(p.g[12]), uint8(p.g[13]), uint8(p.g[14]), uint8(p.g[15])
+	data[34], data[38], data[42], data[46] = uint8(p.b[8]), uint8(p.b[9]), uint8(p.b[10]), uint8(p.b[11])
+	data[50], data[54], data[58], data[62] = uint8(p.b[12]), uint8(p.b[13]), uint8(p.b[14]), uint8(p.b[15])
+	data[35], data[39], data[43], data[47] = uint8(p.a[8]), uint8(p.a[9]), uint8(p.a[10]), uint8(p.a[11])
+	data[51], data[55], data[59], data[63] = uint8(p.a[12]), uint8(p.a[13]), uint8(p.a[14]), uint8(p.a[15])
 }
 
 //go:fix inline
 func (p *LowPipeline) StoreTail() {
 	baseIdx := (p.dy*p.pixmap.RealWidth + p.dx) * 4
 	data := p.pixmap.Data[baseIdx : baseIdx+p.tail*4]
+
 	for i := 0; i < p.tail; i++ {
 		off := i * 4
 		data[off] = uint8(p.r[i])
@@ -253,389 +198,311 @@ func (p *LowPipeline) StoreTail() {
 func (p *LowPipeline) LoadDestinationU8() {
 	baseIdx := (p.dy*p.pixmap.RealWidth + p.dx) * 4
 	data := p.pixmap.Data[baseIdx : baseIdx+LOW_STAGE_WIDTH*4]
-	for i := 0; i < LOW_STAGE_WIDTH; i += 8 {
-		off0 := i * 4
-		p.dr[i] = uint16(data[off0])
-		p.dr[i+1] = uint16(data[off0+4])
-		p.dr[i+2] = uint16(data[off0+8])
-		p.dr[i+3] = uint16(data[off0+12])
-		p.dr[i+4] = uint16(data[off0+16])
-		p.dr[i+5] = uint16(data[off0+20])
-		p.dr[i+6] = uint16(data[off0+24])
-		p.dr[i+7] = uint16(data[off0+28])
 
-		p.dg[i] = uint16(data[off0+1])
-		p.dg[i+1] = uint16(data[off0+5])
-		p.dg[i+2] = uint16(data[off0+9])
-		p.dg[i+3] = uint16(data[off0+13])
-		p.dg[i+4] = uint16(data[off0+17])
-		p.dg[i+5] = uint16(data[off0+21])
-		p.dg[i+6] = uint16(data[off0+25])
-		p.dg[i+7] = uint16(data[off0+29])
-
-		p.db[i] = uint16(data[off0+2])
-		p.db[i+1] = uint16(data[off0+6])
-		p.db[i+2] = uint16(data[off0+10])
-		p.db[i+3] = uint16(data[off0+14])
-		p.db[i+4] = uint16(data[off0+18])
-		p.db[i+5] = uint16(data[off0+22])
-		p.db[i+6] = uint16(data[off0+26])
-		p.db[i+7] = uint16(data[off0+30])
-
-		p.da[i] = uint16(data[off0+3])
-		p.da[i+1] = uint16(data[off0+7])
-		p.da[i+2] = uint16(data[off0+11])
-		p.da[i+3] = uint16(data[off0+15])
-		p.da[i+4] = uint16(data[off0+19])
-		p.da[i+5] = uint16(data[off0+23])
-		p.da[i+6] = uint16(data[off0+27])
-		p.da[i+7] = uint16(data[off0+31])
-	}
+	p.da[0], p.da[1], p.da[2], p.da[3] = uint16(data[3]), uint16(data[7]), uint16(data[11]), uint16(data[15])
+	p.da[4], p.da[5], p.da[6], p.da[7] = uint16(data[19]), uint16(data[23]), uint16(data[27]), uint16(data[31])
+	p.da[8], p.da[9], p.da[10], p.da[11] = uint16(data[35]), uint16(data[39]), uint16(data[43]), uint16(data[47])
+	p.da[12], p.da[13], p.da[14], p.da[15] = uint16(data[51]), uint16(data[55]), uint16(data[59]), uint16(data[63])
 }
 
 //go:fix inline
 func (p *LowPipeline) LoadDestinationU8Tail() {
-	// TODO
+	baseIdx := (p.dy*p.pixmap.RealWidth + p.dx) * 4
+	data := p.pixmap.Data[baseIdx : baseIdx+p.tail*4]
+
+	for i := 0; i < p.tail; i++ {
+		off := i * 4
+		p.da[i] = uint16(data[off+3])
+	}
 }
 
 //go:fix inline
 func (p *LowPipeline) StoreU8() {
 	baseIdx := (p.dy*p.pixmap.RealWidth + p.dx) * 4
-	data := p.pixmap.Data[baseIdx : baseIdx+p.tail*4]
-	for i := 0; i < p.tail; i++ {
-		off := i * 4
-		data[off] = uint8(p.r[i])
-		data[off+1] = uint8(p.g[i])
-		data[off+2] = uint8(p.b[i])
-		data[off+3] = uint8(p.a[i])
-	}
+	data := p.pixmap.Data[baseIdx : baseIdx+LOW_STAGE_WIDTH]
+
+	data[0], data[1], data[2], data[3] = uint8(p.a[0]), uint8(p.a[1]), uint8(p.a[2]), uint8(p.a[3])
+	data[4], data[5], data[6], data[7] = uint8(p.a[4]), uint8(p.a[5]), uint8(p.a[6]), uint8(p.a[7])
+	data[8], data[9], data[10], data[11] = uint8(p.a[8]), uint8(p.a[9]), uint8(p.a[10]), uint8(p.a[11])
+	data[12], data[13], data[14], data[15] = uint8(p.a[12]), uint8(p.a[13]), uint8(p.a[14]), uint8(p.a[15])
 }
 
 //go:fix inline
 func (p *LowPipeline) StoreU8Tail() {
-	// TODO
+	baseIdx := (p.dy*p.pixmap.RealWidth + p.dx) * 4
+	data := p.pixmap.Data[baseIdx : baseIdx+p.tail]
+
+	for i := 0; i < p.tail; i++ {
+		data[i] = uint8(p.a[i])
+	}
 }
 
 //go:fix inline
 func (p *LowPipeline) Gather() {
-	// This stage samples colors from a texture based on UV coordinates
-	// stored in p.r/p.g and uses the shader context
-	for i := 0; i < LOW_STAGE_WIDTH; i += 8 {
-		// Gather would sample from texture using UV coordinates
-		// For lowp, this is typically handled by highp pipeline
-	}
 }
 
 //go:fix inline
 func (p *LowPipeline) LoadMaskU8() {
-	if p.maskCtx != nil && len(p.maskCtx.Data) > 0 {
-		baseIdx := int(p.maskCtx.RealWidth)*p.dy + p.dx
-		maskData := p.maskCtx.Data
-		for i := 0; i < LOW_STAGE_WIDTH && baseIdx+i < len(maskData); i += 8 {
-			p.a[i] = uint16(maskData[baseIdx+i])
-			p.a[i+1] = uint16(maskData[baseIdx+i+1])
-			p.a[i+2] = uint16(maskData[baseIdx+i+2])
-			p.a[i+3] = uint16(maskData[baseIdx+i+3])
-			p.a[i+4] = uint16(maskData[baseIdx+i+4])
-			p.a[i+5] = uint16(maskData[baseIdx+i+5])
-			p.a[i+6] = uint16(maskData[baseIdx+i+6])
-			p.a[i+7] = uint16(maskData[baseIdx+i+7])
-		}
+	baseIdx := int(p.maskCtx.RealWidth)*p.dy + p.dx
+	maskData := p.maskCtx.Data
+
+	var c [LOW_STAGE_WIDTH]uint16
+	for i := 0; i < p.tail; i++ {
+		c[i] = uint16(maskData[baseIdx+i])
 	}
+
+	p.r = [LOW_STAGE_WIDTH]uint16{}
+	p.g = [LOW_STAGE_WIDTH]uint16{}
+	p.b = [LOW_STAGE_WIDTH]uint16{}
+	p.a = c
 }
 
 //go:fix inline
 func (p *LowPipeline) MaskU8() {
-	for i := 0; i < LOW_STAGE_WIDTH; i += 8 {
-		mask := p.a[i]
-		p.r[i] = uint16((uint32(p.r[i])*uint32(mask) + 255) >> 8)
-		p.g[i] = uint16((uint32(p.g[i])*uint32(mask) + 255) >> 8)
-		p.b[i] = uint16((uint32(p.b[i])*uint32(mask) + 255) >> 8)
-		p.a[i] = uint16((uint32(p.a[i])*uint32(mask) + 255) >> 8)
+	baseIdx := int(p.maskCtx.RealWidth)*p.dy + p.dx
+	maskData := p.maskCtx.Data
+
+	var c [LOW_STAGE_WIDTH]uint16
+	for i := 0; i < p.tail; i++ {
+		c[i] = uint16(maskData[baseIdx+i])
 	}
+
+	p.r[0], p.r[1], p.r[2], p.r[3] = (p.r[0]*c[0]+255)>>8, (p.r[1]*c[1]+255)>>8, (p.r[2]*c[2]+255)>>8, (p.r[3]*c[3]+255)>>8
+	p.r[4], p.r[5], p.r[6], p.r[7] = (p.r[4]*c[4]+255)>>8, (p.r[5]*c[5]+255)>>8, (p.r[6]*c[6]+255)>>8, (p.r[7]*c[7]+255)>>8
+	p.r[8], p.r[9], p.r[10], p.r[11] = (p.r[8]*c[8]+255)>>8, (p.r[9]*c[9]+255)>>8, (p.r[10]*c[10]+255)>>8, (p.r[11]*c[11]+255)>>8
+	p.r[12], p.r[13], p.r[14], p.r[15] = (p.r[12]*c[12]+255)>>8, (p.r[13]*c[13]+255)>>8, (p.r[14]*c[14]+255)>>8, (p.r[15]*c[15]+255)>>8
+
+	p.g[0], p.g[1], p.g[2], p.g[3] = (p.g[0]*c[0]+255)>>8, (p.g[1]*c[1]+255)>>8, (p.g[2]*c[2]+255)>>8, (p.g[3]*c[3]+255)>>8
+	p.g[4], p.g[5], p.g[6], p.g[7] = (p.g[4]*c[4]+255)>>8, (p.g[5]*c[5]+255)>>8, (p.g[6]*c[6]+255)>>8, (p.g[7]*c[7]+255)>>8
+	p.g[8], p.g[9], p.g[10], p.g[11] = (p.g[8]*c[8]+255)>>8, (p.g[9]*c[9]+255)>>8, (p.g[10]*c[10]+255)>>8, (p.g[11]*c[11]+255)>>8
+	p.g[12], p.g[13], p.g[14], p.g[15] = (p.g[12]*c[12]+255)>>8, (p.g[13]*c[13]+255)>>8, (p.g[14]*c[14]+255)>>8, (p.g[15]*c[15]+255)>>8
+
+	p.b[0], p.b[1], p.b[2], p.b[3] = (p.b[0]*c[0]+255)>>8, (p.b[1]*c[1]+255)>>8, (p.b[2]*c[2]+255)>>8, (p.b[3]*c[3]+255)>>8
+	p.b[4], p.b[5], p.b[6], p.b[7] = (p.b[4]*c[4]+255)>>8, (p.b[5]*c[5]+255)>>8, (p.b[6]*c[6]+255)>>8, (p.b[7]*c[7]+255)>>8
+	p.b[8], p.b[9], p.b[10], p.b[11] = (p.b[8]*c[8]+255)>>8, (p.b[9]*c[9]+255)>>8, (p.b[10]*c[10]+255)>>8, (p.b[11]*c[11]+255)>>8
+	p.b[12], p.b[13], p.b[14], p.b[15] = (p.b[12]*c[12]+255)>>8, (p.b[13]*c[13]+255)>>8, (p.b[14]*c[14]+255)>>8, (p.b[15]*c[15]+255)>>8
+
+	p.a[0], p.a[1], p.a[2], p.a[3] = (p.a[0]*c[0]+255)>>8, (p.a[1]*c[1]+255)>>8, (p.a[2]*c[2]+255)>>8, (p.a[3]*c[3]+255)>>8
+	p.a[4], p.a[5], p.a[6], p.a[7] = (p.a[4]*c[4]+255)>>8, (p.a[5]*c[5]+255)>>8, (p.a[6]*c[6]+255)>>8, (p.a[7]*c[7]+255)>>8
+	p.a[8], p.a[9], p.a[10], p.a[11] = (p.a[8]*c[8]+255)>>8, (p.a[9]*c[9]+255)>>8, (p.a[10]*c[10]+255)>>8, (p.a[11]*c[11]+255)>>8
+	p.a[12], p.a[13], p.a[14], p.a[15] = (p.a[12]*c[12]+255)>>8, (p.a[13]*c[13]+255)>>8, (p.a[14]*c[14]+255)>>8, (p.a[15]*c[15]+255)>>8
 }
 
 //go:fix inline
 func (p *LowPipeline) ScaleU8() {
-	for i := 0; i < LOW_STAGE_WIDTH; i += 8 {
-		p.r[i] = uint16((uint32(p.r[i])*uint32(p.dr[i]) + 255) >> 8)
-		p.g[i] = uint16((uint32(p.g[i])*uint32(p.dg[i]) + 255) >> 8)
-		p.b[i] = uint16((uint32(p.b[i])*uint32(p.db[i]) + 255) >> 8)
-	}
+	baseIdx := int(p.maskCtx.RealWidth)*p.dy + p.dx
+	maskData := p.maskCtx.Data
+
+	c0 := uint16(maskData[baseIdx])
+	c1 := uint16(maskData[baseIdx+1])
+
+	p.r[0], p.r[1], p.r[2], p.r[3] = (p.r[0]*c0+255)>>8, (p.r[1]*c1+255)>>8, 0, 0
+	p.r[4], p.r[5], p.r[6], p.r[7] = 0, 0, 0, 0
+	p.r[8], p.r[9], p.r[10], p.r[11] = 0, 0, 0, 0
+	p.r[12], p.r[13], p.r[14], p.r[15] = 0, 0, 0, 0
+
+	p.g[0], p.g[1], p.g[2], p.g[3] = (p.g[0]*c0+255)>>8, (p.g[1]*c1+255)>>8, 0, 0
+	p.g[4], p.g[5], p.g[6], p.g[7] = 0, 0, 0, 0
+	p.g[8], p.g[9], p.g[10], p.g[11] = 0, 0, 0, 0
+	p.g[12], p.g[13], p.g[14], p.g[15] = 0, 0, 0, 0
+
+	p.b[0], p.b[1], p.b[2], p.b[3] = (p.b[0]*c0+255)>>8, (p.b[1]*c1+255)>>8, 0, 0
+	p.b[4], p.b[5], p.b[6], p.b[7] = 0, 0, 0, 0
+	p.b[8], p.b[9], p.b[10], p.b[11] = 0, 0, 0, 0
+	p.b[12], p.b[13], p.b[14], p.b[15] = 0, 0, 0, 0
+
+	p.a[0], p.a[1], p.a[2], p.a[3] = (p.a[0]*c0+255)>>8, (p.a[1]*c1+255)>>8, 0, 0
+	p.a[4], p.a[5], p.a[6], p.a[7] = 0, 0, 0, 0
+	p.a[8], p.a[9], p.a[10], p.a[11] = 0, 0, 0, 0
+	p.a[12], p.a[13], p.a[14], p.a[15] = 0, 0, 0, 0
 }
 
 //go:fix inline
 func (p *LowPipeline) LerpU8() {
-	for i := 0; i < LOW_STAGE_WIDTH; i += 8 {
-		invA0 := 255 - p.a[i]
-		p.r[i] = uint16((uint32(p.r[i])*uint32(p.a[i]) + uint32(p.dr[i])*uint32(invA0) + 255) >> 8)
-	}
+	baseIdx := int(p.maskCtx.RealWidth)*p.dy + p.dx
+	maskData := p.maskCtx.Data
+
+	c0 := uint16(maskData[baseIdx])
+	c1 := uint16(maskData[baseIdx+1])
+	invC0, invC1 := 255-c0, 255-c1
+
+	p.r[0], p.r[1], p.r[2], p.r[3] = (p.dr[0]*invC0+p.r[0]*c0+255)>>8, (p.dr[1]*invC1+p.r[1]*c1+255)>>8, 0, 0
+	p.r[4], p.r[5], p.r[6], p.r[7] = 0, 0, 0, 0
+	p.r[8], p.r[9], p.r[10], p.r[11] = 0, 0, 0, 0
+	p.r[12], p.r[13], p.r[14], p.r[15] = 0, 0, 0, 0
+
+	p.g[0], p.g[1], p.g[2], p.g[3] = (p.dg[0]*invC0+p.g[0]*c0+255)>>8, (p.dg[1]*invC1+p.g[1]*c1+255)>>8, 0, 0
+	p.g[4], p.g[5], p.g[6], p.g[7] = 0, 0, 0, 0
+	p.g[8], p.g[9], p.g[10], p.g[11] = 0, 0, 0, 0
+	p.g[12], p.g[13], p.g[14], p.g[15] = 0, 0, 0, 0
+
+	p.b[0], p.b[1], p.b[2], p.b[3] = (p.db[0]*invC0+p.b[0]*c0+255)>>8, (p.db[1]*invC1+p.b[1]*c1+255)>>8, 0, 0
+	p.b[4], p.b[5], p.b[6], p.b[7] = 0, 0, 0, 0
+	p.b[8], p.b[9], p.b[10], p.b[11] = 0, 0, 0, 0
+	p.b[12], p.b[13], p.b[14], p.b[15] = 0, 0, 0, 0
+
+	p.a[0], p.a[1], p.a[2], p.a[3] = (p.da[0]*invC0+p.a[0]*c0+255)>>8, (p.da[1]*invC1+p.a[1]*c1+255)>>8, 0, 0
+	p.a[4], p.a[5], p.a[6], p.a[7] = 0, 0, 0, 0
+	p.a[8], p.a[9], p.a[10], p.a[11] = 0, 0, 0, 0
+	p.a[12], p.a[13], p.a[14], p.a[15] = 0, 0, 0, 0
 }
 
 //go:fix inline
 func (p *LowPipeline) Scale1Float() {
-	c := p.ctx.CurrentCoverage
-	for i := 0; i < LOW_STAGE_WIDTH; i += 8 {
-		p.r[i] = uint16((uint32(p.r[i])*uint32(c) + 255) >> 8)
-		p.r[i+1] = uint16((uint32(p.r[i+1])*uint32(c) + 255) >> 8)
-		p.r[i+2] = uint16((uint32(p.r[i+2])*uint32(c) + 255) >> 8)
-		p.r[i+3] = uint16((uint32(p.r[i+3])*uint32(c) + 255) >> 8)
-		p.r[i+4] = uint16((uint32(p.r[i+4])*uint32(c) + 255) >> 8)
-		p.r[i+5] = uint16((uint32(p.r[i+5])*uint32(c) + 255) >> 8)
-		p.r[i+6] = uint16((uint32(p.r[i+6])*uint32(c) + 255) >> 8)
-		p.r[i+7] = uint16((uint32(p.r[i+7])*uint32(c) + 255) >> 8)
+	c := uint16(p.ctx.CurrentCoverage)
 
-		p.g[i] = uint16((uint32(p.g[i])*uint32(c) + 255) >> 8)
-		p.g[i+1] = uint16((uint32(p.g[i+1])*uint32(c) + 255) >> 8)
-		p.g[i+2] = uint16((uint32(p.g[i+2])*uint32(c) + 255) >> 8)
-		p.g[i+3] = uint16((uint32(p.g[i+3])*uint32(c) + 255) >> 8)
-		p.g[i+4] = uint16((uint32(p.g[i+4])*uint32(c) + 255) >> 8)
-		p.g[i+5] = uint16((uint32(p.g[i+5])*uint32(c) + 255) >> 8)
-		p.g[i+6] = uint16((uint32(p.g[i+6])*uint32(c) + 255) >> 8)
-		p.g[i+7] = uint16((uint32(p.g[i+7])*uint32(c) + 255) >> 8)
+	p.r[0], p.r[1], p.r[2], p.r[3] = (p.r[0]*c+255)>>8, (p.r[1]*c+255)>>8, (p.r[2]*c+255)>>8, (p.r[3]*c+255)>>8
+	p.r[4], p.r[5], p.r[6], p.r[7] = (p.r[4]*c+255)>>8, (p.r[5]*c+255)>>8, (p.r[6]*c+255)>>8, (p.r[7]*c+255)>>8
+	p.r[8], p.r[9], p.r[10], p.r[11] = (p.r[8]*c+255)>>8, (p.r[9]*c+255)>>8, (p.r[10]*c+255)>>8, (p.r[11]*c+255)>>8
+	p.r[12], p.r[13], p.r[14], p.r[15] = (p.r[12]*c+255)>>8, (p.r[13]*c+255)>>8, (p.r[14]*c+255)>>8, (p.r[15]*c+255)>>8
 
-		p.b[i] = uint16((uint32(p.b[i])*uint32(c) + 255) >> 8)
-		p.b[i+1] = uint16((uint32(p.b[i+1])*uint32(c) + 255) >> 8)
-		p.b[i+2] = uint16((uint32(p.b[i+2])*uint32(c) + 255) >> 8)
-		p.b[i+3] = uint16((uint32(p.b[i+3])*uint32(c) + 255) >> 8)
-		p.b[i+4] = uint16((uint32(p.b[i+4])*uint32(c) + 255) >> 8)
-		p.b[i+5] = uint16((uint32(p.b[i+5])*uint32(c) + 255) >> 8)
-		p.b[i+6] = uint16((uint32(p.b[i+6])*uint32(c) + 255) >> 8)
-		p.b[i+7] = uint16((uint32(p.b[i+7])*uint32(c) + 255) >> 8)
+	p.g[0], p.g[1], p.g[2], p.g[3] = (p.g[0]*c+255)>>8, (p.g[1]*c+255)>>8, (p.g[2]*c+255)>>8, (p.g[3]*c+255)>>8
+	p.g[4], p.g[5], p.g[6], p.g[7] = (p.g[4]*c+255)>>8, (p.g[5]*c+255)>>8, (p.g[6]*c+255)>>8, (p.g[7]*c+255)>>8
+	p.g[8], p.g[9], p.g[10], p.g[11] = (p.g[8]*c+255)>>8, (p.g[9]*c+255)>>8, (p.g[10]*c+255)>>8, (p.g[11]*c+255)>>8
+	p.g[12], p.g[13], p.g[14], p.g[15] = (p.g[12]*c+255)>>8, (p.g[13]*c+255)>>8, (p.g[14]*c+255)>>8, (p.g[15]*c+255)>>8
 
-		p.a[i] = uint16((uint32(p.a[i])*uint32(c) + 255) >> 8)
-		p.a[i+1] = uint16((uint32(p.a[i+1])*uint32(c) + 255) >> 8)
-		p.a[i+2] = uint16((uint32(p.a[i+2])*uint32(c) + 255) >> 8)
-		p.a[i+3] = uint16((uint32(p.a[i+3])*uint32(c) + 255) >> 8)
-		p.a[i+4] = uint16((uint32(p.a[i+4])*uint32(c) + 255) >> 8)
-		p.a[i+5] = uint16((uint32(p.a[i+5])*uint32(c) + 255) >> 8)
-		p.a[i+6] = uint16((uint32(p.a[i+6])*uint32(c) + 255) >> 8)
-		p.a[i+7] = uint16((uint32(p.a[i+7])*uint32(c) + 255) >> 8)
-	}
+	p.b[0], p.b[1], p.b[2], p.b[3] = (p.b[0]*c+255)>>8, (p.b[1]*c+255)>>8, (p.b[2]*c+255)>>8, (p.b[3]*c+255)>>8
+	p.b[4], p.b[5], p.b[6], p.b[7] = (p.b[4]*c+255)>>8, (p.b[5]*c+255)>>8, (p.b[6]*c+255)>>8, (p.b[7]*c+255)>>8
+	p.b[8], p.b[9], p.b[10], p.b[11] = (p.b[8]*c+255)>>8, (p.b[9]*c+255)>>8, (p.b[10]*c+255)>>8, (p.b[11]*c+255)>>8
+	p.b[12], p.b[13], p.b[14], p.b[15] = (p.b[12]*c+255)>>8, (p.b[13]*c+255)>>8, (p.b[14]*c+255)>>8, (p.b[15]*c+255)>>8
+
+	p.a[0], p.a[1], p.a[2], p.a[3] = (p.a[0]*c+255)>>8, (p.a[1]*c+255)>>8, (p.a[2]*c+255)>>8, (p.a[3]*c+255)>>8
+	p.a[4], p.a[5], p.a[6], p.a[7] = (p.a[4]*c+255)>>8, (p.a[5]*c+255)>>8, (p.a[6]*c+255)>>8, (p.a[7]*c+255)>>8
+	p.a[8], p.a[9], p.a[10], p.a[11] = (p.a[8]*c+255)>>8, (p.a[9]*c+255)>>8, (p.a[10]*c+255)>>8, (p.a[11]*c+255)>>8
+	p.a[12], p.a[13], p.a[14], p.a[15] = (p.a[12]*c+255)>>8, (p.a[13]*c+255)>>8, (p.a[14]*c+255)>>8, (p.a[15]*c+255)>>8
 }
 
 //go:fix inline
 func (p *LowPipeline) Lerp1Float() {
-	// where c = current_coverage
-	c := p.ctx.CurrentCoverage
-	for i := 0; i < LOW_STAGE_WIDTH; i += 8 {
-		// lerp(dr, r, c) = dr + (r - dr) * c / 255
-		p.r[i] = uint16(int32(p.dr[i]) + ((int32(p.r[i])-int32(p.dr[i]))*int32(c)+128)>>8)
-		p.r[i+1] = uint16(int32(p.dr[i+1]) + ((int32(p.r[i+1])-int32(p.dr[i+1]))*int32(c)+128)>>8)
-		p.r[i+2] = uint16(int32(p.dr[i+2]) + ((int32(p.r[i+2])-int32(p.dr[i+2]))*int32(c)+128)>>8)
-		p.r[i+3] = uint16(int32(p.dr[i+3]) + ((int32(p.r[i+3])-int32(p.dr[i+3]))*int32(c)+128)>>8)
-		p.r[i+4] = uint16(int32(p.dr[i+4]) + ((int32(p.r[i+4])-int32(p.dr[i+4]))*int32(c)+128)>>8)
-		p.r[i+5] = uint16(int32(p.dr[i+5]) + ((int32(p.r[i+5])-int32(p.dr[i+5]))*int32(c)+128)>>8)
-		p.r[i+6] = uint16(int32(p.dr[i+6]) + ((int32(p.r[i+6])-int32(p.dr[i+6]))*int32(c)+128)>>8)
-		p.r[i+7] = uint16(int32(p.dr[i+7]) + ((int32(p.r[i+7])-int32(p.dr[i+7]))*int32(c)+128)>>8)
+	c := int32(p.ctx.CurrentCoverage)
+	invC := 255 - c
 
-		p.g[i] = uint16(int32(p.dg[i]) + ((int32(p.g[i])-int32(p.dg[i]))*int32(c)+128)>>8)
-		p.g[i+1] = uint16(int32(p.dg[i+1]) + ((int32(p.g[i+1])-int32(p.dg[i+1]))*int32(c)+128)>>8)
-		p.g[i+2] = uint16(int32(p.dg[i+2]) + ((int32(p.g[i+2])-int32(p.dg[i+2]))*int32(c)+128)>>8)
-		p.g[i+3] = uint16(int32(p.dg[i+3]) + ((int32(p.g[i+3])-int32(p.dg[i+3]))*int32(c)+128)>>8)
-		p.g[i+4] = uint16(int32(p.dg[i+4]) + ((int32(p.g[i+4])-int32(p.dg[i+4]))*int32(c)+128)>>8)
-		p.g[i+5] = uint16(int32(p.dg[i+5]) + ((int32(p.g[i+5])-int32(p.dg[i+5]))*int32(c)+128)>>8)
-		p.g[i+6] = uint16(int32(p.dg[i+6]) + ((int32(p.g[i+6])-int32(p.dg[i+6]))*int32(c)+128)>>8)
-		p.g[i+7] = uint16(int32(p.dg[i+7]) + ((int32(p.g[i+7])-int32(p.dg[i+7]))*int32(c)+128)>>8)
+	p.r[0], p.r[1], p.r[2], p.r[3] = uint16((int32(p.dr[0])*invC+int32(p.r[0])*c+128)>>8), uint16((int32(p.dr[1])*invC+int32(p.r[1])*c+128)>>8), uint16((int32(p.dr[2])*invC+int32(p.r[2])*c+128)>>8), uint16((int32(p.dr[3])*invC+int32(p.r[3])*c+128)>>8)
+	p.r[4], p.r[5], p.r[6], p.r[7] = uint16((int32(p.dr[4])*invC+int32(p.r[4])*c+128)>>8), uint16((int32(p.dr[5])*invC+int32(p.r[5])*c+128)>>8), uint16((int32(p.dr[6])*invC+int32(p.r[6])*c+128)>>8), uint16((int32(p.dr[7])*invC+int32(p.r[7])*c+128)>>8)
+	p.r[8], p.r[9], p.r[10], p.r[11] = uint16((int32(p.dr[8])*invC+int32(p.r[8])*c+128)>>8), uint16((int32(p.dr[9])*invC+int32(p.r[9])*c+128)>>8), uint16((int32(p.dr[10])*invC+int32(p.r[10])*c+128)>>8), uint16((int32(p.dr[11])*invC+int32(p.r[11])*c+128)>>8)
+	p.r[12], p.r[13], p.r[14], p.r[15] = uint16((int32(p.dr[12])*invC+int32(p.r[12])*c+128)>>8), uint16((int32(p.dr[13])*invC+int32(p.r[13])*c+128)>>8), uint16((int32(p.dr[14])*invC+int32(p.r[14])*c+128)>>8), uint16((int32(p.dr[15])*invC+int32(p.r[15])*c+128)>>8)
 
-		p.b[i] = uint16(int32(p.db[i]) + ((int32(p.b[i])-int32(p.db[i]))*int32(c)+128)>>8)
-		p.b[i+1] = uint16(int32(p.db[i+1]) + ((int32(p.b[i+1])-int32(p.db[i+1]))*int32(c)+128)>>8)
-		p.b[i+2] = uint16(int32(p.db[i+2]) + ((int32(p.b[i+2])-int32(p.db[i+2]))*int32(c)+128)>>8)
-		p.b[i+3] = uint16(int32(p.db[i+3]) + ((int32(p.b[i+3])-int32(p.db[i+3]))*int32(c)+128)>>8)
-		p.b[i+4] = uint16(int32(p.db[i+4]) + ((int32(p.b[i+4])-int32(p.db[i+4]))*int32(c)+128)>>8)
-		p.b[i+5] = uint16(int32(p.db[i+5]) + ((int32(p.b[i+5])-int32(p.db[i+5]))*int32(c)+128)>>8)
-		p.b[i+6] = uint16(int32(p.db[i+6]) + ((int32(p.b[i+6])-int32(p.db[i+6]))*int32(c)+128)>>8)
-		p.b[i+7] = uint16(int32(p.db[i+7]) + ((int32(p.b[i+7])-int32(p.db[i+7]))*int32(c)+128)>>8)
+	p.g[0], p.g[1], p.g[2], p.g[3] = uint16((int32(p.dg[0])*invC+int32(p.g[0])*c+128)>>8), uint16((int32(p.dg[1])*invC+int32(p.g[1])*c+128)>>8), uint16((int32(p.dg[2])*invC+int32(p.g[2])*c+128)>>8), uint16((int32(p.dg[3])*invC+int32(p.g[3])*c+128)>>8)
+	p.g[4], p.g[5], p.g[6], p.g[7] = uint16((int32(p.dg[4])*invC+int32(p.g[4])*c+128)>>8), uint16((int32(p.dg[5])*invC+int32(p.g[5])*c+128)>>8), uint16((int32(p.dg[6])*invC+int32(p.g[6])*c+128)>>8), uint16((int32(p.dg[7])*invC+int32(p.g[7])*c+128)>>8)
+	p.g[8], p.g[9], p.g[10], p.g[11] = uint16((int32(p.dg[8])*invC+int32(p.g[8])*c+128)>>8), uint16((int32(p.dg[9])*invC+int32(p.g[9])*c+128)>>8), uint16((int32(p.dg[10])*invC+int32(p.g[10])*c+128)>>8), uint16((int32(p.dg[11])*invC+int32(p.g[11])*c+128)>>8)
+	p.g[12], p.g[13], p.g[14], p.g[15] = uint16((int32(p.dg[12])*invC+int32(p.g[12])*c+128)>>8), uint16((int32(p.dg[13])*invC+int32(p.g[13])*c+128)>>8), uint16((int32(p.dg[14])*invC+int32(p.g[14])*c+128)>>8), uint16((int32(p.dg[15])*invC+int32(p.g[15])*c+128)>>8)
 
-		p.a[i] = uint16(int32(p.da[i]) + ((int32(p.a[i])-int32(p.da[i]))*int32(c)+128)>>8)
-		p.a[i+1] = uint16(int32(p.da[i+1]) + ((int32(p.a[i+1])-int32(p.da[i+1]))*int32(c)+128)>>8)
-		p.a[i+2] = uint16(int32(p.da[i+2]) + ((int32(p.a[i+2])-int32(p.da[i+2]))*int32(c)+128)>>8)
-		p.a[i+3] = uint16(int32(p.da[i+3]) + ((int32(p.a[i+3])-int32(p.da[i+3]))*int32(c)+128)>>8)
-		p.a[i+4] = uint16(int32(p.da[i+4]) + ((int32(p.a[i+4])-int32(p.da[i+4]))*int32(c)+128)>>8)
-		p.a[i+5] = uint16(int32(p.da[i+5]) + ((int32(p.a[i+5])-int32(p.da[i+5]))*int32(c)+128)>>8)
-		p.a[i+6] = uint16(int32(p.da[i+6]) + ((int32(p.a[i+6])-int32(p.da[i+6]))*int32(c)+128)>>8)
-		p.a[i+7] = uint16(int32(p.da[i+7]) + ((int32(p.a[i+7])-int32(p.da[i+7]))*int32(c)+128)>>8)
-	}
+	p.b[0], p.b[1], p.b[2], p.b[3] = uint16((int32(p.db[0])*invC+int32(p.b[0])*c+128)>>8), uint16((int32(p.db[1])*invC+int32(p.b[1])*c+128)>>8), uint16((int32(p.db[2])*invC+int32(p.b[2])*c+128)>>8), uint16((int32(p.db[3])*invC+int32(p.b[3])*c+128)>>8)
+	p.b[4], p.b[5], p.b[6], p.b[7] = uint16((int32(p.db[4])*invC+int32(p.b[4])*c+128)>>8), uint16((int32(p.db[5])*invC+int32(p.b[5])*c+128)>>8), uint16((int32(p.db[6])*invC+int32(p.b[6])*c+128)>>8), uint16((int32(p.db[7])*invC+int32(p.b[7])*c+128)>>8)
+	p.b[8], p.b[9], p.b[10], p.b[11] = uint16((int32(p.db[8])*invC+int32(p.b[8])*c+128)>>8), uint16((int32(p.db[9])*invC+int32(p.b[9])*c+128)>>8), uint16((int32(p.db[10])*invC+int32(p.b[10])*c+128)>>8), uint16((int32(p.db[11])*invC+int32(p.b[11])*c+128)>>8)
+	p.b[12], p.b[13], p.b[14], p.b[15] = uint16((int32(p.db[12])*invC+int32(p.b[12])*c+128)>>8), uint16((int32(p.db[13])*invC+int32(p.b[13])*c+128)>>8), uint16((int32(p.db[14])*invC+int32(p.b[14])*c+128)>>8), uint16((int32(p.db[15])*invC+int32(p.b[15])*c+128)>>8)
+
+	p.a[0], p.a[1], p.a[2], p.a[3] = uint16((int32(p.da[0])*invC+int32(p.a[0])*c+128)>>8), uint16((int32(p.da[1])*invC+int32(p.a[1])*c+128)>>8), uint16((int32(p.da[2])*invC+int32(p.a[2])*c+128)>>8), uint16((int32(p.da[3])*invC+int32(p.a[3])*c+128)>>8)
+	p.a[4], p.a[5], p.a[6], p.a[7] = uint16((int32(p.da[4])*invC+int32(p.a[4])*c+128)>>8), uint16((int32(p.da[5])*invC+int32(p.a[5])*c+128)>>8), uint16((int32(p.da[6])*invC+int32(p.a[6])*c+128)>>8), uint16((int32(p.da[7])*invC+int32(p.a[7])*c+128)>>8)
+	p.a[8], p.a[9], p.a[10], p.a[11] = uint16((int32(p.da[8])*invC+int32(p.a[8])*c+128)>>8), uint16((int32(p.da[9])*invC+int32(p.a[9])*c+128)>>8), uint16((int32(p.da[10])*invC+int32(p.a[10])*c+128)>>8), uint16((int32(p.da[11])*invC+int32(p.a[11])*c+128)>>8)
+	p.a[12], p.a[13], p.a[14], p.a[15] = uint16((int32(p.da[12])*invC+int32(p.a[12])*c+128)>>8), uint16((int32(p.da[13])*invC+int32(p.a[13])*c+128)>>8), uint16((int32(p.da[14])*invC+int32(p.a[14])*c+128)>>8), uint16((int32(p.da[15])*invC+int32(p.a[15])*c+128)>>8)
 }
 
 //go:fix inline
 func (p *LowPipeline) DestinationAtop() {
-	for i := 0; i < LOW_STAGE_WIDTH; i += 8 {
-		invDa0, invDa1 := 255-p.da[i], 255-p.da[i+1]
-		invDa2, invDa3 := 255-p.da[i+2], 255-p.da[i+3]
-		invDa4, invDa5 := 255-p.da[i+4], 255-p.da[i+5]
-		invDa6, invDa7 := 255-p.da[i+6], 255-p.da[i+7]
+	invDa0, invDa1, invDa2, invDa3 := 255-p.da[0], 255-p.da[1], 255-p.da[2], 255-p.da[3]
+	invDa4, invDa5, invDa6, invDa7 := 255-p.da[4], 255-p.da[5], 255-p.da[6], 255-p.da[7]
+	invDa8, invDa9, invDa10, invDa11 := 255-p.da[8], 255-p.da[9], 255-p.da[10], 255-p.da[11]
+	invDa12, invDa13, invDa14, invDa15 := 255-p.da[12], 255-p.da[13], 255-p.da[14], 255-p.da[15]
 
-		p.r[i] = uint16((uint32(p.dr[i])*uint32(p.a[i]) + uint32(p.r[i])*uint32(invDa0) + 255) >> 8)
-		p.r[i+1] = uint16((uint32(p.dr[i+1])*uint32(p.a[i+1]) + uint32(p.r[i+1])*uint32(invDa1) + 255) >> 8)
-		p.r[i+2] = uint16((uint32(p.dr[i+2])*uint32(p.a[i+2]) + uint32(p.r[i+2])*uint32(invDa2) + 255) >> 8)
-		p.r[i+3] = uint16((uint32(p.dr[i+3])*uint32(p.a[i+3]) + uint32(p.r[i+3])*uint32(invDa3) + 255) >> 8)
-		p.r[i+4] = uint16((uint32(p.dr[i+4])*uint32(p.a[i+4]) + uint32(p.r[i+4])*uint32(invDa4) + 255) >> 8)
-		p.r[i+5] = uint16((uint32(p.dr[i+5])*uint32(p.a[i+5]) + uint32(p.r[i+5])*uint32(invDa5) + 255) >> 8)
-		p.r[i+6] = uint16((uint32(p.dr[i+6])*uint32(p.a[i+6]) + uint32(p.r[i+6])*uint32(invDa6) + 255) >> 8)
-		p.r[i+7] = uint16((uint32(p.dr[i+7])*uint32(p.a[i+7]) + uint32(p.r[i+7])*uint32(invDa7) + 255) >> 8)
+	p.r[0], p.r[1], p.r[2], p.r[3] = uint16((uint32(p.dr[0])*uint32(p.a[0])+uint32(p.r[0])*uint32(invDa0)+255)>>8), uint16((uint32(p.dr[1])*uint32(p.a[1])+uint32(p.r[1])*uint32(invDa1)+255)>>8), uint16((uint32(p.dr[2])*uint32(p.a[2])+uint32(p.r[2])*uint32(invDa2)+255)>>8), uint16((uint32(p.dr[3])*uint32(p.a[3])+uint32(p.r[3])*uint32(invDa3)+255)>>8)
+	p.r[4], p.r[5], p.r[6], p.r[7] = uint16((uint32(p.dr[4])*uint32(p.a[4])+uint32(p.r[4])*uint32(invDa4)+255)>>8), uint16((uint32(p.dr[5])*uint32(p.a[5])+uint32(p.r[5])*uint32(invDa5)+255)>>8), uint16((uint32(p.dr[6])*uint32(p.a[6])+uint32(p.r[6])*uint32(invDa6)+255)>>8), uint16((uint32(p.dr[7])*uint32(p.a[7])+uint32(p.r[7])*uint32(invDa7)+255)>>8)
+	p.r[8], p.r[9], p.r[10], p.r[11] = uint16((uint32(p.dr[8])*uint32(p.a[8])+uint32(p.r[8])*uint32(invDa8)+255)>>8), uint16((uint32(p.dr[9])*uint32(p.a[9])+uint32(p.r[9])*uint32(invDa9)+255)>>8), uint16((uint32(p.dr[10])*uint32(p.a[10])+uint32(p.r[10])*uint32(invDa10)+255)>>8), uint16((uint32(p.dr[11])*uint32(p.a[11])+uint32(p.r[11])*uint32(invDa11)+255)>>8)
+	p.r[12], p.r[13], p.r[14], p.r[15] = uint16((uint32(p.dr[12])*uint32(p.a[12])+uint32(p.r[12])*uint32(invDa12)+255)>>8), uint16((uint32(p.dr[13])*uint32(p.a[13])+uint32(p.r[13])*uint32(invDa13)+255)>>8), uint16((uint32(p.dr[14])*uint32(p.a[14])+uint32(p.r[14])*uint32(invDa14)+255)>>8), uint16((uint32(p.dr[15])*uint32(p.a[15])+uint32(p.r[15])*uint32(invDa15)+255)>>8)
 
-		p.g[i] = uint16((uint32(p.dg[i])*uint32(p.a[i]) + uint32(p.g[i])*uint32(invDa0) + 255) >> 8)
-		p.g[i+1] = uint16((uint32(p.dg[i+1])*uint32(p.a[i+1]) + uint32(p.g[i+1])*uint32(invDa1) + 255) >> 8)
-		p.g[i+2] = uint16((uint32(p.dg[i+2])*uint32(p.a[i+2]) + uint32(p.g[i+2])*uint32(invDa2) + 255) >> 8)
-		p.g[i+3] = uint16((uint32(p.dg[i+3])*uint32(p.a[i+3]) + uint32(p.g[i+3])*uint32(invDa3) + 255) >> 8)
-		p.g[i+4] = uint16((uint32(p.dg[i+4])*uint32(p.a[i+4]) + uint32(p.g[i+4])*uint32(invDa4) + 255) >> 8)
-		p.g[i+5] = uint16((uint32(p.dg[i+5])*uint32(p.a[i+5]) + uint32(p.g[i+5])*uint32(invDa5) + 255) >> 8)
-		p.g[i+6] = uint16((uint32(p.dg[i+6])*uint32(p.a[i+6]) + uint32(p.g[i+6])*uint32(invDa6) + 255) >> 8)
-		p.g[i+7] = uint16((uint32(p.dg[i+7])*uint32(p.a[i+7]) + uint32(p.g[i+7])*uint32(invDa7) + 255) >> 8)
+	p.g[0], p.g[1], p.g[2], p.g[3] = uint16((uint32(p.dg[0])*uint32(p.a[0])+uint32(p.g[0])*uint32(invDa0)+255)>>8), uint16((uint32(p.dg[1])*uint32(p.a[1])+uint32(p.g[1])*uint32(invDa1)+255)>>8), uint16((uint32(p.dg[2])*uint32(p.a[2])+uint32(p.g[2])*uint32(invDa2)+255)>>8), uint16((uint32(p.dg[3])*uint32(p.a[3])+uint32(p.g[3])*uint32(invDa3)+255)>>8)
+	p.g[4], p.g[5], p.g[6], p.g[7] = uint16((uint32(p.dg[4])*uint32(p.a[4])+uint32(p.g[4])*uint32(invDa4)+255)>>8), uint16((uint32(p.dg[5])*uint32(p.a[5])+uint32(p.g[5])*uint32(invDa5)+255)>>8), uint16((uint32(p.dg[6])*uint32(p.a[6])+uint32(p.g[6])*uint32(invDa6)+255)>>8), uint16((uint32(p.dg[7])*uint32(p.a[7])+uint32(p.g[7])*uint32(invDa7)+255)>>8)
+	p.g[8], p.g[9], p.g[10], p.g[11] = uint16((uint32(p.dg[8])*uint32(p.a[8])+uint32(p.g[8])*uint32(invDa8)+255)>>8), uint16((uint32(p.dg[9])*uint32(p.a[9])+uint32(p.g[9])*uint32(invDa9)+255)>>8), uint16((uint32(p.dg[10])*uint32(p.a[10])+uint32(p.g[10])*uint32(invDa10)+255)>>8), uint16((uint32(p.dg[11])*uint32(p.a[11])+uint32(p.g[11])*uint32(invDa11)+255)>>8)
+	p.g[12], p.g[13], p.g[14], p.g[15] = uint16((uint32(p.dg[12])*uint32(p.a[12])+uint32(p.g[12])*uint32(invDa12)+255)>>8), uint16((uint32(p.dg[13])*uint32(p.a[13])+uint32(p.g[13])*uint32(invDa13)+255)>>8), uint16((uint32(p.dg[14])*uint32(p.a[14])+uint32(p.g[14])*uint32(invDa14)+255)>>8), uint16((uint32(p.dg[15])*uint32(p.a[15])+uint32(p.g[15])*uint32(invDa15)+255)>>8)
 
-		p.b[i] = uint16((uint32(p.db[i])*uint32(p.a[i]) + uint32(p.b[i])*uint32(invDa0) + 255) >> 8)
-		p.b[i+1] = uint16((uint32(p.db[i+1])*uint32(p.a[i+1]) + uint32(p.b[i+1])*uint32(invDa1) + 255) >> 8)
-		p.b[i+2] = uint16((uint32(p.db[i+2])*uint32(p.a[i+2]) + uint32(p.b[i+2])*uint32(invDa2) + 255) >> 8)
-		p.b[i+3] = uint16((uint32(p.db[i+3])*uint32(p.a[i+3]) + uint32(p.b[i+3])*uint32(invDa3) + 255) >> 8)
-		p.b[i+4] = uint16((uint32(p.db[i+4])*uint32(p.a[i+4]) + uint32(p.b[i+4])*uint32(invDa4) + 255) >> 8)
-		p.b[i+5] = uint16((uint32(p.db[i+5])*uint32(p.a[i+5]) + uint32(p.b[i+5])*uint32(invDa5) + 255) >> 8)
-		p.b[i+6] = uint16((uint32(p.db[i+6])*uint32(p.a[i+6]) + uint32(p.b[i+6])*uint32(invDa6) + 255) >> 8)
-		p.b[i+7] = uint16((uint32(p.db[i+7])*uint32(p.a[i+7]) + uint32(p.b[i+7])*uint32(invDa7) + 255) >> 8)
+	p.b[0], p.b[1], p.b[2], p.b[3] = uint16((uint32(p.db[0])*uint32(p.a[0])+uint32(p.b[0])*uint32(invDa0)+255)>>8), uint16((uint32(p.db[1])*uint32(p.a[1])+uint32(p.b[1])*uint32(invDa1)+255)>>8), uint16((uint32(p.db[2])*uint32(p.a[2])+uint32(p.b[2])*uint32(invDa2)+255)>>8), uint16((uint32(p.db[3])*uint32(p.a[3])+uint32(p.b[3])*uint32(invDa3)+255)>>8)
+	p.b[4], p.b[5], p.b[6], p.b[7] = uint16((uint32(p.db[4])*uint32(p.a[4])+uint32(p.b[4])*uint32(invDa4)+255)>>8), uint16((uint32(p.db[5])*uint32(p.a[5])+uint32(p.b[5])*uint32(invDa5)+255)>>8), uint16((uint32(p.db[6])*uint32(p.a[6])+uint32(p.b[6])*uint32(invDa6)+255)>>8), uint16((uint32(p.db[7])*uint32(p.a[7])+uint32(p.b[7])*uint32(invDa7)+255)>>8)
+	p.b[8], p.b[9], p.b[10], p.b[11] = uint16((uint32(p.db[8])*uint32(p.a[8])+uint32(p.b[8])*uint32(invDa8)+255)>>8), uint16((uint32(p.db[9])*uint32(p.a[9])+uint32(p.b[9])*uint32(invDa9)+255)>>8), uint16((uint32(p.db[10])*uint32(p.a[10])+uint32(p.b[10])*uint32(invDa10)+255)>>8), uint16((uint32(p.db[11])*uint32(p.a[11])+uint32(p.b[11])*uint32(invDa11)+255)>>8)
+	p.b[12], p.b[13], p.b[14], p.b[15] = uint16((uint32(p.db[12])*uint32(p.a[12])+uint32(p.b[12])*uint32(invDa12)+255)>>8), uint16((uint32(p.db[13])*uint32(p.a[13])+uint32(p.b[13])*uint32(invDa13)+255)>>8), uint16((uint32(p.db[14])*uint32(p.a[14])+uint32(p.b[14])*uint32(invDa14)+255)>>8), uint16((uint32(p.db[15])*uint32(p.a[15])+uint32(p.b[15])*uint32(invDa15)+255)>>8)
 
-		// Alpha channel: same formula as RGB - div255(d * sa + s * inv(da))
-		p.a[i] = uint16((uint32(p.da[i])*uint32(p.a[i]) + uint32(p.a[i])*uint32(invDa0) + 255) >> 8)
-		p.a[i+1] = uint16((uint32(p.da[i+1])*uint32(p.a[i+1]) + uint32(p.a[i+1])*uint32(invDa1) + 255) >> 8)
-		p.a[i+2] = uint16((uint32(p.da[i+2])*uint32(p.a[i+2]) + uint32(p.a[i+2])*uint32(invDa2) + 255) >> 8)
-		p.a[i+3] = uint16((uint32(p.da[i+3])*uint32(p.a[i+3]) + uint32(p.a[i+3])*uint32(invDa3) + 255) >> 8)
-		p.a[i+4] = uint16((uint32(p.da[i+4])*uint32(p.a[i+4]) + uint32(p.a[i+4])*uint32(invDa4) + 255) >> 8)
-		p.a[i+5] = uint16((uint32(p.da[i+5])*uint32(p.a[i+5]) + uint32(p.a[i+5])*uint32(invDa5) + 255) >> 8)
-		p.a[i+6] = uint16((uint32(p.da[i+6])*uint32(p.a[i+6]) + uint32(p.a[i+6])*uint32(invDa6) + 255) >> 8)
-		p.a[i+7] = uint16((uint32(p.da[i+7])*uint32(p.a[i+7]) + uint32(p.a[i+7])*uint32(invDa7) + 255) >> 8)
-	}
+	p.a[0], p.a[1], p.a[2], p.a[3] = uint16((uint32(p.da[0])*uint32(p.a[0])+uint32(p.a[0])*uint32(invDa0)+255)>>8), uint16((uint32(p.da[1])*uint32(p.a[1])+uint32(p.a[1])*uint32(invDa1)+255)>>8), uint16((uint32(p.da[2])*uint32(p.a[2])+uint32(p.a[2])*uint32(invDa2)+255)>>8), uint16((uint32(p.da[3])*uint32(p.a[3])+uint32(p.a[3])*uint32(invDa3)+255)>>8)
+	p.a[4], p.a[5], p.a[6], p.a[7] = uint16((uint32(p.da[4])*uint32(p.a[4])+uint32(p.a[4])*uint32(invDa4)+255)>>8), uint16((uint32(p.da[5])*uint32(p.a[5])+uint32(p.a[5])*uint32(invDa5)+255)>>8), uint16((uint32(p.da[6])*uint32(p.a[6])+uint32(p.a[6])*uint32(invDa6)+255)>>8), uint16((uint32(p.da[7])*uint32(p.a[7])+uint32(p.a[7])*uint32(invDa7)+255)>>8)
+	p.a[8], p.a[9], p.a[10], p.a[11] = uint16((uint32(p.da[8])*uint32(p.a[8])+uint32(p.a[8])*uint32(invDa8)+255)>>8), uint16((uint32(p.da[9])*uint32(p.a[9])+uint32(p.a[9])*uint32(invDa9)+255)>>8), uint16((uint32(p.da[10])*uint32(p.a[10])+uint32(p.a[10])*uint32(invDa10)+255)>>8), uint16((uint32(p.da[11])*uint32(p.a[11])+uint32(p.a[11])*uint32(invDa11)+255)>>8)
+	p.a[12], p.a[13], p.a[14], p.a[15] = uint16((uint32(p.da[12])*uint32(p.a[12])+uint32(p.a[12])*uint32(invDa12)+255)>>8), uint16((uint32(p.da[13])*uint32(p.a[13])+uint32(p.a[13])*uint32(invDa13)+255)>>8), uint16((uint32(p.da[14])*uint32(p.a[14])+uint32(p.a[14])*uint32(invDa14)+255)>>8), uint16((uint32(p.da[15])*uint32(p.a[15])+uint32(p.a[15])*uint32(invDa15)+255)>>8)
 }
 
 //go:fix inline
 func (p *LowPipeline) DestinationIn() {
-	for i := 0; i < LOW_STAGE_WIDTH; i += 8 {
-		p.r[i] = uint16((uint32(p.dr[i])*uint32(p.a[i]) + 255) >> 8)
-		p.r[i+1] = uint16((uint32(p.dr[i+1])*uint32(p.a[i+1]) + 255) >> 8)
-		p.r[i+2] = uint16((uint32(p.dr[i+2])*uint32(p.a[i+2]) + 255) >> 8)
-		p.r[i+3] = uint16((uint32(p.dr[i+3])*uint32(p.a[i+3]) + 255) >> 8)
-		p.r[i+4] = uint16((uint32(p.dr[i+4])*uint32(p.a[i+4]) + 255) >> 8)
-		p.r[i+5] = uint16((uint32(p.dr[i+5])*uint32(p.a[i+5]) + 255) >> 8)
-		p.r[i+6] = uint16((uint32(p.dr[i+6])*uint32(p.a[i+6]) + 255) >> 8)
-		p.r[i+7] = uint16((uint32(p.dr[i+7])*uint32(p.a[i+7]) + 255) >> 8)
+	p.r[0], p.r[1], p.r[2], p.r[3] = uint16((uint32(p.dr[0])*uint32(p.a[0])+255)>>8), uint16((uint32(p.dr[1])*uint32(p.a[1])+255)>>8), uint16((uint32(p.dr[2])*uint32(p.a[2])+255)>>8), uint16((uint32(p.dr[3])*uint32(p.a[3])+255)>>8)
+	p.r[4], p.r[5], p.r[6], p.r[7] = uint16((uint32(p.dr[4])*uint32(p.a[4])+255)>>8), uint16((uint32(p.dr[5])*uint32(p.a[5])+255)>>8), uint16((uint32(p.dr[6])*uint32(p.a[6])+255)>>8), uint16((uint32(p.dr[7])*uint32(p.a[7])+255)>>8)
+	p.r[8], p.r[9], p.r[10], p.r[11] = uint16((uint32(p.dr[8])*uint32(p.a[8])+255)>>8), uint16((uint32(p.dr[9])*uint32(p.a[9])+255)>>8), uint16((uint32(p.dr[10])*uint32(p.a[10])+255)>>8), uint16((uint32(p.dr[11])*uint32(p.a[11])+255)>>8)
+	p.r[12], p.r[13], p.r[14], p.r[15] = uint16((uint32(p.dr[12])*uint32(p.a[12])+255)>>8), uint16((uint32(p.dr[13])*uint32(p.a[13])+255)>>8), uint16((uint32(p.dr[14])*uint32(p.a[14])+255)>>8), uint16((uint32(p.dr[15])*uint32(p.a[15])+255)>>8)
 
-		p.g[i] = uint16((uint32(p.dg[i])*uint32(p.a[i]) + 255) >> 8)
-		p.g[i+1] = uint16((uint32(p.dg[i+1])*uint32(p.a[i+1]) + 255) >> 8)
-		p.g[i+2] = uint16((uint32(p.dg[i+2])*uint32(p.a[i+2]) + 255) >> 8)
-		p.g[i+3] = uint16((uint32(p.dg[i+3])*uint32(p.a[i+3]) + 255) >> 8)
-		p.g[i+4] = uint16((uint32(p.dg[i+4])*uint32(p.a[i+4]) + 255) >> 8)
-		p.g[i+5] = uint16((uint32(p.dg[i+5])*uint32(p.a[i+5]) + 255) >> 8)
-		p.g[i+6] = uint16((uint32(p.dg[i+6])*uint32(p.a[i+6]) + 255) >> 8)
-		p.g[i+7] = uint16((uint32(p.dg[i+7])*uint32(p.a[i+7]) + 255) >> 8)
+	p.g[0], p.g[1], p.g[2], p.g[3] = uint16((uint32(p.dg[0])*uint32(p.a[0])+255)>>8), uint16((uint32(p.dg[1])*uint32(p.a[1])+255)>>8), uint16((uint32(p.dg[2])*uint32(p.a[2])+255)>>8), uint16((uint32(p.dg[3])*uint32(p.a[3])+255)>>8)
+	p.g[4], p.g[5], p.g[6], p.g[7] = uint16((uint32(p.dg[4])*uint32(p.a[4])+255)>>8), uint16((uint32(p.dg[5])*uint32(p.a[5])+255)>>8), uint16((uint32(p.dg[6])*uint32(p.a[6])+255)>>8), uint16((uint32(p.dg[7])*uint32(p.a[7])+255)>>8)
+	p.g[8], p.g[9], p.g[10], p.g[11] = uint16((uint32(p.dg[8])*uint32(p.a[8])+255)>>8), uint16((uint32(p.dg[9])*uint32(p.a[9])+255)>>8), uint16((uint32(p.dg[10])*uint32(p.a[10])+255)>>8), uint16((uint32(p.dg[11])*uint32(p.a[11])+255)>>8)
+	p.g[12], p.g[13], p.g[14], p.g[15] = uint16((uint32(p.dg[12])*uint32(p.a[12])+255)>>8), uint16((uint32(p.dg[13])*uint32(p.a[13])+255)>>8), uint16((uint32(p.dg[14])*uint32(p.a[14])+255)>>8), uint16((uint32(p.dg[15])*uint32(p.a[15])+255)>>8)
 
-		p.b[i] = uint16((uint32(p.db[i])*uint32(p.a[i]) + 255) >> 8)
-		p.b[i+1] = uint16((uint32(p.db[i+1])*uint32(p.a[i+1]) + 255) >> 8)
-		p.b[i+2] = uint16((uint32(p.db[i+2])*uint32(p.a[i+2]) + 255) >> 8)
-		p.b[i+3] = uint16((uint32(p.db[i+3])*uint32(p.a[i+3]) + 255) >> 8)
-		p.b[i+4] = uint16((uint32(p.db[i+4])*uint32(p.a[i+4]) + 255) >> 8)
-		p.b[i+5] = uint16((uint32(p.db[i+5])*uint32(p.a[i+5]) + 255) >> 8)
-		p.b[i+6] = uint16((uint32(p.db[i+6])*uint32(p.a[i+6]) + 255) >> 8)
-		p.b[i+7] = uint16((uint32(p.db[i+7])*uint32(p.a[i+7]) + 255) >> 8)
+	p.b[0], p.b[1], p.b[2], p.b[3] = uint16((uint32(p.db[0])*uint32(p.a[0])+255)>>8), uint16((uint32(p.db[1])*uint32(p.a[1])+255)>>8), uint16((uint32(p.db[2])*uint32(p.a[2])+255)>>8), uint16((uint32(p.db[3])*uint32(p.a[3])+255)>>8)
+	p.b[4], p.b[5], p.b[6], p.b[7] = uint16((uint32(p.db[4])*uint32(p.a[4])+255)>>8), uint16((uint32(p.db[5])*uint32(p.a[5])+255)>>8), uint16((uint32(p.db[6])*uint32(p.a[6])+255)>>8), uint16((uint32(p.db[7])*uint32(p.a[7])+255)>>8)
+	p.b[8], p.b[9], p.b[10], p.b[11] = uint16((uint32(p.db[8])*uint32(p.a[8])+255)>>8), uint16((uint32(p.db[9])*uint32(p.a[9])+255)>>8), uint16((uint32(p.db[10])*uint32(p.a[10])+255)>>8), uint16((uint32(p.db[11])*uint32(p.a[11])+255)>>8)
+	p.b[12], p.b[13], p.b[14], p.b[15] = uint16((uint32(p.db[12])*uint32(p.a[12])+255)>>8), uint16((uint32(p.db[13])*uint32(p.a[13])+255)>>8), uint16((uint32(p.db[14])*uint32(p.a[14])+255)>>8), uint16((uint32(p.db[15])*uint32(p.a[15])+255)>>8)
 
-		p.a[i] = uint16((uint32(p.da[i])*uint32(p.a[i]) + 255) >> 8)
-		p.a[i+1] = uint16((uint32(p.da[i+1])*uint32(p.a[i+1]) + 255) >> 8)
-		p.a[i+2] = uint16((uint32(p.da[i+2])*uint32(p.a[i+2]) + 255) >> 8)
-		p.a[i+3] = uint16((uint32(p.da[i+3])*uint32(p.a[i+3]) + 255) >> 8)
-		p.a[i+4] = uint16((uint32(p.da[i+4])*uint32(p.a[i+4]) + 255) >> 8)
-		p.a[i+5] = uint16((uint32(p.da[i+5])*uint32(p.a[i+5]) + 255) >> 8)
-		p.a[i+6] = uint16((uint32(p.da[i+6])*uint32(p.a[i+6]) + 255) >> 8)
-		p.a[i+7] = uint16((uint32(p.da[i+7])*uint32(p.a[i+7]) + 255) >> 8)
-	}
+	p.a[0], p.a[1], p.a[2], p.a[3] = uint16((uint32(p.da[0])*uint32(p.a[0])+255)>>8), uint16((uint32(p.da[1])*uint32(p.a[1])+255)>>8), uint16((uint32(p.da[2])*uint32(p.a[2])+255)>>8), uint16((uint32(p.da[3])*uint32(p.a[3])+255)>>8)
+	p.a[4], p.a[5], p.a[6], p.a[7] = uint16((uint32(p.da[4])*uint32(p.a[4])+255)>>8), uint16((uint32(p.da[5])*uint32(p.a[5])+255)>>8), uint16((uint32(p.da[6])*uint32(p.a[6])+255)>>8), uint16((uint32(p.da[7])*uint32(p.a[7])+255)>>8)
+	p.a[8], p.a[9], p.a[10], p.a[11] = uint16((uint32(p.da[8])*uint32(p.a[8])+255)>>8), uint16((uint32(p.da[9])*uint32(p.a[9])+255)>>8), uint16((uint32(p.da[10])*uint32(p.a[10])+255)>>8), uint16((uint32(p.da[11])*uint32(p.a[11])+255)>>8)
+	p.a[12], p.a[13], p.a[14], p.a[15] = uint16((uint32(p.da[12])*uint32(p.a[12])+255)>>8), uint16((uint32(p.da[13])*uint32(p.a[13])+255)>>8), uint16((uint32(p.da[14])*uint32(p.a[14])+255)>>8), uint16((uint32(p.da[15])*uint32(p.a[15])+255)>>8)
 }
 
 //go:fix inline
 func (p *LowPipeline) DestinationOut() {
-	for i := 0; i < LOW_STAGE_WIDTH; i += 8 {
-		invSa0, invSa1 := 255-p.a[i], 255-p.a[i+1]
-		invSa2, invSa3 := 255-p.a[i+2], 255-p.a[i+3]
-		invSa4, invSa5 := 255-p.a[i+4], 255-p.a[i+5]
-		invSa6, invSa7 := 255-p.a[i+6], 255-p.a[i+7]
+	invSa0, invSa1, invSa2, invSa3 := 255-p.a[0], 255-p.a[1], 255-p.a[2], 255-p.a[3]
+	invSa4, invSa5, invSa6, invSa7 := 255-p.a[4], 255-p.a[5], 255-p.a[6], 255-p.a[7]
+	invSa8, invSa9, invSa10, invSa11 := 255-p.a[8], 255-p.a[9], 255-p.a[10], 255-p.a[11]
+	invSa12, invSa13, invSa14, invSa15 := 255-p.a[12], 255-p.a[13], 255-p.a[14], 255-p.a[15]
 
-		p.r[i] = uint16((uint32(p.dr[i])*uint32(invSa0) + 255) >> 8)
-		p.r[i+1] = uint16((uint32(p.dr[i+1])*uint32(invSa1) + 255) >> 8)
-		p.r[i+2] = uint16((uint32(p.dr[i+2])*uint32(invSa2) + 255) >> 8)
-		p.r[i+3] = uint16((uint32(p.dr[i+3])*uint32(invSa3) + 255) >> 8)
-		p.r[i+4] = uint16((uint32(p.dr[i+4])*uint32(invSa4) + 255) >> 8)
-		p.r[i+5] = uint16((uint32(p.dr[i+5])*uint32(invSa5) + 255) >> 8)
-		p.r[i+6] = uint16((uint32(p.dr[i+6])*uint32(invSa6) + 255) >> 8)
-		p.r[i+7] = uint16((uint32(p.dr[i+7])*uint32(invSa7) + 255) >> 8)
+	p.r[0], p.r[1], p.r[2], p.r[3] = uint16((uint32(p.dr[0])*uint32(invSa0)+255)>>8), uint16((uint32(p.dr[1])*uint32(invSa1)+255)>>8), uint16((uint32(p.dr[2])*uint32(invSa2)+255)>>8), uint16((uint32(p.dr[3])*uint32(invSa3)+255)>>8)
+	p.r[4], p.r[5], p.r[6], p.r[7] = uint16((uint32(p.dr[4])*uint32(invSa4)+255)>>8), uint16((uint32(p.dr[5])*uint32(invSa5)+255)>>8), uint16((uint32(p.dr[6])*uint32(invSa6)+255)>>8), uint16((uint32(p.dr[7])*uint32(invSa7)+255)>>8)
+	p.r[8], p.r[9], p.r[10], p.r[11] = uint16((uint32(p.dr[8])*uint32(invSa8)+255)>>8), uint16((uint32(p.dr[9])*uint32(invSa9)+255)>>8), uint16((uint32(p.dr[10])*uint32(invSa10)+255)>>8), uint16((uint32(p.dr[11])*uint32(invSa11)+255)>>8)
+	p.r[12], p.r[13], p.r[14], p.r[15] = uint16((uint32(p.dr[12])*uint32(invSa12)+255)>>8), uint16((uint32(p.dr[13])*uint32(invSa13)+255)>>8), uint16((uint32(p.dr[14])*uint32(invSa14)+255)>>8), uint16((uint32(p.dr[15])*uint32(invSa15)+255)>>8)
 
-		p.g[i] = uint16((uint32(p.dg[i])*uint32(invSa0) + 255) >> 8)
-		p.g[i+1] = uint16((uint32(p.dg[i+1])*uint32(invSa1) + 255) >> 8)
-		p.g[i+2] = uint16((uint32(p.dg[i+2])*uint32(invSa2) + 255) >> 8)
-		p.g[i+3] = uint16((uint32(p.dg[i+3])*uint32(invSa3) + 255) >> 8)
-		p.g[i+4] = uint16((uint32(p.dg[i+4])*uint32(invSa4) + 255) >> 8)
-		p.g[i+5] = uint16((uint32(p.dg[i+5])*uint32(invSa5) + 255) >> 8)
-		p.g[i+6] = uint16((uint32(p.dg[i+6])*uint32(invSa6) + 255) >> 8)
-		p.g[i+7] = uint16((uint32(p.dg[i+7])*uint32(invSa7) + 255) >> 8)
+	p.g[0], p.g[1], p.g[2], p.g[3] = uint16((uint32(p.dg[0])*uint32(invSa0)+255)>>8), uint16((uint32(p.dg[1])*uint32(invSa1)+255)>>8), uint16((uint32(p.dg[2])*uint32(invSa2)+255)>>8), uint16((uint32(p.dg[3])*uint32(invSa3)+255)>>8)
+	p.g[4], p.g[5], p.g[6], p.g[7] = uint16((uint32(p.dg[4])*uint32(invSa4)+255)>>8), uint16((uint32(p.dg[5])*uint32(invSa5)+255)>>8), uint16((uint32(p.dg[6])*uint32(invSa6)+255)>>8), uint16((uint32(p.dg[7])*uint32(invSa7)+255)>>8)
+	p.g[8], p.g[9], p.g[10], p.g[11] = uint16((uint32(p.dg[8])*uint32(invSa8)+255)>>8), uint16((uint32(p.dg[9])*uint32(invSa9)+255)>>8), uint16((uint32(p.dg[10])*uint32(invSa10)+255)>>8), uint16((uint32(p.dg[11])*uint32(invSa11)+255)>>8)
+	p.g[12], p.g[13], p.g[14], p.g[15] = uint16((uint32(p.dg[12])*uint32(invSa12)+255)>>8), uint16((uint32(p.dg[13])*uint32(invSa13)+255)>>8), uint16((uint32(p.dg[14])*uint32(invSa14)+255)>>8), uint16((uint32(p.dg[15])*uint32(invSa15)+255)>>8)
 
-		p.b[i] = uint16((uint32(p.db[i])*uint32(invSa0) + 255) >> 8)
-		p.b[i+1] = uint16((uint32(p.db[i+1])*uint32(invSa1) + 255) >> 8)
-		p.b[i+2] = uint16((uint32(p.db[i+2])*uint32(invSa2) + 255) >> 8)
-		p.b[i+3] = uint16((uint32(p.db[i+3])*uint32(invSa3) + 255) >> 8)
-		p.b[i+4] = uint16((uint32(p.db[i+4])*uint32(invSa4) + 255) >> 8)
-		p.b[i+5] = uint16((uint32(p.db[i+5])*uint32(invSa5) + 255) >> 8)
-		p.b[i+6] = uint16((uint32(p.db[i+6])*uint32(invSa6) + 255) >> 8)
-		p.b[i+7] = uint16((uint32(p.db[i+7])*uint32(invSa7) + 255) >> 8)
+	p.b[0], p.b[1], p.b[2], p.b[3] = uint16((uint32(p.db[0])*uint32(invSa0)+255)>>8), uint16((uint32(p.db[1])*uint32(invSa1)+255)>>8), uint16((uint32(p.db[2])*uint32(invSa2)+255)>>8), uint16((uint32(p.db[3])*uint32(invSa3)+255)>>8)
+	p.b[4], p.b[5], p.b[6], p.b[7] = uint16((uint32(p.db[4])*uint32(invSa4)+255)>>8), uint16((uint32(p.db[5])*uint32(invSa5)+255)>>8), uint16((uint32(p.db[6])*uint32(invSa6)+255)>>8), uint16((uint32(p.db[7])*uint32(invSa7)+255)>>8)
+	p.b[8], p.b[9], p.b[10], p.b[11] = uint16((uint32(p.db[8])*uint32(invSa8)+255)>>8), uint16((uint32(p.db[9])*uint32(invSa9)+255)>>8), uint16((uint32(p.db[10])*uint32(invSa10)+255)>>8), uint16((uint32(p.db[11])*uint32(invSa11)+255)>>8)
+	p.b[12], p.b[13], p.b[14], p.b[15] = uint16((uint32(p.db[12])*uint32(invSa12)+255)>>8), uint16((uint32(p.db[13])*uint32(invSa13)+255)>>8), uint16((uint32(p.db[14])*uint32(invSa14)+255)>>8), uint16((uint32(p.db[15])*uint32(invSa15)+255)>>8)
 
-		p.a[i] = uint16((uint32(p.da[i])*uint32(invSa0) + 255) >> 8)
-		p.a[i+1] = uint16((uint32(p.da[i+1])*uint32(invSa1) + 255) >> 8)
-		p.a[i+2] = uint16((uint32(p.da[i+2])*uint32(invSa2) + 255) >> 8)
-		p.a[i+3] = uint16((uint32(p.da[i+3])*uint32(invSa3) + 255) >> 8)
-		p.a[i+4] = uint16((uint32(p.da[i+4])*uint32(invSa4) + 255) >> 8)
-		p.a[i+5] = uint16((uint32(p.da[i+5])*uint32(invSa5) + 255) >> 8)
-		p.a[i+6] = uint16((uint32(p.da[i+6])*uint32(invSa6) + 255) >> 8)
-		p.a[i+7] = uint16((uint32(p.da[i+7])*uint32(invSa7) + 255) >> 8)
-	}
+	p.a[0], p.a[1], p.a[2], p.a[3] = uint16((uint32(p.da[0])*uint32(invSa0)+255)>>8), uint16((uint32(p.da[1])*uint32(invSa1)+255)>>8), uint16((uint32(p.da[2])*uint32(invSa2)+255)>>8), uint16((uint32(p.da[3])*uint32(invSa3)+255)>>8)
+	p.a[4], p.a[5], p.a[6], p.a[7] = uint16((uint32(p.da[4])*uint32(invSa4)+255)>>8), uint16((uint32(p.da[5])*uint32(invSa5)+255)>>8), uint16((uint32(p.da[6])*uint32(invSa6)+255)>>8), uint16((uint32(p.da[7])*uint32(invSa7)+255)>>8)
+	p.a[8], p.a[9], p.a[10], p.a[11] = uint16((uint32(p.da[8])*uint32(invSa8)+255)>>8), uint16((uint32(p.da[9])*uint32(invSa9)+255)>>8), uint16((uint32(p.da[10])*uint32(invSa10)+255)>>8), uint16((uint32(p.da[11])*uint32(invSa11)+255)>>8)
+	p.a[12], p.a[13], p.a[14], p.a[15] = uint16((uint32(p.da[12])*uint32(invSa12)+255)>>8), uint16((uint32(p.da[13])*uint32(invSa13)+255)>>8), uint16((uint32(p.da[14])*uint32(invSa14)+255)>>8), uint16((uint32(p.da[15])*uint32(invSa15)+255)>>8)
 }
 
 //go:fix inline
 func (p *LowPipeline) DestinationOver() {
-	for i := 0; i < LOW_STAGE_WIDTH; i += 8 {
-		invDa0, invDa1 := 255-p.da[i], 255-p.da[i+1]
-		invDa2, invDa3 := 255-p.da[i+2], 255-p.da[i+3]
-		invDa4, invDa5 := 255-p.da[i+4], 255-p.da[i+5]
-		invDa6, invDa7 := 255-p.da[i+6], 255-p.da[i+7]
+	invDa0, invDa1, invDa2, invDa3 := 255-p.da[0], 255-p.da[1], 255-p.da[2], 255-p.da[3]
+	invDa4, invDa5, invDa6, invDa7 := 255-p.da[4], 255-p.da[5], 255-p.da[6], 255-p.da[7]
+	invDa8, invDa9, invDa10, invDa11 := 255-p.da[8], 255-p.da[9], 255-p.da[10], 255-p.da[11]
+	invDa12, invDa13, invDa14, invDa15 := 255-p.da[12], 255-p.da[13], 255-p.da[14], 255-p.da[15]
 
-		p.r[i] = uint16(uint32(p.dr[i]) + (uint32(p.r[i])*uint32(invDa0)+255)>>8)
-		p.r[i+1] = uint16(uint32(p.dr[i+1]) + (uint32(p.r[i+1])*uint32(invDa1)+255)>>8)
-		p.r[i+2] = uint16(uint32(p.dr[i+2]) + (uint32(p.r[i+2])*uint32(invDa2)+255)>>8)
-		p.r[i+3] = uint16(uint32(p.dr[i+3]) + (uint32(p.r[i+3])*uint32(invDa3)+255)>>8)
-		p.r[i+4] = uint16(uint32(p.dr[i+4]) + (uint32(p.r[i+4])*uint32(invDa4)+255)>>8)
-		p.r[i+5] = uint16(uint32(p.dr[i+5]) + (uint32(p.r[i+5])*uint32(invDa5)+255)>>8)
-		p.r[i+6] = uint16(uint32(p.dr[i+6]) + (uint32(p.r[i+6])*uint32(invDa6)+255)>>8)
-		p.r[i+7] = uint16(uint32(p.dr[i+7]) + (uint32(p.r[i+7])*uint32(invDa7)+255)>>8)
+	p.r[0], p.r[1], p.r[2], p.r[3] = uint16(uint32(p.dr[0])+(uint32(p.r[0])*uint32(invDa0)+255)>>8), uint16(uint32(p.dr[1])+(uint32(p.r[1])*uint32(invDa1)+255)>>8), uint16(uint32(p.dr[2])+(uint32(p.r[2])*uint32(invDa2)+255)>>8), uint16(uint32(p.dr[3])+(uint32(p.r[3])*uint32(invDa3)+255)>>8)
+	p.r[4], p.r[5], p.r[6], p.r[7] = uint16(uint32(p.dr[4])+(uint32(p.r[4])*uint32(invDa4)+255)>>8), uint16(uint32(p.dr[5])+(uint32(p.r[5])*uint32(invDa5)+255)>>8), uint16(uint32(p.dr[6])+(uint32(p.r[6])*uint32(invDa6)+255)>>8), uint16(uint32(p.dr[7])+(uint32(p.r[7])*uint32(invDa7)+255)>>8)
+	p.r[8], p.r[9], p.r[10], p.r[11] = uint16(uint32(p.dr[8])+(uint32(p.r[8])*uint32(invDa8)+255)>>8), uint16(uint32(p.dr[9])+(uint32(p.r[9])*uint32(invDa9)+255)>>8), uint16(uint32(p.dr[10])+(uint32(p.r[10])*uint32(invDa10)+255)>>8), uint16(uint32(p.dr[11])+(uint32(p.r[11])*uint32(invDa11)+255)>>8)
+	p.r[12], p.r[13], p.r[14], p.r[15] = uint16(uint32(p.dr[12])+(uint32(p.r[12])*uint32(invDa12)+255)>>8), uint16(uint32(p.dr[13])+(uint32(p.r[13])*uint32(invDa13)+255)>>8), uint16(uint32(p.dr[14])+(uint32(p.r[14])*uint32(invDa14)+255)>>8), uint16(uint32(p.dr[15])+(uint32(p.r[15])*uint32(invDa15)+255)>>8)
 
-		p.g[i] = uint16(uint32(p.dg[i]) + (uint32(p.g[i])*uint32(invDa0)+255)>>8)
-		p.g[i+1] = uint16(uint32(p.dg[i+1]) + (uint32(p.g[i+1])*uint32(invDa1)+255)>>8)
-		p.g[i+2] = uint16(uint32(p.dg[i+2]) + (uint32(p.g[i+2])*uint32(invDa2)+255)>>8)
-		p.g[i+3] = uint16(uint32(p.dg[i+3]) + (uint32(p.g[i+3])*uint32(invDa3)+255)>>8)
-		p.g[i+4] = uint16(uint32(p.dg[i+4]) + (uint32(p.g[i+4])*uint32(invDa4)+255)>>8)
-		p.g[i+5] = uint16(uint32(p.dg[i+5]) + (uint32(p.g[i+5])*uint32(invDa5)+255)>>8)
-		p.g[i+6] = uint16(uint32(p.dg[i+6]) + (uint32(p.g[i+6])*uint32(invDa6)+255)>>8)
-		p.g[i+7] = uint16(uint32(p.dg[i+7]) + (uint32(p.g[i+7])*uint32(invDa7)+255)>>8)
+	p.g[0], p.g[1], p.g[2], p.g[3] = uint16(uint32(p.dg[0])+(uint32(p.g[0])*uint32(invDa0)+255)>>8), uint16(uint32(p.dg[1])+(uint32(p.g[1])*uint32(invDa1)+255)>>8), uint16(uint32(p.dg[2])+(uint32(p.g[2])*uint32(invDa2)+255)>>8), uint16(uint32(p.dg[3])+(uint32(p.g[3])*uint32(invDa3)+255)>>8)
+	p.g[4], p.g[5], p.g[6], p.g[7] = uint16(uint32(p.dg[4])+(uint32(p.g[4])*uint32(invDa4)+255)>>8), uint16(uint32(p.dg[5])+(uint32(p.g[5])*uint32(invDa5)+255)>>8), uint16(uint32(p.dg[6])+(uint32(p.g[6])*uint32(invDa6)+255)>>8), uint16(uint32(p.dg[7])+(uint32(p.g[7])*uint32(invDa7)+255)>>8)
+	p.g[8], p.g[9], p.g[10], p.g[11] = uint16(uint32(p.dg[8])+(uint32(p.g[8])*uint32(invDa8)+255)>>8), uint16(uint32(p.dg[9])+(uint32(p.g[9])*uint32(invDa9)+255)>>8), uint16(uint32(p.dg[10])+(uint32(p.g[10])*uint32(invDa10)+255)>>8), uint16(uint32(p.dg[11])+(uint32(p.g[11])*uint32(invDa11)+255)>>8)
+	p.g[12], p.g[13], p.g[14], p.g[15] = uint16(uint32(p.dg[12])+(uint32(p.g[12])*uint32(invDa12)+255)>>8), uint16(uint32(p.dg[13])+(uint32(p.g[13])*uint32(invDa13)+255)>>8), uint16(uint32(p.dg[14])+(uint32(p.g[14])*uint32(invDa14)+255)>>8), uint16(uint32(p.dg[15])+(uint32(p.g[15])*uint32(invDa15)+255)>>8)
 
-		p.b[i] = uint16(uint32(p.db[i]) + (uint32(p.b[i])*uint32(invDa0)+255)>>8)
-		p.b[i+1] = uint16(uint32(p.db[i+1]) + (uint32(p.b[i+1])*uint32(invDa1)+255)>>8)
-		p.b[i+2] = uint16(uint32(p.db[i+2]) + (uint32(p.b[i+2])*uint32(invDa2)+255)>>8)
-		p.b[i+3] = uint16(uint32(p.db[i+3]) + (uint32(p.b[i+3])*uint32(invDa3)+255)>>8)
-		p.b[i+4] = uint16(uint32(p.db[i+4]) + (uint32(p.b[i+4])*uint32(invDa4)+255)>>8)
-		p.b[i+5] = uint16(uint32(p.db[i+5]) + (uint32(p.b[i+5])*uint32(invDa5)+255)>>8)
-		p.b[i+6] = uint16(uint32(p.db[i+6]) + (uint32(p.b[i+6])*uint32(invDa6)+255)>>8)
-		p.b[i+7] = uint16(uint32(p.db[i+7]) + (uint32(p.b[i+7])*uint32(invDa7)+255)>>8)
+	p.b[0], p.b[1], p.b[2], p.b[3] = uint16(uint32(p.db[0])+(uint32(p.b[0])*uint32(invDa0)+255)>>8), uint16(uint32(p.db[1])+(uint32(p.b[1])*uint32(invDa1)+255)>>8), uint16(uint32(p.db[2])+(uint32(p.b[2])*uint32(invDa2)+255)>>8), uint16(uint32(p.db[3])+(uint32(p.b[3])*uint32(invDa3)+255)>>8)
+	p.b[4], p.b[5], p.b[6], p.b[7] = uint16(uint32(p.db[4])+(uint32(p.b[4])*uint32(invDa4)+255)>>8), uint16(uint32(p.db[5])+(uint32(p.b[5])*uint32(invDa5)+255)>>8), uint16(uint32(p.db[6])+(uint32(p.b[6])*uint32(invDa6)+255)>>8), uint16(uint32(p.db[7])+(uint32(p.b[7])*uint32(invDa7)+255)>>8)
+	p.b[8], p.b[9], p.b[10], p.b[11] = uint16(uint32(p.db[8])+(uint32(p.b[8])*uint32(invDa8)+255)>>8), uint16(uint32(p.db[9])+(uint32(p.b[9])*uint32(invDa9)+255)>>8), uint16(uint32(p.db[10])+(uint32(p.b[10])*uint32(invDa10)+255)>>8), uint16(uint32(p.db[11])+(uint32(p.b[11])*uint32(invDa11)+255)>>8)
+	p.b[12], p.b[13], p.b[14], p.b[15] = uint16(uint32(p.db[12])+(uint32(p.b[12])*uint32(invDa12)+255)>>8), uint16(uint32(p.db[13])+(uint32(p.b[13])*uint32(invDa13)+255)>>8), uint16(uint32(p.db[14])+(uint32(p.b[14])*uint32(invDa14)+255)>>8), uint16(uint32(p.db[15])+(uint32(p.b[15])*uint32(invDa15)+255)>>8)
 
-		p.a[i] = uint16(uint32(p.da[i]) + (uint32(p.a[i])*uint32(invDa0)+255)>>8)
-		p.a[i+1] = uint16(uint32(p.da[i+1]) + (uint32(p.a[i+1])*uint32(invDa1)+255)>>8)
-		p.a[i+2] = uint16(uint32(p.da[i+2]) + (uint32(p.a[i+2])*uint32(invDa2)+255)>>8)
-		p.a[i+3] = uint16(uint32(p.da[i+3]) + (uint32(p.a[i+3])*uint32(invDa3)+255)>>8)
-		p.a[i+4] = uint16(uint32(p.da[i+4]) + (uint32(p.a[i+4])*uint32(invDa4)+255)>>8)
-		p.a[i+5] = uint16(uint32(p.da[i+5]) + (uint32(p.a[i+5])*uint32(invDa5)+255)>>8)
-		p.a[i+6] = uint16(uint32(p.da[i+6]) + (uint32(p.a[i+6])*uint32(invDa6)+255)>>8)
-		p.a[i+7] = uint16(uint32(p.da[i+7]) + (uint32(p.a[i+7])*uint32(invDa7)+255)>>8)
-	}
+	p.a[0], p.a[1], p.a[2], p.a[3] = uint16(uint32(p.da[0])+(uint32(p.a[0])*uint32(invDa0)+255)>>8), uint16(uint32(p.da[1])+(uint32(p.a[1])*uint32(invDa1)+255)>>8), uint16(uint32(p.da[2])+(uint32(p.a[2])*uint32(invDa2)+255)>>8), uint16(uint32(p.da[3])+(uint32(p.a[3])*uint32(invDa3)+255)>>8)
+	p.a[4], p.a[5], p.a[6], p.a[7] = uint16(uint32(p.da[4])+(uint32(p.a[4])*uint32(invDa4)+255)>>8), uint16(uint32(p.da[5])+(uint32(p.a[5])*uint32(invDa5)+255)>>8), uint16(uint32(p.da[6])+(uint32(p.a[6])*uint32(invDa6)+255)>>8), uint16(uint32(p.da[7])+(uint32(p.a[7])*uint32(invDa7)+255)>>8)
+	p.a[8], p.a[9], p.a[10], p.a[11] = uint16(uint32(p.da[8])+(uint32(p.a[8])*uint32(invDa8)+255)>>8), uint16(uint32(p.da[9])+(uint32(p.a[9])*uint32(invDa9)+255)>>8), uint16(uint32(p.da[10])+(uint32(p.a[10])*uint32(invDa10)+255)>>8), uint16(uint32(p.da[11])+(uint32(p.a[11])*uint32(invDa11)+255)>>8)
+	p.a[12], p.a[13], p.a[14], p.a[15] = uint16(uint32(p.da[12])+(uint32(p.a[12])*uint32(invDa12)+255)>>8), uint16(uint32(p.da[13])+(uint32(p.a[13])*uint32(invDa13)+255)>>8), uint16(uint32(p.da[14])+(uint32(p.a[14])*uint32(invDa14)+255)>>8), uint16(uint32(p.da[15])+(uint32(p.a[15])*uint32(invDa15)+255)>>8)
 }
 
 //go:fix inline
@@ -817,19 +684,10 @@ func (p *LowPipeline) SourceOver() {
 
 //go:fix inline
 func (p *LowPipeline) Clear() {
-	for i := 0; i < LOW_STAGE_WIDTH; i += 8 {
-		p.r[i], p.r[i+1], p.r[i+2], p.r[i+3] = 0, 0, 0, 0
-		p.r[i+4], p.r[i+5], p.r[i+6], p.r[i+7] = 0, 0, 0, 0
-
-		p.g[i], p.g[i+1], p.g[i+2], p.g[i+3] = 0, 0, 0, 0
-		p.g[i+4], p.g[i+5], p.g[i+6], p.g[i+7] = 0, 0, 0, 0
-
-		p.b[i], p.b[i+1], p.b[i+2], p.b[i+3] = 0, 0, 0, 0
-		p.b[i+4], p.b[i+5], p.b[i+6], p.b[i+7] = 0, 0, 0, 0
-
-		p.a[i], p.a[i+1], p.a[i+2], p.a[i+3] = 0, 0, 0, 0
-		p.a[i+4], p.a[i+5], p.a[i+6], p.a[i+7] = 0, 0, 0, 0
-	}
+	p.r = [LOW_STAGE_WIDTH]uint16{}
+	p.g = [LOW_STAGE_WIDTH]uint16{}
+	p.b = [LOW_STAGE_WIDTH]uint16{}
+	p.a = [LOW_STAGE_WIDTH]uint16{}
 }
 
 //go:fix inline
@@ -1587,36 +1445,97 @@ func (p *LowPipeline) RepeatX1() {
 
 //go:fix inline
 func (p *LowPipeline) Gradient() {
-	// Interpolates gradient colors based on t value in p.r/p.g
 	ctx := p.ctx.Gradient
-	if ctx.Len > 0 {
-		// Join r,g into t values as float32
-		var t [16]float32
-		for i := 0; i < 16; i++ {
-			t[i] = math.Float32frombits(uint32(p.r[i]) | uint32(p.g[i])<<16)
+
+	// Join r,g into t values as float32
+	var t [16]float32
+	for i := 0; i < 16; i++ {
+		t[i] = math.Float32frombits(uint32(p.r[i]) | uint32(p.g[i])<<16)
+	}
+
+	// Find stop indices for all pixels
+	var idx [16]uint16
+	for j := 1; j < ctx.Len; j++ {
+		tt := ctx.TValues[j].Get()
+		if t[0] >= tt {
+			idx[0]++
 		}
-
-		// For each pixel, find which stop interval it falls into
-		for i := 0; i < LOW_STAGE_WIDTH; i++ {
-			ti := t[i]
-			idx := uint16(0)
-			// Find the stop index where t >= stop.t
-			for j := 1; j < ctx.Len; j++ {
-				if ti >= ctx.TValues[j].Get() {
-					idx = uint16(j)
-				}
-			}
-
-			// Use bias color from gradient context (already interpolated)
-			if int(idx) < 16 {
-				color := ctx.Biases[idx]
-				p.r[i] = uint16(color.R)
-				p.g[i] = uint16(color.G)
-				p.b[i] = uint16(color.B)
-				p.a[i] = uint16(color.A)
-			}
+		if t[1] >= tt {
+			idx[1]++
+		}
+		if t[2] >= tt {
+			idx[2]++
+		}
+		if t[3] >= tt {
+			idx[3]++
+		}
+		if t[4] >= tt {
+			idx[4]++
+		}
+		if t[5] >= tt {
+			idx[5]++
+		}
+		if t[6] >= tt {
+			idx[6]++
+		}
+		if t[7] >= tt {
+			idx[7]++
+		}
+		if t[8] >= tt {
+			idx[8]++
+		}
+		if t[9] >= tt {
+			idx[9]++
+		}
+		if t[10] >= tt {
+			idx[10]++
+		}
+		if t[11] >= tt {
+			idx[11]++
+		}
+		if t[12] >= tt {
+			idx[12]++
+		}
+		if t[13] >= tt {
+			idx[13]++
+		}
+		if t[14] >= tt {
+			idx[14]++
+		}
+		if t[15] >= tt {
+			idx[15]++
 		}
 	}
+
+	f0, f1, f2, f3 := ctx.Factors[idx[0]], ctx.Factors[idx[1]], ctx.Factors[idx[2]], ctx.Factors[idx[3]]
+	f4, f5, f6, f7 := ctx.Factors[idx[4]], ctx.Factors[idx[5]], ctx.Factors[idx[6]], ctx.Factors[idx[7]]
+	f8, f9, f10, f11 := ctx.Factors[idx[8]], ctx.Factors[idx[9]], ctx.Factors[idx[10]], ctx.Factors[idx[11]]
+	f12, f13, f14, f15 := ctx.Factors[idx[12]], ctx.Factors[idx[13]], ctx.Factors[idx[14]], ctx.Factors[idx[15]]
+
+	b0, b1, b2, b3 := ctx.Biases[idx[0]], ctx.Biases[idx[1]], ctx.Biases[idx[2]], ctx.Biases[idx[3]]
+	b4, b5, b6, b7 := ctx.Biases[idx[4]], ctx.Biases[idx[5]], ctx.Biases[idx[6]], ctx.Biases[idx[7]]
+	b8, b9, b10, b11 := ctx.Biases[idx[8]], ctx.Biases[idx[9]], ctx.Biases[idx[10]], ctx.Biases[idx[11]]
+	b12, b13, b14, b15 := ctx.Biases[idx[12]], ctx.Biases[idx[13]], ctx.Biases[idx[14]], ctx.Biases[idx[15]]
+
+	p.r[0], p.r[1], p.r[2], p.r[3] = uint16((t[0]*f0.R+b0.R)*255.0+0.5), uint16((t[1]*f1.R+b1.R)*255.0+0.5), uint16((t[2]*f2.R+b2.R)*255.0+0.5), uint16((t[3]*f3.R+b3.R)*255.0+0.5)
+	p.r[4], p.r[5], p.r[6], p.r[7] = uint16((t[4]*f4.R+b4.R)*255.0+0.5), uint16((t[5]*f5.R+b5.R)*255.0+0.5), uint16((t[6]*f6.R+b6.R)*255.0+0.5), uint16((t[7]*f7.R+b7.R)*255.0+0.5)
+	p.r[8], p.r[9], p.r[10], p.r[11] = uint16((t[8]*f8.R+b8.R)*255.0+0.5), uint16((t[9]*f9.R+b9.R)*255.0+0.5), uint16((t[10]*f10.R+b10.R)*255.0+0.5), uint16((t[11]*f11.R+b11.R)*255.0+0.5)
+	p.r[12], p.r[13], p.r[14], p.r[15] = uint16((t[12]*f12.R+b12.R)*255.0+0.5), uint16((t[13]*f13.R+b13.R)*255.0+0.5), uint16((t[14]*f14.R+b14.R)*255.0+0.5), uint16((t[15]*f15.R+b15.R)*255.0+0.5)
+
+	p.g[0], p.g[1], p.g[2], p.g[3] = uint16((t[0]*f0.G+b0.G)*255.0+0.5), uint16((t[1]*f1.G+b1.G)*255.0+0.5), uint16((t[2]*f2.G+b2.G)*255.0+0.5), uint16((t[3]*f3.G+b3.G)*255.0+0.5)
+	p.g[4], p.g[5], p.g[6], p.g[7] = uint16((t[4]*f4.G+b4.G)*255.0+0.5), uint16((t[5]*f5.G+b5.G)*255.0+0.5), uint16((t[6]*f6.G+b6.G)*255.0+0.5), uint16((t[7]*f7.G+b7.G)*255.0+0.5)
+	p.g[8], p.g[9], p.g[10], p.g[11] = uint16((t[8]*f8.G+b8.G)*255.0+0.5), uint16((t[9]*f9.G+b9.G)*255.0+0.5), uint16((t[10]*f10.G+b10.G)*255.0+0.5), uint16((t[11]*f11.G+b11.G)*255.0+0.5)
+	p.g[12], p.g[13], p.g[14], p.g[15] = uint16((t[12]*f12.G+b12.G)*255.0+0.5), uint16((t[13]*f13.G+b13.G)*255.0+0.5), uint16((t[14]*f14.G+b14.G)*255.0+0.5), uint16((t[15]*f15.G+b15.G)*255.0+0.5)
+
+	p.b[0], p.b[1], p.b[2], p.b[3] = uint16((t[0]*f0.B+b0.B)*255.0+0.5), uint16((t[1]*f1.B+b1.B)*255.0+0.5), uint16((t[2]*f2.B+b2.B)*255.0+0.5), uint16((t[3]*f3.B+b3.B)*255.0+0.5)
+	p.b[4], p.b[5], p.b[6], p.b[7] = uint16((t[4]*f4.B+b4.B)*255.0+0.5), uint16((t[5]*f5.B+b5.B)*255.0+0.5), uint16((t[6]*f6.B+b6.B)*255.0+0.5), uint16((t[7]*f7.B+b7.B)*255.0+0.5)
+	p.b[8], p.b[9], p.b[10], p.b[11] = uint16((t[8]*f8.B+b8.B)*255.0+0.5), uint16((t[9]*f9.B+b9.B)*255.0+0.5), uint16((t[10]*f10.B+b10.B)*255.0+0.5), uint16((t[11]*f11.B+b11.B)*255.0+0.5)
+	p.b[12], p.b[13], p.b[14], p.b[15] = uint16((t[12]*f12.B+b12.B)*255.0+0.5), uint16((t[13]*f13.B+b13.B)*255.0+0.5), uint16((t[14]*f14.B+b14.B)*255.0+0.5), uint16((t[15]*f15.B+b15.B)*255.0+0.5)
+
+	p.a[0], p.a[1], p.a[2], p.a[3] = uint16((t[0]*f0.A+b0.A)*255.0+0.5), uint16((t[1]*f1.A+b1.A)*255.0+0.5), uint16((t[2]*f2.A+b2.A)*255.0+0.5), uint16((t[3]*f3.A+b3.A)*255.0+0.5)
+	p.a[4], p.a[5], p.a[6], p.a[7] = uint16((t[4]*f4.A+b4.A)*255.0+0.5), uint16((t[5]*f5.A+b5.A)*255.0+0.5), uint16((t[6]*f6.A+b6.A)*255.0+0.5), uint16((t[7]*f7.A+b7.A)*255.0+0.5)
+	p.a[8], p.a[9], p.a[10], p.a[11] = uint16((t[8]*f8.A+b8.A)*255.0+0.5), uint16((t[9]*f9.A+b9.A)*255.0+0.5), uint16((t[10]*f10.A+b10.A)*255.0+0.5), uint16((t[11]*f11.A+b11.A)*255.0+0.5)
+	p.a[12], p.a[13], p.a[14], p.a[15] = uint16((t[12]*f12.A+b12.A)*255.0+0.5), uint16((t[13]*f13.A+b13.A)*255.0+0.5), uint16((t[14]*f14.A+b14.A)*255.0+0.5), uint16((t[15]*f15.A+b15.A)*255.0+0.5)
 }
 
 //go:fix inline
@@ -1633,24 +1552,35 @@ func (p *LowPipeline) EvenlySpaced2StopGradient() {
 
 //go:fix inline
 func (p *LowPipeline) XYToUnitAngle() {
-	for i := 0; i < LOW_STAGE_WIDTH; i++ {
-		// Convert x,y to float32
-		x := math.Float32frombits(uint32(p.r[i]) | uint32(p.g[i])<<16)
-		y := math.Float32frombits(uint32(p.b[i]) | uint32(p.a[i])<<16)
-		// Calculate radius: r = sqrt(x^2 + y^2)
-		r := float32(math.Sqrt(float64(x*x + y*y)))
-		// Convert back to u16 representation
-		rBits := math.Float32bits(r)
-		p.r[i] = uint16(rBits & 0xFFFF)
-		p.g[i] = uint16(rBits >> 16)
-		p.b[i] = uint16(0)
-		p.a[i] = uint16(0)
-	}
 }
 
 //go:fix inline
 func (p *LowPipeline) XYToRadius() {
-	// null_fn
+	// Join r and g into x coordinates
+	var x [LOW_STAGE_WIDTH]float32
+	for i := 0; i < LOW_STAGE_WIDTH; i++ {
+		x[i] = math.Float32frombits(uint32(p.r[i]) | uint32(p.g[i])<<16)
+	}
+
+	// Join b and a into y coordinates
+	var y [LOW_STAGE_WIDTH]float32
+	for i := 0; i < LOW_STAGE_WIDTH; i++ {
+		y[i] = math.Float32frombits(uint32(p.b[i]) | uint32(p.a[i])<<16)
+	}
+
+	// Calculate radius: r = sqrt(x^2 + y^2)
+	for i := 0; i < LOW_STAGE_WIDTH; i++ {
+		x[i] = float32(math.Sqrt(float64(x[i]*x[i] + y[i]*y[i])))
+	}
+
+	// Split result back to r,g (b,a are set to 0)
+	for i := 0; i < LOW_STAGE_WIDTH; i++ {
+		bits := math.Float32bits(x[i])
+		p.r[i] = uint16(bits & 0xFFFF)
+		p.g[i] = uint16(bits >> 16)
+		p.b[i] = 0
+		p.a[i] = 0
+	}
 }
 
 //go:fix inline
