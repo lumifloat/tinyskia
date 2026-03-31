@@ -507,179 +507,143 @@ func (p *LowPipeline) DestinationOver() {
 
 //go:fix inline
 func (p *LowPipeline) SourceAtop() {
-	for i := 0; i < LOW_STAGE_WIDTH; i += 8 {
-		invSa0, invSa1 := 255-p.a[i], 255-p.a[i+1]
-		invSa2, invSa3 := 255-p.a[i+2], 255-p.a[i+3]
-		invSa4, invSa5 := 255-p.a[i+4], 255-p.a[i+5]
-		invSa6, invSa7 := 255-p.a[i+6], 255-p.a[i+7]
-
-		p.r[i] = uint16((uint32(p.r[i])*uint32(p.da[i]) + uint32(p.dr[i])*uint32(invSa0) + 255) >> 8)
-		p.r[i+1] = uint16((uint32(p.r[i+1])*uint32(p.da[i+1]) + uint32(p.dr[i+1])*uint32(invSa1) + 255) >> 8)
-		p.r[i+2] = uint16((uint32(p.r[i+2])*uint32(p.da[i+2]) + uint32(p.dr[i+2])*uint32(invSa2) + 255) >> 8)
-		p.r[i+3] = uint16((uint32(p.r[i+3])*uint32(p.da[i+3]) + uint32(p.dr[i+3])*uint32(invSa3) + 255) >> 8)
-		p.r[i+4] = uint16((uint32(p.r[i+4])*uint32(p.da[i+4]) + uint32(p.dr[i+4])*uint32(invSa4) + 255) >> 8)
-		p.r[i+5] = uint16((uint32(p.r[i+5])*uint32(p.da[i+5]) + uint32(p.dr[i+5])*uint32(invSa5) + 255) >> 8)
-		p.r[i+6] = uint16((uint32(p.r[i+6])*uint32(p.da[i+6]) + uint32(p.dr[i+6])*uint32(invSa6) + 255) >> 8)
-		p.r[i+7] = uint16((uint32(p.r[i+7])*uint32(p.da[i+7]) + uint32(p.dr[i+7])*uint32(invSa7) + 255) >> 8)
-
-		p.g[i] = uint16((uint32(p.g[i])*uint32(p.da[i]) + uint32(p.dg[i])*uint32(invSa0) + 255) >> 8)
-		p.g[i+1] = uint16((uint32(p.g[i+1])*uint32(p.da[i+1]) + uint32(p.dg[i+1])*uint32(invSa1) + 255) >> 8)
-		p.g[i+2] = uint16((uint32(p.g[i+2])*uint32(p.da[i+2]) + uint32(p.dg[i+2])*uint32(invSa2) + 255) >> 8)
-		p.g[i+3] = uint16((uint32(p.g[i+3])*uint32(p.da[i+3]) + uint32(p.dg[i+3])*uint32(invSa3) + 255) >> 8)
-		p.g[i+4] = uint16((uint32(p.g[i+4])*uint32(p.da[i+4]) + uint32(p.dg[i+4])*uint32(invSa4) + 255) >> 8)
-		p.g[i+5] = uint16((uint32(p.g[i+5])*uint32(p.da[i+5]) + uint32(p.dg[i+5])*uint32(invSa5) + 255) >> 8)
-		p.g[i+6] = uint16((uint32(p.g[i+6])*uint32(p.da[i+6]) + uint32(p.dg[i+6])*uint32(invSa6) + 255) >> 8)
-		p.g[i+7] = uint16((uint32(p.g[i+7])*uint32(p.da[i+7]) + uint32(p.dg[i+7])*uint32(invSa7) + 255) >> 8)
-
-		p.b[i] = uint16((uint32(p.b[i])*uint32(p.da[i]) + uint32(p.db[i])*uint32(invSa0) + 255) >> 8)
-		p.b[i+1] = uint16((uint32(p.b[i+1])*uint32(p.da[i+1]) + uint32(p.db[i+1])*uint32(invSa1) + 255) >> 8)
-		p.b[i+2] = uint16((uint32(p.b[i+2])*uint32(p.da[i+2]) + uint32(p.db[i+2])*uint32(invSa2) + 255) >> 8)
-		p.b[i+3] = uint16((uint32(p.b[i+3])*uint32(p.da[i+3]) + uint32(p.db[i+3])*uint32(invSa3) + 255) >> 8)
-		p.b[i+4] = uint16((uint32(p.b[i+4])*uint32(p.da[i+4]) + uint32(p.db[i+4])*uint32(invSa4) + 255) >> 8)
-		p.b[i+5] = uint16((uint32(p.b[i+5])*uint32(p.da[i+5]) + uint32(p.db[i+5])*uint32(invSa5) + 255) >> 8)
-		p.b[i+6] = uint16((uint32(p.b[i+6])*uint32(p.da[i+6]) + uint32(p.db[i+6])*uint32(invSa6) + 255) >> 8)
-		p.b[i+7] = uint16((uint32(p.b[i+7])*uint32(p.da[i+7]) + uint32(p.db[i+7])*uint32(invSa7) + 255) >> 8)
-
-		p.a[i] = uint16((uint32(p.a[i])*uint32(p.da[i]) + uint32(p.da[i])*uint32(invSa0) + 255) >> 8)
-		p.a[i+1] = uint16((uint32(p.a[i+1])*uint32(p.da[i+1]) + uint32(p.da[i+1])*uint32(invSa1) + 255) >> 8)
-		p.a[i+2] = uint16((uint32(p.a[i+2])*uint32(p.da[i+2]) + uint32(p.da[i+2])*uint32(invSa2) + 255) >> 8)
-		p.a[i+3] = uint16((uint32(p.a[i+3])*uint32(p.da[i+3]) + uint32(p.da[i+3])*uint32(invSa3) + 255) >> 8)
-		p.a[i+4] = uint16((uint32(p.a[i+4])*uint32(p.da[i+4]) + uint32(p.da[i+4])*uint32(invSa4) + 255) >> 8)
-		p.a[i+5] = uint16((uint32(p.a[i+5])*uint32(p.da[i+5]) + uint32(p.da[i+5])*uint32(invSa5) + 255) >> 8)
-		p.a[i+6] = uint16((uint32(p.a[i+6])*uint32(p.da[i+6]) + uint32(p.da[i+6])*uint32(invSa6) + 255) >> 8)
-		p.a[i+7] = uint16((uint32(p.a[i+7])*uint32(p.da[i+7]) + uint32(p.da[i+7])*uint32(invSa7) + 255) >> 8)
+	// Formula: div255(s * da + d * inv(sa))
+	ch := func(s, d, da, sa uint16) uint16 {
+		invSa := uint16(255 - sa)
+		return uint16((uint32(s)*uint32(da) + uint32(d)*uint32(invSa) + 255) >> 8)
 	}
+
+	// Blend R channel (4 at a time)
+	p.r[0], p.r[1], p.r[2], p.r[3] = ch(p.r[0], p.dr[0], p.da[0], p.a[0]), ch(p.r[1], p.dr[1], p.da[1], p.a[1]), ch(p.r[2], p.dr[2], p.da[2], p.a[2]), ch(p.r[3], p.dr[3], p.da[3], p.a[3])
+	p.r[4], p.r[5], p.r[6], p.r[7] = ch(p.r[4], p.dr[4], p.da[4], p.a[4]), ch(p.r[5], p.dr[5], p.da[5], p.a[5]), ch(p.r[6], p.dr[6], p.da[6], p.a[6]), ch(p.r[7], p.dr[7], p.da[7], p.a[7])
+	p.r[8], p.r[9], p.r[10], p.r[11] = ch(p.r[8], p.dr[8], p.da[8], p.a[8]), ch(p.r[9], p.dr[9], p.da[9], p.a[9]), ch(p.r[10], p.dr[10], p.da[10], p.a[10]), ch(p.r[11], p.dr[11], p.da[11], p.a[11])
+	p.r[12], p.r[13], p.r[14], p.r[15] = ch(p.r[12], p.dr[12], p.da[12], p.a[12]), ch(p.r[13], p.dr[13], p.da[13], p.a[13]), ch(p.r[14], p.dr[14], p.da[14], p.a[14]), ch(p.r[15], p.dr[15], p.da[15], p.a[15])
+
+	// Blend G channel (4 at a time)
+	p.g[0], p.g[1], p.g[2], p.g[3] = ch(p.g[0], p.dg[0], p.da[0], p.a[0]), ch(p.g[1], p.dg[1], p.da[1], p.a[1]), ch(p.g[2], p.dg[2], p.da[2], p.a[2]), ch(p.g[3], p.dg[3], p.da[3], p.a[3])
+	p.g[4], p.g[5], p.g[6], p.g[7] = ch(p.g[4], p.dg[4], p.da[4], p.a[4]), ch(p.g[5], p.dg[5], p.da[5], p.a[5]), ch(p.g[6], p.dg[6], p.da[6], p.a[6]), ch(p.g[7], p.dg[7], p.da[7], p.a[7])
+	p.g[8], p.g[9], p.g[10], p.g[11] = ch(p.g[8], p.dg[8], p.da[8], p.a[8]), ch(p.g[9], p.dg[9], p.da[9], p.a[9]), ch(p.g[10], p.dg[10], p.da[10], p.a[10]), ch(p.g[11], p.dg[11], p.da[11], p.a[11])
+	p.g[12], p.g[13], p.g[14], p.g[15] = ch(p.g[12], p.dg[12], p.da[12], p.a[12]), ch(p.g[13], p.dg[13], p.da[13], p.a[13]), ch(p.g[14], p.dg[14], p.da[14], p.a[14]), ch(p.g[15], p.dg[15], p.da[15], p.a[15])
+
+	// Blend B channel (4 at a time)
+	p.b[0], p.b[1], p.b[2], p.b[3] = ch(p.b[0], p.db[0], p.da[0], p.a[0]), ch(p.b[1], p.db[1], p.da[1], p.a[1]), ch(p.b[2], p.db[2], p.da[2], p.a[2]), ch(p.b[3], p.db[3], p.da[3], p.a[3])
+	p.b[4], p.b[5], p.b[6], p.b[7] = ch(p.b[4], p.db[4], p.da[4], p.a[4]), ch(p.b[5], p.db[5], p.da[5], p.a[5]), ch(p.b[6], p.db[6], p.da[6], p.a[6]), ch(p.b[7], p.db[7], p.da[7], p.a[7])
+	p.b[8], p.b[9], p.b[10], p.b[11] = ch(p.b[8], p.db[8], p.da[8], p.a[8]), ch(p.b[9], p.db[9], p.da[9], p.a[9]), ch(p.b[10], p.db[10], p.da[10], p.a[10]), ch(p.b[11], p.db[11], p.da[11], p.a[11])
+	p.b[12], p.b[13], p.b[14], p.b[15] = ch(p.b[12], p.db[12], p.da[12], p.a[12]), ch(p.b[13], p.db[13], p.da[13], p.a[13]), ch(p.b[14], p.db[14], p.da[14], p.a[14]), ch(p.b[15], p.db[15], p.da[15], p.a[15])
+
+	// Alpha channel (4 at a time)
+	p.a[0], p.a[1], p.a[2], p.a[3] = ch(p.a[0], p.da[0], p.da[0], p.a[0]), ch(p.a[1], p.da[1], p.da[1], p.a[1]), ch(p.a[2], p.da[2], p.da[2], p.a[2]), ch(p.a[3], p.da[3], p.da[3], p.a[3])
+	p.a[4], p.a[5], p.a[6], p.a[7] = ch(p.a[4], p.da[4], p.da[4], p.a[4]), ch(p.a[5], p.da[5], p.da[5], p.a[5]), ch(p.a[6], p.da[6], p.da[6], p.a[6]), ch(p.a[7], p.da[7], p.da[7], p.a[7])
+	p.a[8], p.a[9], p.a[10], p.a[11] = ch(p.a[8], p.da[8], p.da[8], p.a[8]), ch(p.a[9], p.da[9], p.da[9], p.a[9]), ch(p.a[10], p.da[10], p.da[10], p.a[10]), ch(p.a[11], p.da[11], p.da[11], p.a[11])
+	p.a[12], p.a[13], p.a[14], p.a[15] = ch(p.a[12], p.da[12], p.da[12], p.a[12]), ch(p.a[13], p.da[13], p.da[13], p.a[13]), ch(p.a[14], p.da[14], p.da[14], p.a[14]), ch(p.a[15], p.da[15], p.da[15], p.a[15])
 }
 
 //go:fix inline
 func (p *LowPipeline) SourceIn() {
-	for i := 0; i < LOW_STAGE_WIDTH; i += 8 {
-		p.r[i] = uint16((uint32(p.r[i])*uint32(p.da[i]) + 255) >> 8)
-		p.r[i+1] = uint16((uint32(p.r[i+1])*uint32(p.da[i+1]) + 255) >> 8)
-		p.r[i+2] = uint16((uint32(p.r[i+2])*uint32(p.da[i+2]) + 255) >> 8)
-		p.r[i+3] = uint16((uint32(p.r[i+3])*uint32(p.da[i+3]) + 255) >> 8)
-		p.r[i+4] = uint16((uint32(p.r[i+4])*uint32(p.da[i+4]) + 255) >> 8)
-		p.r[i+5] = uint16((uint32(p.r[i+5])*uint32(p.da[i+5]) + 255) >> 8)
-		p.r[i+6] = uint16((uint32(p.r[i+6])*uint32(p.da[i+6]) + 255) >> 8)
-		p.r[i+7] = uint16((uint32(p.r[i+7])*uint32(p.da[i+7]) + 255) >> 8)
-
-		p.g[i] = uint16((uint32(p.g[i])*uint32(p.da[i]) + 255) >> 8)
-		p.g[i+1] = uint16((uint32(p.g[i+1])*uint32(p.da[i+1]) + 255) >> 8)
-		p.g[i+2] = uint16((uint32(p.g[i+2])*uint32(p.da[i+2]) + 255) >> 8)
-		p.g[i+3] = uint16((uint32(p.g[i+3])*uint32(p.da[i+3]) + 255) >> 8)
-		p.g[i+4] = uint16((uint32(p.g[i+4])*uint32(p.da[i+4]) + 255) >> 8)
-		p.g[i+5] = uint16((uint32(p.g[i+5])*uint32(p.da[i+5]) + 255) >> 8)
-		p.g[i+6] = uint16((uint32(p.g[i+6])*uint32(p.da[i+6]) + 255) >> 8)
-		p.g[i+7] = uint16((uint32(p.g[i+7])*uint32(p.da[i+7]) + 255) >> 8)
-
-		p.b[i] = uint16((uint32(p.b[i])*uint32(p.da[i]) + 255) >> 8)
-		p.b[i+1] = uint16((uint32(p.b[i+1])*uint32(p.da[i+1]) + 255) >> 8)
-		p.b[i+2] = uint16((uint32(p.b[i+2])*uint32(p.da[i+2]) + 255) >> 8)
-		p.b[i+3] = uint16((uint32(p.b[i+3])*uint32(p.da[i+3]) + 255) >> 8)
-		p.b[i+4] = uint16((uint32(p.b[i+4])*uint32(p.da[i+4]) + 255) >> 8)
-		p.b[i+5] = uint16((uint32(p.b[i+5])*uint32(p.da[i+5]) + 255) >> 8)
-		p.b[i+6] = uint16((uint32(p.b[i+6])*uint32(p.da[i+6]) + 255) >> 8)
-		p.b[i+7] = uint16((uint32(p.b[i+7])*uint32(p.da[i+7]) + 255) >> 8)
-
-		p.a[i] = uint16((uint32(p.a[i])*uint32(p.da[i]) + 255) >> 8)
-		p.a[i+1] = uint16((uint32(p.a[i+1])*uint32(p.da[i+1]) + 255) >> 8)
-		p.a[i+2] = uint16((uint32(p.a[i+2])*uint32(p.da[i+2]) + 255) >> 8)
-		p.a[i+3] = uint16((uint32(p.a[i+3])*uint32(p.da[i+3]) + 255) >> 8)
-		p.a[i+4] = uint16((uint32(p.a[i+4])*uint32(p.da[i+4]) + 255) >> 8)
-		p.a[i+5] = uint16((uint32(p.a[i+5])*uint32(p.da[i+5]) + 255) >> 8)
-		p.a[i+6] = uint16((uint32(p.a[i+6])*uint32(p.da[i+6]) + 255) >> 8)
-		p.a[i+7] = uint16((uint32(p.a[i+7])*uint32(p.da[i+7]) + 255) >> 8)
+	// Formula: div255(s * da)
+	ch := func(s, da uint16) uint16 {
+		return uint16((uint32(s)*uint32(da) + 255) >> 8)
 	}
+
+	// Blend R channel (4 at a time)
+	p.r[0], p.r[1], p.r[2], p.r[3] = ch(p.r[0], p.da[0]), ch(p.r[1], p.da[1]), ch(p.r[2], p.da[2]), ch(p.r[3], p.da[3])
+	p.r[4], p.r[5], p.r[6], p.r[7] = ch(p.r[4], p.da[4]), ch(p.r[5], p.da[5]), ch(p.r[6], p.da[6]), ch(p.r[7], p.da[7])
+	p.r[8], p.r[9], p.r[10], p.r[11] = ch(p.r[8], p.da[8]), ch(p.r[9], p.da[9]), ch(p.r[10], p.da[10]), ch(p.r[11], p.da[11])
+	p.r[12], p.r[13], p.r[14], p.r[15] = ch(p.r[12], p.da[12]), ch(p.r[13], p.da[13]), ch(p.r[14], p.da[14]), ch(p.r[15], p.da[15])
+
+	// Blend G channel (4 at a time)
+	p.g[0], p.g[1], p.g[2], p.g[3] = ch(p.g[0], p.da[0]), ch(p.g[1], p.da[1]), ch(p.g[2], p.da[2]), ch(p.g[3], p.da[3])
+	p.g[4], p.g[5], p.g[6], p.g[7] = ch(p.g[4], p.da[4]), ch(p.g[5], p.da[5]), ch(p.g[6], p.da[6]), ch(p.g[7], p.da[7])
+	p.g[8], p.g[9], p.g[10], p.g[11] = ch(p.g[8], p.da[8]), ch(p.g[9], p.da[9]), ch(p.g[10], p.da[10]), ch(p.g[11], p.da[11])
+	p.g[12], p.g[13], p.g[14], p.g[15] = ch(p.g[12], p.da[12]), ch(p.g[13], p.da[13]), ch(p.g[14], p.da[14]), ch(p.g[15], p.da[15])
+
+	// Blend B channel (4 at a time)
+	p.b[0], p.b[1], p.b[2], p.b[3] = ch(p.b[0], p.da[0]), ch(p.b[1], p.da[1]), ch(p.b[2], p.da[2]), ch(p.b[3], p.da[3])
+	p.b[4], p.b[5], p.b[6], p.b[7] = ch(p.b[4], p.da[4]), ch(p.b[5], p.da[5]), ch(p.b[6], p.da[6]), ch(p.b[7], p.da[7])
+	p.b[8], p.b[9], p.b[10], p.b[11] = ch(p.b[8], p.da[8]), ch(p.b[9], p.da[9]), ch(p.b[10], p.da[10]), ch(p.b[11], p.da[11])
+	p.b[12], p.b[13], p.b[14], p.b[15] = ch(p.b[12], p.da[12]), ch(p.b[13], p.da[13]), ch(p.b[14], p.da[14]), ch(p.b[15], p.da[15])
+
+	// Alpha channel (4 at a time)
+	p.a[0], p.a[1], p.a[2], p.a[3] = ch(p.a[0], p.da[0]), ch(p.a[1], p.da[1]), ch(p.a[2], p.da[2]), ch(p.a[3], p.da[3])
+	p.a[4], p.a[5], p.a[6], p.a[7] = ch(p.a[4], p.da[4]), ch(p.a[5], p.da[5]), ch(p.a[6], p.da[6]), ch(p.a[7], p.da[7])
+	p.a[8], p.a[9], p.a[10], p.a[11] = ch(p.a[8], p.da[8]), ch(p.a[9], p.da[9]), ch(p.a[10], p.da[10]), ch(p.a[11], p.da[11])
+	p.a[12], p.a[13], p.a[14], p.a[15] = ch(p.a[12], p.da[12]), ch(p.a[13], p.da[13]), ch(p.a[14], p.da[14]), ch(p.a[15], p.da[15])
 }
 
 //go:fix inline
 func (p *LowPipeline) SourceOut() {
-	for i := 0; i < LOW_STAGE_WIDTH; i += 8 {
-		invDa0, invDa1 := 255-p.da[i], 255-p.da[i+1]
-		invDa2, invDa3 := 255-p.da[i+2], 255-p.da[i+3]
-		invDa4, invDa5 := 255-p.da[i+4], 255-p.da[i+5]
-		invDa6, invDa7 := 255-p.da[i+6], 255-p.da[i+7]
-
-		p.r[i] = uint16((uint32(p.r[i])*uint32(invDa0) + 255) >> 8)
-		p.r[i+1] = uint16((uint32(p.r[i+1])*uint32(invDa1) + 255) >> 8)
-		p.r[i+2] = uint16((uint32(p.r[i+2])*uint32(invDa2) + 255) >> 8)
-		p.r[i+3] = uint16((uint32(p.r[i+3])*uint32(invDa3) + 255) >> 8)
-		p.r[i+4] = uint16((uint32(p.r[i+4])*uint32(invDa4) + 255) >> 8)
-		p.r[i+5] = uint16((uint32(p.r[i+5])*uint32(invDa5) + 255) >> 8)
-		p.r[i+6] = uint16((uint32(p.r[i+6])*uint32(invDa6) + 255) >> 8)
-		p.r[i+7] = uint16((uint32(p.r[i+7])*uint32(invDa7) + 255) >> 8)
-
-		p.g[i] = uint16((uint32(p.g[i])*uint32(invDa0) + 255) >> 8)
-		p.g[i+1] = uint16((uint32(p.g[i+1])*uint32(invDa1) + 255) >> 8)
-		p.g[i+2] = uint16((uint32(p.g[i+2])*uint32(invDa2) + 255) >> 8)
-		p.g[i+3] = uint16((uint32(p.g[i+3])*uint32(invDa3) + 255) >> 8)
-		p.g[i+4] = uint16((uint32(p.g[i+4])*uint32(invDa4) + 255) >> 8)
-		p.g[i+5] = uint16((uint32(p.g[i+5])*uint32(invDa5) + 255) >> 8)
-		p.g[i+6] = uint16((uint32(p.g[i+6])*uint32(invDa6) + 255) >> 8)
-		p.g[i+7] = uint16((uint32(p.g[i+7])*uint32(invDa7) + 255) >> 8)
-
-		p.b[i] = uint16((uint32(p.b[i])*uint32(invDa0) + 255) >> 8)
-		p.b[i+1] = uint16((uint32(p.b[i+1])*uint32(invDa1) + 255) >> 8)
-		p.b[i+2] = uint16((uint32(p.b[i+2])*uint32(invDa2) + 255) >> 8)
-		p.b[i+3] = uint16((uint32(p.b[i+3])*uint32(invDa3) + 255) >> 8)
-		p.b[i+4] = uint16((uint32(p.b[i+4])*uint32(invDa4) + 255) >> 8)
-		p.b[i+5] = uint16((uint32(p.b[i+5])*uint32(invDa5) + 255) >> 8)
-		p.b[i+6] = uint16((uint32(p.b[i+6])*uint32(invDa6) + 255) >> 8)
-		p.b[i+7] = uint16((uint32(p.b[i+7])*uint32(invDa7) + 255) >> 8)
-
-		p.a[i] = uint16((uint32(p.a[i])*uint32(invDa0) + 255) >> 8)
-		p.a[i+1] = uint16((uint32(p.a[i+1])*uint32(invDa1) + 255) >> 8)
-		p.a[i+2] = uint16((uint32(p.a[i+2])*uint32(invDa2) + 255) >> 8)
-		p.a[i+3] = uint16((uint32(p.a[i+3])*uint32(invDa3) + 255) >> 8)
-		p.a[i+4] = uint16((uint32(p.a[i+4])*uint32(invDa4) + 255) >> 8)
-		p.a[i+5] = uint16((uint32(p.a[i+5])*uint32(invDa5) + 255) >> 8)
-		p.a[i+6] = uint16((uint32(p.a[i+6])*uint32(invDa6) + 255) >> 8)
-		p.a[i+7] = uint16((uint32(p.a[i+7])*uint32(invDa7) + 255) >> 8)
+	// Formula: div255(s * inv(da))
+	ch := func(s, invDa uint16) uint16 {
+		return uint16((uint32(s)*uint32(invDa) + 255) >> 8)
 	}
+
+	// Precompute inverse alpha values (4 at a time)
+	invDa0, invDa1, invDa2, invDa3 := uint16(255-p.da[0]), uint16(255-p.da[1]), uint16(255-p.da[2]), uint16(255-p.da[3])
+	invDa4, invDa5, invDa6, invDa7 := uint16(255-p.da[4]), uint16(255-p.da[5]), uint16(255-p.da[6]), uint16(255-p.da[7])
+	invDa8, invDa9, invDa10, invDa11 := uint16(255-p.da[8]), uint16(255-p.da[9]), uint16(255-p.da[10]), uint16(255-p.da[11])
+	invDa12, invDa13, invDa14, invDa15 := uint16(255-p.da[12]), uint16(255-p.da[13]), uint16(255-p.da[14]), uint16(255-p.da[15])
+
+	// Blend R channel (4 at a time)
+	p.r[0], p.r[1], p.r[2], p.r[3] = ch(p.r[0], invDa0), ch(p.r[1], invDa1), ch(p.r[2], invDa2), ch(p.r[3], invDa3)
+	p.r[4], p.r[5], p.r[6], p.r[7] = ch(p.r[4], invDa4), ch(p.r[5], invDa5), ch(p.r[6], invDa6), ch(p.r[7], invDa7)
+	p.r[8], p.r[9], p.r[10], p.r[11] = ch(p.r[8], invDa8), ch(p.r[9], invDa9), ch(p.r[10], invDa10), ch(p.r[11], invDa11)
+	p.r[12], p.r[13], p.r[14], p.r[15] = ch(p.r[12], invDa12), ch(p.r[13], invDa13), ch(p.r[14], invDa14), ch(p.r[15], invDa15)
+
+	// Blend G channel (4 at a time)
+	p.g[0], p.g[1], p.g[2], p.g[3] = ch(p.g[0], invDa0), ch(p.g[1], invDa1), ch(p.g[2], invDa2), ch(p.g[3], invDa3)
+	p.g[4], p.g[5], p.g[6], p.g[7] = ch(p.g[4], invDa4), ch(p.g[5], invDa5), ch(p.g[6], invDa6), ch(p.g[7], invDa7)
+	p.g[8], p.g[9], p.g[10], p.g[11] = ch(p.g[8], invDa8), ch(p.g[9], invDa9), ch(p.g[10], invDa10), ch(p.g[11], invDa11)
+	p.g[12], p.g[13], p.g[14], p.g[15] = ch(p.g[12], invDa12), ch(p.g[13], invDa13), ch(p.g[14], invDa14), ch(p.g[15], invDa15)
+
+	// Blend B channel (4 at a time)
+	p.b[0], p.b[1], p.b[2], p.b[3] = ch(p.b[0], invDa0), ch(p.b[1], invDa1), ch(p.b[2], invDa2), ch(p.b[3], invDa3)
+	p.b[4], p.b[5], p.b[6], p.b[7] = ch(p.b[4], invDa4), ch(p.b[5], invDa5), ch(p.b[6], invDa6), ch(p.b[7], invDa7)
+	p.b[8], p.b[9], p.b[10], p.b[11] = ch(p.b[8], invDa8), ch(p.b[9], invDa9), ch(p.b[10], invDa10), ch(p.b[11], invDa11)
+	p.b[12], p.b[13], p.b[14], p.b[15] = ch(p.b[12], invDa12), ch(p.b[13], invDa13), ch(p.b[14], invDa14), ch(p.b[15], invDa15)
+
+	// Alpha channel (4 at a time)
+	p.a[0], p.a[1], p.a[2], p.a[3] = ch(p.a[0], invDa0), ch(p.a[1], invDa1), ch(p.a[2], invDa2), ch(p.a[3], invDa3)
+	p.a[4], p.a[5], p.a[6], p.a[7] = ch(p.a[4], invDa4), ch(p.a[5], invDa5), ch(p.a[6], invDa6), ch(p.a[7], invDa7)
+	p.a[8], p.a[9], p.a[10], p.a[11] = ch(p.a[8], invDa8), ch(p.a[9], invDa9), ch(p.a[10], invDa10), ch(p.a[11], invDa11)
+	p.a[12], p.a[13], p.a[14], p.a[15] = ch(p.a[12], invDa12), ch(p.a[13], invDa13), ch(p.a[14], invDa14), ch(p.a[15], invDa15)
 }
 
 //go:fix inline
 func (p *LowPipeline) SourceOver() {
-	for i := 0; i < LOW_STAGE_WIDTH; i += 8 {
-		invSa0, invSa1, invSa2, invSa3 := 255-p.a[i], 255-p.a[i+1], 255-p.a[i+2], 255-p.a[i+3]
-		invSa4, invSa5, invSa6, invSa7 := 255-p.a[i+4], 255-p.a[i+5], 255-p.a[i+6], 255-p.a[i+7]
-
-		p.r[i] = uint16(uint32(p.r[i]) + (uint32(p.dr[i])*uint32(invSa0)+255)>>8)
-		p.r[i+1] = uint16(uint32(p.r[i+1]) + (uint32(p.dr[i+1])*uint32(invSa1)+255)>>8)
-		p.r[i+2] = uint16(uint32(p.r[i+2]) + (uint32(p.dr[i+2])*uint32(invSa2)+255)>>8)
-		p.r[i+3] = uint16(uint32(p.r[i+3]) + (uint32(p.dr[i+3])*uint32(invSa3)+255)>>8)
-		p.r[i+4] = uint16(uint32(p.r[i+4]) + (uint32(p.dr[i+4])*uint32(invSa4)+255)>>8)
-		p.r[i+5] = uint16(uint32(p.r[i+5]) + (uint32(p.dr[i+5])*uint32(invSa5)+255)>>8)
-		p.r[i+6] = uint16(uint32(p.r[i+6]) + (uint32(p.dr[i+6])*uint32(invSa6)+255)>>8)
-		p.r[i+7] = uint16(uint32(p.r[i+7]) + (uint32(p.dr[i+7])*uint32(invSa7)+255)>>8)
-
-		p.g[i] = uint16(uint32(p.g[i]) + (uint32(p.dg[i])*uint32(invSa0)+255)>>8)
-		p.g[i+1] = uint16(uint32(p.g[i+1]) + (uint32(p.dg[i+1])*uint32(invSa1)+255)>>8)
-		p.g[i+2] = uint16(uint32(p.g[i+2]) + (uint32(p.dg[i+2])*uint32(invSa2)+255)>>8)
-		p.g[i+3] = uint16(uint32(p.g[i+3]) + (uint32(p.dg[i+3])*uint32(invSa3)+255)>>8)
-		p.g[i+4] = uint16(uint32(p.g[i+4]) + (uint32(p.dg[i+4])*uint32(invSa4)+255)>>8)
-		p.g[i+5] = uint16(uint32(p.g[i+5]) + (uint32(p.dg[i+5])*uint32(invSa5)+255)>>8)
-		p.g[i+6] = uint16(uint32(p.g[i+6]) + (uint32(p.dg[i+6])*uint32(invSa6)+255)>>8)
-		p.g[i+7] = uint16(uint32(p.g[i+7]) + (uint32(p.dg[i+7])*uint32(invSa7)+255)>>8)
-
-		p.b[i] = uint16(uint32(p.b[i]) + (uint32(p.db[i])*uint32(invSa0)+255)>>8)
-		p.b[i+1] = uint16(uint32(p.b[i+1]) + (uint32(p.db[i+1])*uint32(invSa1)+255)>>8)
-		p.b[i+2] = uint16(uint32(p.b[i+2]) + (uint32(p.db[i+2])*uint32(invSa2)+255)>>8)
-		p.b[i+3] = uint16(uint32(p.b[i+3]) + (uint32(p.db[i+3])*uint32(invSa3)+255)>>8)
-		p.b[i+4] = uint16(uint32(p.b[i+4]) + (uint32(p.db[i+4])*uint32(invSa4)+255)>>8)
-		p.b[i+5] = uint16(uint32(p.b[i+5]) + (uint32(p.db[i+5])*uint32(invSa5)+255)>>8)
-		p.b[i+6] = uint16(uint32(p.b[i+6]) + (uint32(p.db[i+6])*uint32(invSa6)+255)>>8)
-		p.b[i+7] = uint16(uint32(p.b[i+7]) + (uint32(p.db[i+7])*uint32(invSa7)+255)>>8)
-
-		p.a[i] = uint16(uint32(p.a[i]) + (uint32(p.da[i])*uint32(invSa0)+255)>>8)
-		p.a[i+1] = uint16(uint32(p.a[i+1]) + (uint32(p.da[i+1])*uint32(invSa1)+255)>>8)
-		p.a[i+2] = uint16(uint32(p.a[i+2]) + (uint32(p.da[i+2])*uint32(invSa2)+255)>>8)
-		p.a[i+3] = uint16(uint32(p.a[i+3]) + (uint32(p.da[i+3])*uint32(invSa3)+255)>>8)
-		p.a[i+4] = uint16(uint32(p.a[i+4]) + (uint32(p.da[i+4])*uint32(invSa4)+255)>>8)
-		p.a[i+5] = uint16(uint32(p.a[i+5]) + (uint32(p.da[i+5])*uint32(invSa5)+255)>>8)
-		p.a[i+6] = uint16(uint32(p.a[i+6]) + (uint32(p.da[i+6])*uint32(invSa6)+255)>>8)
-		p.a[i+7] = uint16(uint32(p.a[i+7]) + (uint32(p.da[i+7])*uint32(invSa7)+255)>>8)
+	// Formula: s + div255(d * inv(sa))
+	ch := func(s, d, invSa uint16) uint16 {
+		return uint16(uint32(s) + ((uint32(d)*uint32(invSa) + 255) >> 8))
 	}
+
+	// Precompute inverse alpha values (4 at a time)
+	invSa0, invSa1, invSa2, invSa3 := uint16(255-p.a[0]), uint16(255-p.a[1]), uint16(255-p.a[2]), uint16(255-p.a[3])
+	invSa4, invSa5, invSa6, invSa7 := uint16(255-p.a[4]), uint16(255-p.a[5]), uint16(255-p.a[6]), uint16(255-p.a[7])
+	invSa8, invSa9, invSa10, invSa11 := uint16(255-p.a[8]), uint16(255-p.a[9]), uint16(255-p.a[10]), uint16(255-p.a[11])
+	invSa12, invSa13, invSa14, invSa15 := uint16(255-p.a[12]), uint16(255-p.a[13]), uint16(255-p.a[14]), uint16(255-p.a[15])
+
+	// Blend R channel (4 at a time)
+	p.r[0], p.r[1], p.r[2], p.r[3] = ch(p.r[0], p.dr[0], invSa0), ch(p.r[1], p.dr[1], invSa1), ch(p.r[2], p.dr[2], invSa2), ch(p.r[3], p.dr[3], invSa3)
+	p.r[4], p.r[5], p.r[6], p.r[7] = ch(p.r[4], p.dr[4], invSa4), ch(p.r[5], p.dr[5], invSa5), ch(p.r[6], p.dr[6], invSa6), ch(p.r[7], p.dr[7], invSa7)
+	p.r[8], p.r[9], p.r[10], p.r[11] = ch(p.r[8], p.dr[8], invSa8), ch(p.r[9], p.dr[9], invSa9), ch(p.r[10], p.dr[10], invSa10), ch(p.r[11], p.dr[11], invSa11)
+	p.r[12], p.r[13], p.r[14], p.r[15] = ch(p.r[12], p.dr[12], invSa12), ch(p.r[13], p.dr[13], invSa13), ch(p.r[14], p.dr[14], invSa14), ch(p.r[15], p.dr[15], invSa15)
+
+	// Blend G channel (4 at a time)
+	p.g[0], p.g[1], p.g[2], p.g[3] = ch(p.g[0], p.dg[0], invSa0), ch(p.g[1], p.dg[1], invSa1), ch(p.g[2], p.dg[2], invSa2), ch(p.g[3], p.dg[3], invSa3)
+	p.g[4], p.g[5], p.g[6], p.g[7] = ch(p.g[4], p.dg[4], invSa4), ch(p.g[5], p.dg[5], invSa5), ch(p.g[6], p.dg[6], invSa6), ch(p.g[7], p.dg[7], invSa7)
+	p.g[8], p.g[9], p.g[10], p.g[11] = ch(p.g[8], p.dg[8], invSa8), ch(p.g[9], p.dg[9], invSa9), ch(p.g[10], p.dg[10], invSa10), ch(p.g[11], p.dg[11], invSa11)
+	p.g[12], p.g[13], p.g[14], p.g[15] = ch(p.g[12], p.dg[12], invSa12), ch(p.g[13], p.dg[13], invSa13), ch(p.g[14], p.dg[14], invSa14), ch(p.g[15], p.dg[15], invSa15)
+
+	// Blend B channel (4 at a time)
+	p.b[0], p.b[1], p.b[2], p.b[3] = ch(p.b[0], p.db[0], invSa0), ch(p.b[1], p.db[1], invSa1), ch(p.b[2], p.db[2], invSa2), ch(p.b[3], p.db[3], invSa3)
+	p.b[4], p.b[5], p.b[6], p.b[7] = ch(p.b[4], p.db[4], invSa4), ch(p.b[5], p.db[5], invSa5), ch(p.b[6], p.db[6], invSa6), ch(p.b[7], p.db[7], invSa7)
+	p.b[8], p.b[9], p.b[10], p.b[11] = ch(p.b[8], p.db[8], invSa8), ch(p.b[9], p.db[9], invSa9), ch(p.b[10], p.db[10], invSa10), ch(p.b[11], p.db[11], invSa11)
+	p.b[12], p.b[13], p.b[14], p.b[15] = ch(p.b[12], p.db[12], invSa12), ch(p.b[13], p.db[13], invSa13), ch(p.b[14], p.db[14], invSa14), ch(p.b[15], p.db[15], invSa15)
+
+	// Alpha channel (4 at a time)
+	p.a[0], p.a[1], p.a[2], p.a[3] = ch(p.a[0], p.da[0], invSa0), ch(p.a[1], p.da[1], invSa1), ch(p.a[2], p.da[2], invSa2), ch(p.a[3], p.da[3], invSa3)
+	p.a[4], p.a[5], p.a[6], p.a[7] = ch(p.a[4], p.da[4], invSa4), ch(p.a[5], p.da[5], invSa5), ch(p.a[6], p.da[6], invSa6), ch(p.a[7], p.da[7], invSa7)
+	p.a[8], p.a[9], p.a[10], p.a[11] = ch(p.a[8], p.da[8], invSa8), ch(p.a[9], p.da[9], invSa9), ch(p.a[10], p.da[10], invSa10), ch(p.a[11], p.da[11], invSa11)
+	p.a[12], p.a[13], p.a[14], p.a[15] = ch(p.a[12], p.da[12], invSa12), ch(p.a[13], p.da[13], invSa13), ch(p.a[14], p.da[14], invSa14), ch(p.a[15], p.da[15], invSa15)
 }
 
 //go:fix inline
@@ -692,388 +656,188 @@ func (p *LowPipeline) Clear() {
 
 //go:fix inline
 func (p *LowPipeline) Modulate() {
-	for i := 0; i < LOW_STAGE_WIDTH; i += 8 {
-		p.r[i] = uint16((uint32(p.r[i])*uint32(p.dr[i]) + 255) >> 8)
-		p.r[i+1] = uint16((uint32(p.r[i+1])*uint32(p.dr[i+1]) + 255) >> 8)
-		p.r[i+2] = uint16((uint32(p.r[i+2])*uint32(p.dr[i+2]) + 255) >> 8)
-		p.r[i+3] = uint16((uint32(p.r[i+3])*uint32(p.dr[i+3]) + 255) >> 8)
-		p.r[i+4] = uint16((uint32(p.r[i+4])*uint32(p.dr[i+4]) + 255) >> 8)
-		p.r[i+5] = uint16((uint32(p.r[i+5])*uint32(p.dr[i+5]) + 255) >> 8)
-		p.r[i+6] = uint16((uint32(p.r[i+6])*uint32(p.dr[i+6]) + 255) >> 8)
-		p.r[i+7] = uint16((uint32(p.r[i+7])*uint32(p.dr[i+7]) + 255) >> 8)
-
-		p.g[i] = uint16((uint32(p.g[i])*uint32(p.dg[i]) + 255) >> 8)
-		p.g[i+1] = uint16((uint32(p.g[i+1])*uint32(p.dg[i+1]) + 255) >> 8)
-		p.g[i+2] = uint16((uint32(p.g[i+2])*uint32(p.dg[i+2]) + 255) >> 8)
-		p.g[i+3] = uint16((uint32(p.g[i+3])*uint32(p.dg[i+3]) + 255) >> 8)
-		p.g[i+4] = uint16((uint32(p.g[i+4])*uint32(p.dg[i+4]) + 255) >> 8)
-		p.g[i+5] = uint16((uint32(p.g[i+5])*uint32(p.dg[i+5]) + 255) >> 8)
-		p.g[i+6] = uint16((uint32(p.g[i+6])*uint32(p.dg[i+6]) + 255) >> 8)
-		p.g[i+7] = uint16((uint32(p.g[i+7])*uint32(p.dg[i+7]) + 255) >> 8)
-
-		p.b[i] = uint16((uint32(p.b[i])*uint32(p.db[i]) + 255) >> 8)
-		p.b[i+1] = uint16((uint32(p.b[i+1])*uint32(p.db[i+1]) + 255) >> 8)
-		p.b[i+2] = uint16((uint32(p.b[i+2])*uint32(p.db[i+2]) + 255) >> 8)
-		p.b[i+3] = uint16((uint32(p.b[i+3])*uint32(p.db[i+3]) + 255) >> 8)
-		p.b[i+4] = uint16((uint32(p.b[i+4])*uint32(p.db[i+4]) + 255) >> 8)
-		p.b[i+5] = uint16((uint32(p.b[i+5])*uint32(p.db[i+5]) + 255) >> 8)
-		p.b[i+6] = uint16((uint32(p.b[i+6])*uint32(p.db[i+6]) + 255) >> 8)
-		p.b[i+7] = uint16((uint32(p.b[i+7])*uint32(p.db[i+7]) + 255) >> 8)
-
-		p.a[i] = uint16((uint32(p.a[i])*uint32(p.da[i]) + 255) >> 8)
-		p.a[i+1] = uint16((uint32(p.a[i+1])*uint32(p.da[i+1]) + 255) >> 8)
-		p.a[i+2] = uint16((uint32(p.a[i+2])*uint32(p.da[i+2]) + 255) >> 8)
-		p.a[i+3] = uint16((uint32(p.a[i+3])*uint32(p.da[i+3]) + 255) >> 8)
-		p.a[i+4] = uint16((uint32(p.a[i+4])*uint32(p.da[i+4]) + 255) >> 8)
-		p.a[i+5] = uint16((uint32(p.a[i+5])*uint32(p.da[i+5]) + 255) >> 8)
-		p.a[i+6] = uint16((uint32(p.a[i+6])*uint32(p.da[i+6]) + 255) >> 8)
-		p.a[i+7] = uint16((uint32(p.a[i+7])*uint32(p.da[i+7]) + 255) >> 8)
+	// Formula: div255(s * d)
+	ch := func(s, d uint16) uint16 {
+		return uint16((uint32(s)*uint32(d) + 255) >> 8)
 	}
+
+	// Blend R channel (4 at a time)
+	p.r[0], p.r[1], p.r[2], p.r[3] = ch(p.r[0], p.dr[0]), ch(p.r[1], p.dr[1]), ch(p.r[2], p.dr[2]), ch(p.r[3], p.dr[3])
+	p.r[4], p.r[5], p.r[6], p.r[7] = ch(p.r[4], p.dr[4]), ch(p.r[5], p.dr[5]), ch(p.r[6], p.dr[6]), ch(p.r[7], p.dr[7])
+	p.r[8], p.r[9], p.r[10], p.r[11] = ch(p.r[8], p.dr[8]), ch(p.r[9], p.dr[9]), ch(p.r[10], p.dr[10]), ch(p.r[11], p.dr[11])
+	p.r[12], p.r[13], p.r[14], p.r[15] = ch(p.r[12], p.dr[12]), ch(p.r[13], p.dr[13]), ch(p.r[14], p.dr[14]), ch(p.r[15], p.dr[15])
+
+	// Blend G channel (4 at a time)
+	p.g[0], p.g[1], p.g[2], p.g[3] = ch(p.g[0], p.dg[0]), ch(p.g[1], p.dg[1]), ch(p.g[2], p.dg[2]), ch(p.g[3], p.dg[3])
+	p.g[4], p.g[5], p.g[6], p.g[7] = ch(p.g[4], p.dg[4]), ch(p.g[5], p.dg[5]), ch(p.g[6], p.dg[6]), ch(p.g[7], p.dg[7])
+	p.g[8], p.g[9], p.g[10], p.g[11] = ch(p.g[8], p.dg[8]), ch(p.g[9], p.dg[9]), ch(p.g[10], p.dg[10]), ch(p.g[11], p.dg[11])
+	p.g[12], p.g[13], p.g[14], p.g[15] = ch(p.g[12], p.dg[12]), ch(p.g[13], p.dg[13]), ch(p.g[14], p.dg[14]), ch(p.g[15], p.dg[15])
+
+	// Blend B channel (4 at a time)
+	p.b[0], p.b[1], p.b[2], p.b[3] = ch(p.b[0], p.db[0]), ch(p.b[1], p.db[1]), ch(p.b[2], p.db[2]), ch(p.b[3], p.db[3])
+	p.b[4], p.b[5], p.b[6], p.b[7] = ch(p.b[4], p.db[4]), ch(p.b[5], p.db[5]), ch(p.b[6], p.db[6]), ch(p.b[7], p.db[7])
+	p.b[8], p.b[9], p.b[10], p.b[11] = ch(p.b[8], p.db[8]), ch(p.b[9], p.db[9]), ch(p.b[10], p.db[10]), ch(p.b[11], p.db[11])
+	p.b[12], p.b[13], p.b[14], p.b[15] = ch(p.b[12], p.db[12]), ch(p.b[13], p.db[13]), ch(p.b[14], p.db[14]), ch(p.b[15], p.db[15])
+
+	// Alpha channel (4 at a time)
+	p.a[0], p.a[1], p.a[2], p.a[3] = ch(p.a[0], p.da[0]), ch(p.a[1], p.da[1]), ch(p.a[2], p.da[2]), ch(p.a[3], p.da[3])
+	p.a[4], p.a[5], p.a[6], p.a[7] = ch(p.a[4], p.da[4]), ch(p.a[5], p.da[5]), ch(p.a[6], p.da[6]), ch(p.a[7], p.da[7])
+	p.a[8], p.a[9], p.a[10], p.a[11] = ch(p.a[8], p.da[8]), ch(p.a[9], p.da[9]), ch(p.a[10], p.da[10]), ch(p.a[11], p.da[11])
+	p.a[12], p.a[13], p.a[14], p.a[15] = ch(p.a[12], p.da[12]), ch(p.a[13], p.da[13]), ch(p.a[14], p.da[14]), ch(p.a[15], p.da[15])
 }
 
 //go:fix inline
 func (p *LowPipeline) Multiply() {
-	for i := 0; i < LOW_STAGE_WIDTH; i += 8 {
-		invDa0, invDa1, invDa2, invDa3 := 255-p.da[i], 255-p.da[i+1], 255-p.da[i+2], 255-p.da[i+3]
-		invDa4, invDa5, invDa6, invDa7 := 255-p.da[i+4], 255-p.da[i+5], 255-p.da[i+6], 255-p.da[i+7]
-		invSa0, invSa1, invSa2, invSa3 := 255-p.a[i], 255-p.a[i+1], 255-p.a[i+2], 255-p.a[i+3]
-		invSa4, invSa5, invSa6, invSa7 := 255-p.a[i+4], 255-p.a[i+5], 255-p.a[i+6], 255-p.a[i+7]
-
-		p.r[i] = uint16((uint32(p.r[i])*uint32(invDa0) + uint32(p.dr[i])*uint32(invSa0) + uint32(p.r[i])*uint32(p.dr[i]) + 255) >> 8)
-		p.r[i+1] = uint16((uint32(p.r[i+1])*uint32(invDa1) + uint32(p.dr[i+1])*uint32(invSa1) + uint32(p.r[i+1])*uint32(p.dr[i+1]) + 255) >> 8)
-		p.r[i+2] = uint16((uint32(p.r[i+2])*uint32(invDa2) + uint32(p.dr[i+2])*uint32(invSa2) + uint32(p.r[i+2])*uint32(p.dr[i+2]) + 255) >> 8)
-		p.r[i+3] = uint16((uint32(p.r[i+3])*uint32(invDa3) + uint32(p.dr[i+3])*uint32(invSa3) + uint32(p.r[i+3])*uint32(p.dr[i+3]) + 255) >> 8)
-		p.r[i+4] = uint16((uint32(p.r[i+4])*uint32(invDa4) + uint32(p.dr[i+4])*uint32(invSa4) + uint32(p.r[i+4])*uint32(p.dr[i+4]) + 255) >> 8)
-		p.r[i+5] = uint16((uint32(p.r[i+5])*uint32(invDa5) + uint32(p.dr[i+5])*uint32(invSa5) + uint32(p.r[i+5])*uint32(p.dr[i+5]) + 255) >> 8)
-		p.r[i+6] = uint16((uint32(p.r[i+6])*uint32(invDa6) + uint32(p.dr[i+6])*uint32(invSa6) + uint32(p.r[i+6])*uint32(p.dr[i+6]) + 255) >> 8)
-		p.r[i+7] = uint16((uint32(p.r[i+7])*uint32(invDa7) + uint32(p.dr[i+7])*uint32(invSa7) + uint32(p.r[i+7])*uint32(p.dr[i+7]) + 255) >> 8)
-
-		p.g[i] = uint16((uint32(p.g[i])*uint32(invDa0) + uint32(p.dg[i])*uint32(invSa0) + uint32(p.g[i])*uint32(p.dg[i]) + 255) >> 8)
-		p.g[i+1] = uint16((uint32(p.g[i+1])*uint32(invDa1) + uint32(p.dg[i+1])*uint32(invSa1) + uint32(p.g[i+1])*uint32(p.dg[i+1]) + 255) >> 8)
-		p.g[i+2] = uint16((uint32(p.g[i+2])*uint32(invDa2) + uint32(p.dg[i+2])*uint32(invSa2) + uint32(p.g[i+2])*uint32(p.dg[i+2]) + 255) >> 8)
-		p.g[i+3] = uint16((uint32(p.g[i+3])*uint32(invDa3) + uint32(p.dg[i+3])*uint32(invSa3) + uint32(p.g[i+3])*uint32(p.dg[i+3]) + 255) >> 8)
-		p.g[i+4] = uint16((uint32(p.g[i+4])*uint32(invDa4) + uint32(p.dg[i+4])*uint32(invSa4) + uint32(p.g[i+4])*uint32(p.dg[i+4]) + 255) >> 8)
-		p.g[i+5] = uint16((uint32(p.g[i+5])*uint32(invDa5) + uint32(p.dg[i+5])*uint32(invSa5) + uint32(p.g[i+5])*uint32(p.dg[i+5]) + 255) >> 8)
-		p.g[i+6] = uint16((uint32(p.g[i+6])*uint32(invDa6) + uint32(p.dg[i+6])*uint32(invSa6) + uint32(p.g[i+6])*uint32(p.dg[i+6]) + 255) >> 8)
-		p.g[i+7] = uint16((uint32(p.g[i+7])*uint32(invDa7) + uint32(p.dg[i+7])*uint32(invSa7) + uint32(p.g[i+7])*uint32(p.dg[i+7]) + 255) >> 8)
-
-		p.b[i] = uint16((uint32(p.b[i])*uint32(invDa0) + uint32(p.db[i])*uint32(invSa0) + uint32(p.b[i])*uint32(p.db[i]) + 255) >> 8)
-		p.b[i+1] = uint16((uint32(p.b[i+1])*uint32(invDa1) + uint32(p.db[i+1])*uint32(invSa1) + uint32(p.b[i+1])*uint32(p.db[i+1]) + 255) >> 8)
-		p.b[i+2] = uint16((uint32(p.b[i+2])*uint32(invDa2) + uint32(p.db[i+2])*uint32(invSa2) + uint32(p.b[i+2])*uint32(p.db[i+2]) + 255) >> 8)
-		p.b[i+3] = uint16((uint32(p.b[i+3])*uint32(invDa3) + uint32(p.db[i+3])*uint32(invSa3) + uint32(p.b[i+3])*uint32(p.db[i+3]) + 255) >> 8)
-		p.b[i+4] = uint16((uint32(p.b[i+4])*uint32(invDa4) + uint32(p.db[i+4])*uint32(invSa4) + uint32(p.b[i+4])*uint32(p.db[i+4]) + 255) >> 8)
-		p.b[i+5] = uint16((uint32(p.b[i+5])*uint32(invDa5) + uint32(p.db[i+5])*uint32(invSa5) + uint32(p.b[i+5])*uint32(p.db[i+5]) + 255) >> 8)
-		p.b[i+6] = uint16((uint32(p.b[i+6])*uint32(invDa6) + uint32(p.db[i+6])*uint32(invSa6) + uint32(p.b[i+6])*uint32(p.db[i+6]) + 255) >> 8)
-		p.b[i+7] = uint16((uint32(p.b[i+7])*uint32(invDa7) + uint32(p.db[i+7])*uint32(invSa7) + uint32(p.b[i+7])*uint32(p.db[i+7]) + 255) >> 8)
-
-		p.a[i] = uint16((uint32(p.a[i])*uint32(invDa0) + uint32(p.da[i])*uint32(invSa0) + uint32(p.a[i])*uint32(p.da[i]) + 255) >> 8)
-		p.a[i+1] = uint16((uint32(p.a[i+1])*uint32(invDa1) + uint32(p.da[i+1])*uint32(invSa1) + uint32(p.a[i+1])*uint32(p.da[i+1]) + 255) >> 8)
-		p.a[i+2] = uint16((uint32(p.a[i+2])*uint32(invDa2) + uint32(p.da[i+2])*uint32(invSa2) + uint32(p.a[i+2])*uint32(p.da[i+2]) + 255) >> 8)
-		p.a[i+3] = uint16((uint32(p.a[i+3])*uint32(invDa3) + uint32(p.da[i+3])*uint32(invSa3) + uint32(p.a[i+3])*uint32(p.da[i+3]) + 255) >> 8)
-		p.a[i+4] = uint16((uint32(p.a[i+4])*uint32(invDa4) + uint32(p.da[i+4])*uint32(invSa4) + uint32(p.a[i+4])*uint32(p.da[i+4]) + 255) >> 8)
-		p.a[i+5] = uint16((uint32(p.a[i+5])*uint32(invDa5) + uint32(p.da[i+5])*uint32(invSa5) + uint32(p.a[i+5])*uint32(p.da[i+5]) + 255) >> 8)
-		p.a[i+6] = uint16((uint32(p.a[i+6])*uint32(invDa6) + uint32(p.da[i+6])*uint32(invSa6) + uint32(p.a[i+6])*uint32(p.da[i+6]) + 255) >> 8)
-		p.a[i+7] = uint16((uint32(p.a[i+7])*uint32(invDa7) + uint32(p.da[i+7])*uint32(invSa7) + uint32(p.a[i+7])*uint32(p.da[i+7]) + 255) >> 8)
+	// Formula: div255(s * inv(da) + d * inv(sa) + s * d)
+	ch := func(s, d, invSa, invDa uint16) uint16 {
+		return uint16((uint32(s)*uint32(invDa) + uint32(d)*uint32(invSa) + uint32(s)*uint32(d) + 255) >> 8)
 	}
+
+	// Precompute inverse alpha values (4 at a time)
+	invSa0, invSa1, invSa2, invSa3 := uint16(255-p.a[0]), uint16(255-p.a[1]), uint16(255-p.a[2]), uint16(255-p.a[3])
+	invSa4, invSa5, invSa6, invSa7 := uint16(255-p.a[4]), uint16(255-p.a[5]), uint16(255-p.a[6]), uint16(255-p.a[7])
+	invSa8, invSa9, invSa10, invSa11 := uint16(255-p.a[8]), uint16(255-p.a[9]), uint16(255-p.a[10]), uint16(255-p.a[11])
+	invSa12, invSa13, invSa14, invSa15 := uint16(255-p.a[12]), uint16(255-p.a[13]), uint16(255-p.a[14]), uint16(255-p.a[15])
+
+	invDa0, invDa1, invDa2, invDa3 := uint16(255-p.da[0]), uint16(255-p.da[1]), uint16(255-p.da[2]), uint16(255-p.da[3])
+	invDa4, invDa5, invDa6, invDa7 := uint16(255-p.da[4]), uint16(255-p.da[5]), uint16(255-p.da[6]), uint16(255-p.da[7])
+	invDa8, invDa9, invDa10, invDa11 := uint16(255-p.da[8]), uint16(255-p.da[9]), uint16(255-p.da[10]), uint16(255-p.da[11])
+	invDa12, invDa13, invDa14, invDa15 := uint16(255-p.da[12]), uint16(255-p.da[13]), uint16(255-p.da[14]), uint16(255-p.da[15])
+
+	// Blend R channel (4 at a time)
+	p.r[0], p.r[1], p.r[2], p.r[3] = ch(p.r[0], p.dr[0], invSa0, invDa0), ch(p.r[1], p.dr[1], invSa1, invDa1), ch(p.r[2], p.dr[2], invSa2, invDa2), ch(p.r[3], p.dr[3], invSa3, invDa3)
+	p.r[4], p.r[5], p.r[6], p.r[7] = ch(p.r[4], p.dr[4], invSa4, invDa4), ch(p.r[5], p.dr[5], invSa5, invDa5), ch(p.r[6], p.dr[6], invSa6, invDa6), ch(p.r[7], p.dr[7], invSa7, invDa7)
+	p.r[8], p.r[9], p.r[10], p.r[11] = ch(p.r[8], p.dr[8], invSa8, invDa8), ch(p.r[9], p.dr[9], invSa9, invDa9), ch(p.r[10], p.dr[10], invSa10, invDa10), ch(p.r[11], p.dr[11], invSa11, invDa11)
+	p.r[12], p.r[13], p.r[14], p.r[15] = ch(p.r[12], p.dr[12], invSa12, invDa12), ch(p.r[13], p.dr[13], invSa13, invDa13), ch(p.r[14], p.dr[14], invSa14, invDa14), ch(p.r[15], p.dr[15], invSa15, invDa15)
+
+	// Blend G channel (4 at a time)
+	p.g[0], p.g[1], p.g[2], p.g[3] = ch(p.g[0], p.dg[0], invSa0, invDa0), ch(p.g[1], p.dg[1], invSa1, invDa1), ch(p.g[2], p.dg[2], invSa2, invDa2), ch(p.g[3], p.dg[3], invSa3, invDa3)
+	p.g[4], p.g[5], p.g[6], p.g[7] = ch(p.g[4], p.dg[4], invSa4, invDa4), ch(p.g[5], p.dg[5], invSa5, invDa5), ch(p.g[6], p.dg[6], invSa6, invDa6), ch(p.g[7], p.dg[7], invSa7, invDa7)
+	p.g[8], p.g[9], p.g[10], p.g[11] = ch(p.g[8], p.dg[8], invSa8, invDa8), ch(p.g[9], p.dg[9], invSa9, invDa9), ch(p.g[10], p.dg[10], invSa10, invDa10), ch(p.g[11], p.dg[11], invSa11, invDa11)
+	p.g[12], p.g[13], p.g[14], p.g[15] = ch(p.g[12], p.dg[12], invSa12, invDa12), ch(p.g[13], p.dg[13], invSa13, invDa13), ch(p.g[14], p.dg[14], invSa14, invDa14), ch(p.g[15], p.dg[15], invSa15, invDa15)
+
+	// Blend B channel (4 at a time)
+	p.b[0], p.b[1], p.b[2], p.b[3] = ch(p.b[0], p.db[0], invSa0, invDa0), ch(p.b[1], p.db[1], invSa1, invDa1), ch(p.b[2], p.db[2], invSa2, invDa2), ch(p.b[3], p.db[3], invSa3, invDa3)
+	p.b[4], p.b[5], p.b[6], p.b[7] = ch(p.b[4], p.db[4], invSa4, invDa4), ch(p.b[5], p.db[5], invSa5, invDa5), ch(p.b[6], p.db[6], invSa6, invDa6), ch(p.b[7], p.db[7], invSa7, invDa7)
+	p.b[8], p.b[9], p.b[10], p.b[11] = ch(p.b[8], p.db[8], invSa8, invDa8), ch(p.b[9], p.db[9], invSa9, invDa9), ch(p.b[10], p.db[10], invSa10, invDa10), ch(p.b[11], p.db[11], invSa11, invDa11)
+	p.b[12], p.b[13], p.b[14], p.b[15] = ch(p.b[12], p.db[12], invSa12, invDa12), ch(p.b[13], p.db[13], invSa13, invDa13), ch(p.b[14], p.db[14], invSa14, invDa14), ch(p.b[15], p.db[15], invSa15, invDa15)
+
+	// Alpha channel (4 at a time)
+	p.a[0], p.a[1], p.a[2], p.a[3] = ch(p.a[0], p.da[0], invSa0, invDa0), ch(p.a[1], p.da[1], invSa1, invDa1), ch(p.a[2], p.da[2], invSa2, invDa2), ch(p.a[3], p.da[3], invSa3, invDa3)
+	p.a[4], p.a[5], p.a[6], p.a[7] = ch(p.a[4], p.da[4], invSa4, invDa4), ch(p.a[5], p.da[5], invSa5, invDa5), ch(p.a[6], p.da[6], invSa6, invDa6), ch(p.a[7], p.da[7], invSa7, invDa7)
+	p.a[8], p.a[9], p.a[10], p.a[11] = ch(p.a[8], p.da[8], invSa8, invDa8), ch(p.a[9], p.da[9], invSa9, invDa9), ch(p.a[10], p.da[10], invSa10, invDa10), ch(p.a[11], p.da[11], invSa11, invDa11)
+	p.a[12], p.a[13], p.a[14], p.a[15] = ch(p.a[12], p.da[12], invSa12, invDa12), ch(p.a[13], p.da[13], invSa13, invDa13), ch(p.a[14], p.da[14], invSa14, invDa14), ch(p.a[15], p.da[15], invSa15, invDa15)
 }
 
 //go:fix inline
 func (p *LowPipeline) Plus() {
-	for i := 0; i < LOW_STAGE_WIDTH; i += 8 {
-		sum := uint32(p.r[i]) + uint32(p.dr[i])
+	// Formula: (s + d).min(255)
+	ch := func(s, d uint16) uint16 {
+		sum := uint32(s) + uint32(d)
 		if sum > 255 {
-			p.r[i] = 255
-		} else {
-			p.r[i] = uint16(sum)
+			return 255
 		}
-
-		sum = uint32(p.r[i+1]) + uint32(p.dr[i+1])
-		if sum > 255 {
-			p.r[i+1] = 255
-		} else {
-			p.r[i+1] = uint16(sum)
-		}
-
-		sum = uint32(p.r[i+2]) + uint32(p.dr[i+2])
-		if sum > 255 {
-			p.r[i+2] = 255
-		} else {
-			p.r[i+2] = uint16(sum)
-		}
-
-		sum = uint32(p.r[i+3]) + uint32(p.dr[i+3])
-		if sum > 255 {
-			p.r[i+3] = 255
-		} else {
-			p.r[i+3] = uint16(sum)
-		}
-
-		sum = uint32(p.r[i+4]) + uint32(p.dr[i+4])
-		if sum > 255 {
-			p.r[i+4] = 255
-		} else {
-			p.r[i+4] = uint16(sum)
-		}
-
-		sum = uint32(p.r[i+5]) + uint32(p.dr[i+5])
-		if sum > 255 {
-			p.r[i+5] = 255
-		} else {
-			p.r[i+5] = uint16(sum)
-		}
-
-		sum = uint32(p.r[i+6]) + uint32(p.dr[i+6])
-		if sum > 255 {
-			p.r[i+6] = 255
-		} else {
-			p.r[i+6] = uint16(sum)
-		}
-
-		sum = uint32(p.r[i+7]) + uint32(p.dr[i+7])
-		if sum > 255 {
-			p.r[i+7] = 255
-		} else {
-			p.r[i+7] = uint16(sum)
-		}
-
-		// G channel
-		sum = uint32(p.g[i]) + uint32(p.dg[i])
-		if sum > 255 {
-			p.g[i] = 255
-		} else {
-			p.g[i] = uint16(sum)
-		}
-		sum = uint32(p.g[i+1]) + uint32(p.dg[i+1])
-		if sum > 255 {
-			p.g[i+1] = 255
-		} else {
-			p.g[i+1] = uint16(sum)
-		}
-		sum = uint32(p.g[i+2]) + uint32(p.dg[i+2])
-		if sum > 255 {
-			p.g[i+2] = 255
-		} else {
-			p.g[i+2] = uint16(sum)
-		}
-		sum = uint32(p.g[i+3]) + uint32(p.dg[i+3])
-		if sum > 255 {
-			p.g[i+3] = 255
-		} else {
-			p.g[i+3] = uint16(sum)
-		}
-		sum = uint32(p.g[i+4]) + uint32(p.dg[i+4])
-		if sum > 255 {
-			p.g[i+4] = 255
-		} else {
-			p.g[i+4] = uint16(sum)
-		}
-		sum = uint32(p.g[i+5]) + uint32(p.dg[i+5])
-		if sum > 255 {
-			p.g[i+5] = 255
-		} else {
-			p.g[i+5] = uint16(sum)
-		}
-		sum = uint32(p.g[i+6]) + uint32(p.dg[i+6])
-		if sum > 255 {
-			p.g[i+6] = 255
-		} else {
-			p.g[i+6] = uint16(sum)
-		}
-		sum = uint32(p.g[i+7]) + uint32(p.dg[i+7])
-		if sum > 255 {
-			p.g[i+7] = 255
-		} else {
-			p.g[i+7] = uint16(sum)
-		}
-
-		// B channel
-		sum = uint32(p.b[i]) + uint32(p.db[i])
-		if sum > 255 {
-			p.b[i] = 255
-		} else {
-			p.b[i] = uint16(sum)
-		}
-		sum = uint32(p.b[i+1]) + uint32(p.db[i+1])
-		if sum > 255 {
-			p.b[i+1] = 255
-		} else {
-			p.b[i+1] = uint16(sum)
-		}
-		sum = uint32(p.b[i+2]) + uint32(p.db[i+2])
-		if sum > 255 {
-			p.b[i+2] = 255
-		} else {
-			p.b[i+2] = uint16(sum)
-		}
-		sum = uint32(p.b[i+3]) + uint32(p.db[i+3])
-		if sum > 255 {
-			p.b[i+3] = 255
-		} else {
-			p.b[i+3] = uint16(sum)
-		}
-		sum = uint32(p.b[i+4]) + uint32(p.db[i+4])
-		if sum > 255 {
-			p.b[i+4] = 255
-		} else {
-			p.b[i+4] = uint16(sum)
-		}
-		sum = uint32(p.b[i+5]) + uint32(p.db[i+5])
-		if sum > 255 {
-			p.b[i+5] = 255
-		} else {
-			p.b[i+5] = uint16(sum)
-		}
-		sum = uint32(p.b[i+6]) + uint32(p.db[i+6])
-		if sum > 255 {
-			p.b[i+6] = 255
-		} else {
-			p.b[i+6] = uint16(sum)
-		}
-		sum = uint32(p.b[i+7]) + uint32(p.db[i+7])
-		if sum > 255 {
-			p.b[i+7] = 255
-		} else {
-			p.b[i+7] = uint16(sum)
-		}
-
-		// A channel
-		sum = uint32(p.a[i]) + uint32(p.da[i])
-		if sum > 255 {
-			p.a[i] = 255
-		} else {
-			p.a[i] = uint16(sum)
-		}
-		sum = uint32(p.a[i+1]) + uint32(p.da[i+1])
-		if sum > 255 {
-			p.a[i+1] = 255
-		} else {
-			p.a[i+1] = uint16(sum)
-		}
-		sum = uint32(p.a[i+2]) + uint32(p.da[i+2])
-		if sum > 255 {
-			p.a[i+2] = 255
-		} else {
-			p.a[i+2] = uint16(sum)
-		}
-		sum = uint32(p.a[i+3]) + uint32(p.da[i+3])
-		if sum > 255 {
-			p.a[i+3] = 255
-		} else {
-			p.a[i+3] = uint16(sum)
-		}
-		sum = uint32(p.a[i+4]) + uint32(p.da[i+4])
-		if sum > 255 {
-			p.a[i+4] = 255
-		} else {
-			p.a[i+4] = uint16(sum)
-		}
-		sum = uint32(p.a[i+5]) + uint32(p.da[i+5])
-		if sum > 255 {
-			p.a[i+5] = 255
-		} else {
-			p.a[i+5] = uint16(sum)
-		}
-		sum = uint32(p.a[i+6]) + uint32(p.da[i+6])
-		if sum > 255 {
-			p.a[i+6] = 255
-		} else {
-			p.a[i+6] = uint16(sum)
-		}
-		sum = uint32(p.a[i+7]) + uint32(p.da[i+7])
-		if sum > 255 {
-			p.a[i+7] = 255
-		} else {
-			p.a[i+7] = uint16(sum)
-		}
+		return uint16(sum)
 	}
 
+	// Blend R channel (4 at a time)
+	p.r[0], p.r[1], p.r[2], p.r[3] = ch(p.r[0], p.dr[0]), ch(p.r[1], p.dr[1]), ch(p.r[2], p.dr[2]), ch(p.r[3], p.dr[3])
+	p.r[4], p.r[5], p.r[6], p.r[7] = ch(p.r[4], p.dr[4]), ch(p.r[5], p.dr[5]), ch(p.r[6], p.dr[6]), ch(p.r[7], p.dr[7])
+	p.r[8], p.r[9], p.r[10], p.r[11] = ch(p.r[8], p.dr[8]), ch(p.r[9], p.dr[9]), ch(p.r[10], p.dr[10]), ch(p.r[11], p.dr[11])
+	p.r[12], p.r[13], p.r[14], p.r[15] = ch(p.r[12], p.dr[12]), ch(p.r[13], p.dr[13]), ch(p.r[14], p.dr[14]), ch(p.r[15], p.dr[15])
+
+	// Blend G channel (4 at a time)
+	p.g[0], p.g[1], p.g[2], p.g[3] = ch(p.g[0], p.dg[0]), ch(p.g[1], p.dg[1]), ch(p.g[2], p.dg[2]), ch(p.g[3], p.dg[3])
+	p.g[4], p.g[5], p.g[6], p.g[7] = ch(p.g[4], p.dg[4]), ch(p.g[5], p.dg[5]), ch(p.g[6], p.dg[6]), ch(p.g[7], p.dg[7])
+	p.g[8], p.g[9], p.g[10], p.g[11] = ch(p.g[8], p.dg[8]), ch(p.g[9], p.dg[9]), ch(p.g[10], p.dg[10]), ch(p.g[11], p.dg[11])
+	p.g[12], p.g[13], p.g[14], p.g[15] = ch(p.g[12], p.dg[12]), ch(p.g[13], p.dg[13]), ch(p.g[14], p.dg[14]), ch(p.g[15], p.dg[15])
+
+	// Blend B channel (4 at a time)
+	p.b[0], p.b[1], p.b[2], p.b[3] = ch(p.b[0], p.db[0]), ch(p.b[1], p.db[1]), ch(p.b[2], p.db[2]), ch(p.b[3], p.db[3])
+	p.b[4], p.b[5], p.b[6], p.b[7] = ch(p.b[4], p.db[4]), ch(p.b[5], p.db[5]), ch(p.b[6], p.db[6]), ch(p.b[7], p.db[7])
+	p.b[8], p.b[9], p.b[10], p.b[11] = ch(p.b[8], p.db[8]), ch(p.b[9], p.db[9]), ch(p.b[10], p.db[10]), ch(p.b[11], p.db[11])
+	p.b[12], p.b[13], p.b[14], p.b[15] = ch(p.b[12], p.db[12]), ch(p.b[13], p.db[13]), ch(p.b[14], p.db[14]), ch(p.b[15], p.db[15])
+
+	// Alpha channel (4 at a time)
+	p.a[0], p.a[1], p.a[2], p.a[3] = ch(p.a[0], p.da[0]), ch(p.a[1], p.da[1]), ch(p.a[2], p.da[2]), ch(p.a[3], p.da[3])
+	p.a[4], p.a[5], p.a[6], p.a[7] = ch(p.a[4], p.da[4]), ch(p.a[5], p.da[5]), ch(p.a[6], p.da[6]), ch(p.a[7], p.da[7])
+	p.a[8], p.a[9], p.a[10], p.a[11] = ch(p.a[8], p.da[8]), ch(p.a[9], p.da[9]), ch(p.a[10], p.da[10]), ch(p.a[11], p.da[11])
+	p.a[12], p.a[13], p.a[14], p.a[15] = ch(p.a[12], p.da[12]), ch(p.a[13], p.da[13]), ch(p.a[14], p.da[14]), ch(p.a[15], p.da[15])
 }
 
 //go:fix inline
 func (p *LowPipeline) Screen() {
-	for i := 0; i < LOW_STAGE_WIDTH; i += 8 {
-		p.r[i] = uint16(uint32(p.r[i]) + uint32(p.dr[i]) - (uint32(p.r[i])*uint32(p.dr[i])+255)>>8)
-		p.r[i+1] = uint16(uint32(p.r[i+1]) + uint32(p.dr[i+1]) - (uint32(p.r[i+1])*uint32(p.dr[i+1])+255)>>8)
-		p.r[i+2] = uint16(uint32(p.r[i+2]) + uint32(p.dr[i+2]) - (uint32(p.r[i+2])*uint32(p.dr[i+2])+255)>>8)
-		p.r[i+3] = uint16(uint32(p.r[i+3]) + uint32(p.dr[i+3]) - (uint32(p.r[i+3])*uint32(p.dr[i+3])+255)>>8)
-		p.r[i+4] = uint16(uint32(p.r[i+4]) + uint32(p.dr[i+4]) - (uint32(p.r[i+4])*uint32(p.dr[i+4])+255)>>8)
-		p.r[i+5] = uint16(uint32(p.r[i+5]) + uint32(p.dr[i+5]) - (uint32(p.r[i+5])*uint32(p.dr[i+5])+255)>>8)
-		p.r[i+6] = uint16(uint32(p.r[i+6]) + uint32(p.dr[i+6]) - (uint32(p.r[i+6])*uint32(p.dr[i+6])+255)>>8)
-		p.r[i+7] = uint16(uint32(p.r[i+7]) + uint32(p.dr[i+7]) - (uint32(p.r[i+7])*uint32(p.dr[i+7])+255)>>8)
-
-		p.g[i] = uint16(uint32(p.g[i]) + uint32(p.dg[i]) - (uint32(p.g[i])*uint32(p.dg[i])+255)>>8)
-		p.g[i+1] = uint16(uint32(p.g[i+1]) + uint32(p.dg[i+1]) - (uint32(p.g[i+1])*uint32(p.dg[i+1])+255)>>8)
-		p.g[i+2] = uint16(uint32(p.g[i+2]) + uint32(p.dg[i+2]) - (uint32(p.g[i+2])*uint32(p.dg[i+2])+255)>>8)
-		p.g[i+3] = uint16(uint32(p.g[i+3]) + uint32(p.dg[i+3]) - (uint32(p.g[i+3])*uint32(p.dg[i+3])+255)>>8)
-		p.g[i+4] = uint16(uint32(p.g[i+4]) + uint32(p.dg[i+4]) - (uint32(p.g[i+4])*uint32(p.dg[i+4])+255)>>8)
-		p.g[i+5] = uint16(uint32(p.g[i+5]) + uint32(p.dg[i+5]) - (uint32(p.g[i+5])*uint32(p.dg[i+5])+255)>>8)
-		p.g[i+6] = uint16(uint32(p.g[i+6]) + uint32(p.dg[i+6]) - (uint32(p.g[i+6])*uint32(p.dg[i+6])+255)>>8)
-		p.g[i+7] = uint16(uint32(p.g[i+7]) + uint32(p.dg[i+7]) - (uint32(p.g[i+7])*uint32(p.dg[i+7])+255)>>8)
-
-		p.b[i] = uint16(uint32(p.b[i]) + uint32(p.db[i]) - (uint32(p.b[i])*uint32(p.db[i])+255)>>8)
-		p.b[i+1] = uint16(uint32(p.b[i+1]) + uint32(p.db[i+1]) - (uint32(p.b[i+1])*uint32(p.db[i+1])+255)>>8)
-		p.b[i+2] = uint16(uint32(p.b[i+2]) + uint32(p.db[i+2]) - (uint32(p.b[i+2])*uint32(p.db[i+2])+255)>>8)
-		p.b[i+3] = uint16(uint32(p.b[i+3]) + uint32(p.db[i+3]) - (uint32(p.b[i+3])*uint32(p.db[i+3])+255)>>8)
-		p.b[i+4] = uint16(uint32(p.b[i+4]) + uint32(p.db[i+4]) - (uint32(p.b[i+4])*uint32(p.db[i+4])+255)>>8)
-		p.b[i+5] = uint16(uint32(p.b[i+5]) + uint32(p.db[i+5]) - (uint32(p.b[i+5])*uint32(p.db[i+5])+255)>>8)
-		p.b[i+6] = uint16(uint32(p.b[i+6]) + uint32(p.db[i+6]) - (uint32(p.b[i+6])*uint32(p.db[i+6])+255)>>8)
-		p.b[i+7] = uint16(uint32(p.b[i+7]) + uint32(p.db[i+7]) - (uint32(p.b[i+7])*uint32(p.db[i+7])+255)>>8)
-
-		p.a[i] = uint16(uint32(p.a[i]) + uint32(p.da[i]) - (uint32(p.a[i])*uint32(p.da[i])+255)>>8)
-		p.a[i+1] = uint16(uint32(p.a[i+1]) + uint32(p.da[i+1]) - (uint32(p.a[i+1])*uint32(p.da[i+1])+255)>>8)
-		p.a[i+2] = uint16(uint32(p.a[i+2]) + uint32(p.da[i+2]) - (uint32(p.a[i+2])*uint32(p.da[i+2])+255)>>8)
-		p.a[i+3] = uint16(uint32(p.a[i+3]) + uint32(p.da[i+3]) - (uint32(p.a[i+3])*uint32(p.da[i+3])+255)>>8)
-		p.a[i+4] = uint16(uint32(p.a[i+4]) + uint32(p.da[i+4]) - (uint32(p.a[i+4])*uint32(p.da[i+4])+255)>>8)
-		p.a[i+5] = uint16(uint32(p.a[i+5]) + uint32(p.da[i+5]) - (uint32(p.a[i+5])*uint32(p.da[i+5])+255)>>8)
-		p.a[i+6] = uint16(uint32(p.a[i+6]) + uint32(p.da[i+6]) - (uint32(p.a[i+6])*uint32(p.da[i+6])+255)>>8)
-		p.a[i+7] = uint16(uint32(p.a[i+7]) + uint32(p.da[i+7]) - (uint32(p.a[i+7])*uint32(p.da[i+7])+255)>>8)
+	// Formula: s + d - div255(s * d)
+	ch := func(s, d uint16) uint16 {
+		return uint16(uint32(s) + uint32(d) - ((uint32(s)*uint32(d) + 255) >> 8))
 	}
+
+	// Blend R channel (4 at a time)
+	p.r[0], p.r[1], p.r[2], p.r[3] = ch(p.r[0], p.dr[0]), ch(p.r[1], p.dr[1]), ch(p.r[2], p.dr[2]), ch(p.r[3], p.dr[3])
+	p.r[4], p.r[5], p.r[6], p.r[7] = ch(p.r[4], p.dr[4]), ch(p.r[5], p.dr[5]), ch(p.r[6], p.dr[6]), ch(p.r[7], p.dr[7])
+	p.r[8], p.r[9], p.r[10], p.r[11] = ch(p.r[8], p.dr[8]), ch(p.r[9], p.dr[9]), ch(p.r[10], p.dr[10]), ch(p.r[11], p.dr[11])
+	p.r[12], p.r[13], p.r[14], p.r[15] = ch(p.r[12], p.dr[12]), ch(p.r[13], p.dr[13]), ch(p.r[14], p.dr[14]), ch(p.r[15], p.dr[15])
+
+	// Blend G channel (4 at a time)
+	p.g[0], p.g[1], p.g[2], p.g[3] = ch(p.g[0], p.dg[0]), ch(p.g[1], p.dg[1]), ch(p.g[2], p.dg[2]), ch(p.g[3], p.dg[3])
+	p.g[4], p.g[5], p.g[6], p.g[7] = ch(p.g[4], p.dg[4]), ch(p.g[5], p.dg[5]), ch(p.g[6], p.dg[6]), ch(p.g[7], p.dg[7])
+	p.g[8], p.g[9], p.g[10], p.g[11] = ch(p.g[8], p.dg[8]), ch(p.g[9], p.dg[9]), ch(p.g[10], p.dg[10]), ch(p.g[11], p.dg[11])
+	p.g[12], p.g[13], p.g[14], p.g[15] = ch(p.g[12], p.dg[12]), ch(p.g[13], p.dg[13]), ch(p.g[14], p.dg[14]), ch(p.g[15], p.dg[15])
+
+	// Blend B channel (4 at a time)
+	p.b[0], p.b[1], p.b[2], p.b[3] = ch(p.b[0], p.db[0]), ch(p.b[1], p.db[1]), ch(p.b[2], p.db[2]), ch(p.b[3], p.db[3])
+	p.b[4], p.b[5], p.b[6], p.b[7] = ch(p.b[4], p.db[4]), ch(p.b[5], p.db[5]), ch(p.b[6], p.db[6]), ch(p.b[7], p.db[7])
+	p.b[8], p.b[9], p.b[10], p.b[11] = ch(p.b[8], p.db[8]), ch(p.b[9], p.db[9]), ch(p.b[10], p.db[10]), ch(p.b[11], p.db[11])
+	p.b[12], p.b[13], p.b[14], p.b[15] = ch(p.b[12], p.db[12]), ch(p.b[13], p.db[13]), ch(p.b[14], p.db[14]), ch(p.b[15], p.db[15])
+
+	// Alpha channel (4 at a time)
+	p.a[0], p.a[1], p.a[2], p.a[3] = ch(p.a[0], p.da[0]), ch(p.a[1], p.da[1]), ch(p.a[2], p.da[2]), ch(p.a[3], p.da[3])
+	p.a[4], p.a[5], p.a[6], p.a[7] = ch(p.a[4], p.da[4]), ch(p.a[5], p.da[5]), ch(p.a[6], p.da[6]), ch(p.a[7], p.da[7])
+	p.a[8], p.a[9], p.a[10], p.a[11] = ch(p.a[8], p.da[8]), ch(p.a[9], p.da[9]), ch(p.a[10], p.da[10]), ch(p.a[11], p.da[11])
+	p.a[12], p.a[13], p.a[14], p.a[15] = ch(p.a[12], p.da[12]), ch(p.a[13], p.da[13]), ch(p.a[14], p.da[14]), ch(p.a[15], p.da[15])
 }
 
 //go:fix inline
 func (p *LowPipeline) Xor() {
-	for i := 0; i < LOW_STAGE_WIDTH; i += 8 {
-		invDa0, invDa1, invDa2, invDa3 := 255-p.da[i], 255-p.da[i+1], 255-p.da[i+2], 255-p.da[i+3]
-		invDa4, invDa5, invDa6, invDa7 := 255-p.da[i+4], 255-p.da[i+5], 255-p.da[i+6], 255-p.da[i+7]
-		invSa0, invSa1, invSa2, invSa3 := 255-p.a[i], 255-p.a[i+1], 255-p.a[i+2], 255-p.a[i+3]
-		invSa4, invSa5, invSa6, invSa7 := 255-p.a[i+4], 255-p.a[i+5], 255-p.a[i+6], 255-p.a[i+7]
-
-		p.r[i] = uint16((uint32(p.r[i])*uint32(invDa0) + uint32(p.dr[i])*uint32(invSa0) + 255) >> 8)
-		p.r[i+1] = uint16((uint32(p.r[i+1])*uint32(invDa1) + uint32(p.dr[i+1])*uint32(invSa1) + 255) >> 8)
-		p.r[i+2] = uint16((uint32(p.r[i+2])*uint32(invDa2) + uint32(p.dr[i+2])*uint32(invSa2) + 255) >> 8)
-		p.r[i+3] = uint16((uint32(p.r[i+3])*uint32(invDa3) + uint32(p.dr[i+3])*uint32(invSa3) + 255) >> 8)
-		p.r[i+4] = uint16((uint32(p.r[i+4])*uint32(invDa4) + uint32(p.dr[i+4])*uint32(invSa4) + 255) >> 8)
-		p.r[i+5] = uint16((uint32(p.r[i+5])*uint32(invDa5) + uint32(p.dr[i+5])*uint32(invSa5) + 255) >> 8)
-		p.r[i+6] = uint16((uint32(p.r[i+6])*uint32(invDa6) + uint32(p.dr[i+6])*uint32(invSa6) + 255) >> 8)
-		p.r[i+7] = uint16((uint32(p.r[i+7])*uint32(invDa7) + uint32(p.dr[i+7])*uint32(invSa7) + 255) >> 8)
-
-		p.g[i] = uint16((uint32(p.g[i])*uint32(invDa0) + uint32(p.dg[i])*uint32(invSa0) + 255) >> 8)
-		p.g[i+1] = uint16((uint32(p.g[i+1])*uint32(invDa1) + uint32(p.dg[i+1])*uint32(invSa1) + 255) >> 8)
-		p.g[i+2] = uint16((uint32(p.g[i+2])*uint32(invDa2) + uint32(p.dg[i+2])*uint32(invSa2) + 255) >> 8)
-		p.g[i+3] = uint16((uint32(p.g[i+3])*uint32(invDa3) + uint32(p.dg[i+3])*uint32(invSa3) + 255) >> 8)
-		p.g[i+4] = uint16((uint32(p.g[i+4])*uint32(invDa4) + uint32(p.dg[i+4])*uint32(invSa4) + 255) >> 8)
-		p.g[i+5] = uint16((uint32(p.g[i+5])*uint32(invDa5) + uint32(p.dg[i+5])*uint32(invSa5) + 255) >> 8)
-		p.g[i+6] = uint16((uint32(p.g[i+6])*uint32(invDa6) + uint32(p.dg[i+6])*uint32(invSa6) + 255) >> 8)
-		p.g[i+7] = uint16((uint32(p.g[i+7])*uint32(invDa7) + uint32(p.dg[i+7])*uint32(invSa7) + 255) >> 8)
-
-		p.b[i] = uint16((uint32(p.b[i])*uint32(invDa0) + uint32(p.db[i])*uint32(invSa0) + 255) >> 8)
-		p.b[i+1] = uint16((uint32(p.b[i+1])*uint32(invDa1) + uint32(p.db[i+1])*uint32(invSa1) + 255) >> 8)
-		p.b[i+2] = uint16((uint32(p.b[i+2])*uint32(invDa2) + uint32(p.db[i+2])*uint32(invSa2) + 255) >> 8)
-		p.b[i+3] = uint16((uint32(p.b[i+3])*uint32(invDa3) + uint32(p.db[i+3])*uint32(invSa3) + 255) >> 8)
-		p.b[i+4] = uint16((uint32(p.b[i+4])*uint32(invDa4) + uint32(p.db[i+4])*uint32(invSa4) + 255) >> 8)
-		p.b[i+5] = uint16((uint32(p.b[i+5])*uint32(invDa5) + uint32(p.db[i+5])*uint32(invSa5) + 255) >> 8)
-		p.b[i+6] = uint16((uint32(p.b[i+6])*uint32(invDa6) + uint32(p.db[i+6])*uint32(invSa6) + 255) >> 8)
-		p.b[i+7] = uint16((uint32(p.b[i+7])*uint32(invDa7) + uint32(p.db[i+7])*uint32(invSa7) + 255) >> 8)
-
-		p.a[i] = uint16((uint32(p.a[i])*uint32(invDa0) + uint32(p.da[i])*uint32(invSa0) + 255) >> 8)
-		p.a[i+1] = uint16((uint32(p.a[i+1])*uint32(invDa1) + uint32(p.da[i+1])*uint32(invSa1) + 255) >> 8)
-		p.a[i+2] = uint16((uint32(p.a[i+2])*uint32(invDa2) + uint32(p.da[i+2])*uint32(invSa2) + 255) >> 8)
-		p.a[i+3] = uint16((uint32(p.a[i+3])*uint32(invDa3) + uint32(p.da[i+3])*uint32(invSa3) + 255) >> 8)
-		p.a[i+4] = uint16((uint32(p.a[i+4])*uint32(invDa4) + uint32(p.da[i+4])*uint32(invSa4) + 255) >> 8)
-		p.a[i+5] = uint16((uint32(p.a[i+5])*uint32(invDa5) + uint32(p.da[i+5])*uint32(invSa5) + 255) >> 8)
-		p.a[i+6] = uint16((uint32(p.a[i+6])*uint32(invDa6) + uint32(p.da[i+6])*uint32(invSa6) + 255) >> 8)
-		p.a[i+7] = uint16((uint32(p.a[i+7])*uint32(invDa7) + uint32(p.da[i+7])*uint32(invSa7) + 255) >> 8)
+	// Formula: div255(s * inv(da) + d * inv(sa))
+	ch := func(s, d, invSa, invDa uint16) uint16 {
+		return uint16((uint32(s)*uint32(invDa) + uint32(d)*uint32(invSa) + 255) >> 8)
 	}
+
+	// Precompute inverse alpha values (4 at a time)
+	invSa0, invSa1, invSa2, invSa3 := uint16(255-p.a[0]), uint16(255-p.a[1]), uint16(255-p.a[2]), uint16(255-p.a[3])
+	invSa4, invSa5, invSa6, invSa7 := uint16(255-p.a[4]), uint16(255-p.a[5]), uint16(255-p.a[6]), uint16(255-p.a[7])
+	invSa8, invSa9, invSa10, invSa11 := uint16(255-p.a[8]), uint16(255-p.a[9]), uint16(255-p.a[10]), uint16(255-p.a[11])
+	invSa12, invSa13, invSa14, invSa15 := uint16(255-p.a[12]), uint16(255-p.a[13]), uint16(255-p.a[14]), uint16(255-p.a[15])
+
+	invDa0, invDa1, invDa2, invDa3 := uint16(255-p.da[0]), uint16(255-p.da[1]), uint16(255-p.da[2]), uint16(255-p.da[3])
+	invDa4, invDa5, invDa6, invDa7 := uint16(255-p.da[4]), uint16(255-p.da[5]), uint16(255-p.da[6]), uint16(255-p.da[7])
+	invDa8, invDa9, invDa10, invDa11 := uint16(255-p.da[8]), uint16(255-p.da[9]), uint16(255-p.da[10]), uint16(255-p.da[11])
+	invDa12, invDa13, invDa14, invDa15 := uint16(255-p.da[12]), uint16(255-p.da[13]), uint16(255-p.da[14]), uint16(255-p.da[15])
+
+	// Blend R channel (4 at a time)
+	p.r[0], p.r[1], p.r[2], p.r[3] = ch(p.r[0], p.dr[0], invSa0, invDa0), ch(p.r[1], p.dr[1], invSa1, invDa1), ch(p.r[2], p.dr[2], invSa2, invDa2), ch(p.r[3], p.dr[3], invSa3, invDa3)
+	p.r[4], p.r[5], p.r[6], p.r[7] = ch(p.r[4], p.dr[4], invSa4, invDa4), ch(p.r[5], p.dr[5], invSa5, invDa5), ch(p.r[6], p.dr[6], invSa6, invDa6), ch(p.r[7], p.dr[7], invSa7, invDa7)
+	p.r[8], p.r[9], p.r[10], p.r[11] = ch(p.r[8], p.dr[8], invSa8, invDa8), ch(p.r[9], p.dr[9], invSa9, invDa9), ch(p.r[10], p.dr[10], invSa10, invDa10), ch(p.r[11], p.dr[11], invSa11, invDa11)
+	p.r[12], p.r[13], p.r[14], p.r[15] = ch(p.r[12], p.dr[12], invSa12, invDa12), ch(p.r[13], p.dr[13], invSa13, invDa13), ch(p.r[14], p.dr[14], invSa14, invDa14), ch(p.r[15], p.dr[15], invSa15, invDa15)
+
+	// Blend G channel (4 at a time)
+	p.g[0], p.g[1], p.g[2], p.g[3] = ch(p.g[0], p.dg[0], invSa0, invDa0), ch(p.g[1], p.dg[1], invSa1, invDa1), ch(p.g[2], p.dg[2], invSa2, invDa2), ch(p.g[3], p.dg[3], invSa3, invDa3)
+	p.g[4], p.g[5], p.g[6], p.g[7] = ch(p.g[4], p.dg[4], invSa4, invDa4), ch(p.g[5], p.dg[5], invSa5, invDa5), ch(p.g[6], p.dg[6], invSa6, invDa6), ch(p.g[7], p.dg[7], invSa7, invDa7)
+	p.g[8], p.g[9], p.g[10], p.g[11] = ch(p.g[8], p.dg[8], invSa8, invDa8), ch(p.g[9], p.dg[9], invSa9, invDa9), ch(p.g[10], p.dg[10], invSa10, invDa10), ch(p.g[11], p.dg[11], invSa11, invDa11)
+	p.g[12], p.g[13], p.g[14], p.g[15] = ch(p.g[12], p.dg[12], invSa12, invDa12), ch(p.g[13], p.dg[13], invSa13, invDa13), ch(p.g[14], p.dg[14], invSa14, invDa14), ch(p.g[15], p.dg[15], invSa15, invDa15)
+
+	// Blend B channel (4 at a time)
+	p.b[0], p.b[1], p.b[2], p.b[3] = ch(p.b[0], p.db[0], invSa0, invDa0), ch(p.b[1], p.db[1], invSa1, invDa1), ch(p.b[2], p.db[2], invSa2, invDa2), ch(p.b[3], p.db[3], invSa3, invDa3)
+	p.b[4], p.b[5], p.b[6], p.b[7] = ch(p.b[4], p.db[4], invSa4, invDa4), ch(p.b[5], p.db[5], invSa5, invDa5), ch(p.b[6], p.db[6], invSa6, invDa6), ch(p.b[7], p.db[7], invSa7, invDa7)
+	p.b[8], p.b[9], p.b[10], p.b[11] = ch(p.b[8], p.db[8], invSa8, invDa8), ch(p.b[9], p.db[9], invSa9, invDa9), ch(p.b[10], p.db[10], invSa10, invDa10), ch(p.b[11], p.db[11], invSa11, invDa11)
+	p.b[12], p.b[13], p.b[14], p.b[15] = ch(p.b[12], p.db[12], invSa12, invDa12), ch(p.b[13], p.db[13], invSa13, invDa13), ch(p.b[14], p.db[14], invSa14, invDa14), ch(p.b[15], p.db[15], invSa15, invDa15)
+
+	// Alpha channel (4 at a time)
+	p.a[0], p.a[1], p.a[2], p.a[3] = ch(p.a[0], p.da[0], invSa0, invDa0), ch(p.a[1], p.da[1], invSa1, invDa1), ch(p.a[2], p.da[2], invSa2, invDa2), ch(p.a[3], p.da[3], invSa3, invDa3)
+	p.a[4], p.a[5], p.a[6], p.a[7] = ch(p.a[4], p.da[4], invSa4, invDa4), ch(p.a[5], p.da[5], invSa5, invDa5), ch(p.a[6], p.da[6], invSa6, invDa6), ch(p.a[7], p.da[7], invSa7, invDa7)
+	p.a[8], p.a[9], p.a[10], p.a[11] = ch(p.a[8], p.da[8], invSa8, invDa8), ch(p.a[9], p.da[9], invSa9, invDa9), ch(p.a[10], p.da[10], invSa10, invDa10), ch(p.a[11], p.da[11], invSa11, invDa11)
+	p.a[12], p.a[13], p.a[14], p.a[15] = ch(p.a[12], p.da[12], invSa12, invDa12), ch(p.a[13], p.da[13], invSa13, invDa13), ch(p.a[14], p.da[14], invSa14, invDa14), ch(p.a[15], p.da[15], invSa15, invDa15)
 }
 
 //go:fix inline
@@ -1088,198 +852,269 @@ func (p *LowPipeline) ColorDodge() {
 
 //go:fix inline
 func (p *LowPipeline) Darken() {
-	for i := 0; i < LOW_STAGE_WIDTH; i += 8 {
-		for j := 0; j < 8; j++ {
-			// Formula: s + d - div255(max(s * da, d * sa))
-			prod1 := uint32(p.r[i+j]) * uint32(p.da[i+j])
-			prod2 := uint32(p.dr[i+j]) * uint32(p.a[i+j])
-			maxProd := u16max(uint16(prod2), uint16(prod1))
-			p.r[i+j] = uint16(uint32(p.r[i+j]) + uint32(p.dr[i+j]) - ((uint32(maxProd) + 255) >> 8))
-
-			prod1 = uint32(p.g[i+j]) * uint32(p.da[i+j])
-			prod2 = uint32(p.dg[i+j]) * uint32(p.a[i+j])
-			maxProd = u16max(uint16(prod2), uint16(prod1))
-			p.g[i+j] = uint16(uint32(p.g[i+j]) + uint32(p.dg[i+j]) - ((uint32(maxProd) + 255) >> 8))
-
-			prod1 = uint32(p.b[i+j]) * uint32(p.da[i+j])
-			prod2 = uint32(p.db[i+j]) * uint32(p.a[i+j])
-			maxProd = u16max(uint16(prod2), uint16(prod1))
-			p.b[i+j] = uint16(uint32(p.b[i+j]) + uint32(p.db[i+j]) - ((uint32(maxProd) + 255) >> 8))
-
-			// Alpha channel: source_over formula
-			invSa := 255 - p.a[i+j]
-			p.a[i+j] = uint16(uint32(p.a[i+j]) + (uint32(p.da[i+j])*uint32(invSa)+255)>>8)
-		}
+	// Formula: s + d - div255(max(s * da, d * sa))
+	ch := func(s, d, sa, da uint16) uint16 {
+		prod1 := uint32(s) * uint32(da)
+		prod2 := uint32(d) * uint32(sa)
+		maxProd := u16max(uint16(prod2), uint16(prod1))
+		return uint16(uint32(s) + uint32(d) - ((uint32(maxProd) + 255) >> 8))
 	}
 
+	// Blend R channel (4 at a time)
+	p.r[0], p.r[1], p.r[2], p.r[3] = ch(p.r[0], p.dr[0], p.a[0], p.da[0]), ch(p.r[1], p.dr[1], p.a[1], p.da[1]), ch(p.r[2], p.dr[2], p.a[2], p.da[2]), ch(p.r[3], p.dr[3], p.a[3], p.da[3])
+	p.r[4], p.r[5], p.r[6], p.r[7] = ch(p.r[4], p.dr[4], p.a[4], p.da[4]), ch(p.r[5], p.dr[5], p.a[5], p.da[5]), ch(p.r[6], p.dr[6], p.a[6], p.da[6]), ch(p.r[7], p.dr[7], p.a[7], p.da[7])
+	p.r[8], p.r[9], p.r[10], p.r[11] = ch(p.r[8], p.dr[8], p.a[8], p.da[8]), ch(p.r[9], p.dr[9], p.a[9], p.da[9]), ch(p.r[10], p.dr[10], p.a[10], p.da[10]), ch(p.r[11], p.dr[11], p.a[11], p.da[11])
+	p.r[12], p.r[13], p.r[14], p.r[15] = ch(p.r[12], p.dr[12], p.a[12], p.da[12]), ch(p.r[13], p.dr[13], p.a[13], p.da[13]), ch(p.r[14], p.dr[14], p.a[14], p.da[14]), ch(p.r[15], p.dr[15], p.a[15], p.da[15])
+
+	// Blend G channel (4 at a time)
+	p.g[0], p.g[1], p.g[2], p.g[3] = ch(p.g[0], p.dg[0], p.a[0], p.da[0]), ch(p.g[1], p.dg[1], p.a[1], p.da[1]), ch(p.g[2], p.dg[2], p.a[2], p.da[2]), ch(p.g[3], p.dg[3], p.a[3], p.da[3])
+	p.g[4], p.g[5], p.g[6], p.g[7] = ch(p.g[4], p.dg[4], p.a[4], p.da[4]), ch(p.g[5], p.dg[5], p.a[5], p.da[5]), ch(p.g[6], p.dg[6], p.a[6], p.da[6]), ch(p.g[7], p.dg[7], p.a[7], p.da[7])
+	p.g[8], p.g[9], p.g[10], p.g[11] = ch(p.g[8], p.dg[8], p.a[8], p.da[8]), ch(p.g[9], p.dg[9], p.a[9], p.da[9]), ch(p.g[10], p.dg[10], p.a[10], p.da[10]), ch(p.g[11], p.dg[11], p.a[11], p.da[11])
+	p.g[12], p.g[13], p.g[14], p.g[15] = ch(p.g[12], p.dg[12], p.a[12], p.da[12]), ch(p.g[13], p.dg[13], p.a[13], p.da[13]), ch(p.g[14], p.dg[14], p.a[14], p.da[14]), ch(p.g[15], p.dg[15], p.a[15], p.da[15])
+
+	// Blend B channel (4 at a time)
+	p.b[0], p.b[1], p.b[2], p.b[3] = ch(p.b[0], p.db[0], p.a[0], p.da[0]), ch(p.b[1], p.db[1], p.a[1], p.da[1]), ch(p.b[2], p.db[2], p.a[2], p.da[2]), ch(p.b[3], p.db[3], p.a[3], p.da[3])
+	p.b[4], p.b[5], p.b[6], p.b[7] = ch(p.b[4], p.db[4], p.a[4], p.da[4]), ch(p.b[5], p.db[5], p.a[5], p.da[5]), ch(p.b[6], p.db[6], p.a[6], p.da[6]), ch(p.b[7], p.db[7], p.a[7], p.da[7])
+	p.b[8], p.b[9], p.b[10], p.b[11] = ch(p.b[8], p.db[8], p.a[8], p.da[8]), ch(p.b[9], p.db[9], p.a[9], p.da[9]), ch(p.b[10], p.db[10], p.a[10], p.da[10]), ch(p.b[11], p.db[11], p.a[11], p.da[11])
+	p.b[12], p.b[13], p.b[14], p.b[15] = ch(p.b[12], p.db[12], p.a[12], p.da[12]), ch(p.b[13], p.db[13], p.a[13], p.da[13]), ch(p.b[14], p.db[14], p.a[14], p.da[14]), ch(p.b[15], p.db[15], p.a[15], p.da[15])
+
+	// Alpha channel: source_over formula (4 at a time)
+	invSa0, invSa1, invSa2, invSa3 := uint16(255-p.a[0]), uint16(255-p.a[1]), uint16(255-p.a[2]), uint16(255-p.a[3])
+	invSa4, invSa5, invSa6, invSa7 := uint16(255-p.a[4]), uint16(255-p.a[5]), uint16(255-p.a[6]), uint16(255-p.a[7])
+	invSa8, invSa9, invSa10, invSa11 := uint16(255-p.a[8]), uint16(255-p.a[9]), uint16(255-p.a[10]), uint16(255-p.a[11])
+	invSa12, invSa13, invSa14, invSa15 := uint16(255-p.a[12]), uint16(255-p.a[13]), uint16(255-p.a[14]), uint16(255-p.a[15])
+
+	p.a[0], p.a[1], p.a[2], p.a[3] = p.a[0]+uint16((uint32(p.da[0])*uint32(invSa0)+255)>>8), p.a[1]+uint16((uint32(p.da[1])*uint32(invSa1)+255)>>8), p.a[2]+uint16((uint32(p.da[2])*uint32(invSa2)+255)>>8), p.a[3]+uint16((uint32(p.da[3])*uint32(invSa3)+255)>>8)
+	p.a[4], p.a[5], p.a[6], p.a[7] = p.a[4]+uint16((uint32(p.da[4])*uint32(invSa4)+255)>>8), p.a[5]+uint16((uint32(p.da[5])*uint32(invSa5)+255)>>8), p.a[6]+uint16((uint32(p.da[6])*uint32(invSa6)+255)>>8), p.a[7]+uint16((uint32(p.da[7])*uint32(invSa7)+255)>>8)
+	p.a[8], p.a[9], p.a[10], p.a[11] = p.a[8]+uint16((uint32(p.da[8])*uint32(invSa8)+255)>>8), p.a[9]+uint16((uint32(p.da[9])*uint32(invSa9)+255)>>8), p.a[10]+uint16((uint32(p.da[10])*uint32(invSa10)+255)>>8), p.a[11]+uint16((uint32(p.da[11])*uint32(invSa11)+255)>>8)
+	p.a[12], p.a[13], p.a[14], p.a[15] = p.a[12]+uint16((uint32(p.da[12])*uint32(invSa12)+255)>>8), p.a[13]+uint16((uint32(p.da[13])*uint32(invSa13)+255)>>8), p.a[14]+uint16((uint32(p.da[14])*uint32(invSa14)+255)>>8), p.a[15]+uint16((uint32(p.da[15])*uint32(invSa15)+255)>>8)
 }
 
 //go:fix inline
 func (p *LowPipeline) Difference() {
-	for i := 0; i < LOW_STAGE_WIDTH; i += 8 {
-		for j := 0; j < 8; j++ {
-			// Formula: s + d - 2 * div255(min(s * da, d * sa))
-			prod1 := uint32(p.r[i+j]) * uint32(p.da[i+j])
-			prod2 := uint32(p.dr[i+j]) * uint32(p.a[i+j])
-			minProd := u16min(uint16(prod2), uint16(prod1))
-			p.r[i+j] = uint16(uint32(p.r[i+j]) + uint32(p.dr[i+j]) - 2*((uint32(minProd)+255)>>8))
-
-			prod1 = uint32(p.g[i+j]) * uint32(p.da[i+j])
-			prod2 = uint32(p.dg[i+j]) * uint32(p.a[i+j])
-			minProd = u16min(uint16(prod2), uint16(prod1))
-			p.g[i+j] = uint16(uint32(p.g[i+j]) + uint32(p.dg[i+j]) - 2*((uint32(minProd)+255)>>8))
-
-			prod1 = uint32(p.b[i+j]) * uint32(p.da[i+j])
-			prod2 = uint32(p.db[i+j]) * uint32(p.a[i+j])
-			minProd = u16min(uint16(prod2), uint16(prod1))
-			p.b[i+j] = uint16(uint32(p.b[i+j]) + uint32(p.db[i+j]) - 2*((uint32(minProd)+255)>>8))
-
-			// Alpha channel: source_over formula
-			invSa := 255 - p.a[i+j]
-			p.a[i+j] = uint16(uint32(p.a[i+j]) + (uint32(p.da[i+j])*uint32(invSa)+255)>>8)
-		}
+	// Formula: s + d - 2 * div255(min(s * da, d * sa))
+	ch := func(s, d, sa, da uint16) uint16 {
+		prod1 := uint32(s) * uint32(da)
+		prod2 := uint32(d) * uint32(sa)
+		minProd := u16min(uint16(prod2), uint16(prod1))
+		return uint16(uint32(s) + uint32(d) - 2*((uint32(minProd)+255)>>8))
 	}
+
+	// Blend R channel (4 at a time)
+	p.r[0], p.r[1], p.r[2], p.r[3] = ch(p.r[0], p.dr[0], p.a[0], p.da[0]), ch(p.r[1], p.dr[1], p.a[1], p.da[1]), ch(p.r[2], p.dr[2], p.a[2], p.da[2]), ch(p.r[3], p.dr[3], p.a[3], p.da[3])
+	p.r[4], p.r[5], p.r[6], p.r[7] = ch(p.r[4], p.dr[4], p.a[4], p.da[4]), ch(p.r[5], p.dr[5], p.a[5], p.da[5]), ch(p.r[6], p.dr[6], p.a[6], p.da[6]), ch(p.r[7], p.dr[7], p.a[7], p.da[7])
+	p.r[8], p.r[9], p.r[10], p.r[11] = ch(p.r[8], p.dr[8], p.a[8], p.da[8]), ch(p.r[9], p.dr[9], p.a[9], p.da[9]), ch(p.r[10], p.dr[10], p.a[10], p.da[10]), ch(p.r[11], p.dr[11], p.a[11], p.da[11])
+	p.r[12], p.r[13], p.r[14], p.r[15] = ch(p.r[12], p.dr[12], p.a[12], p.da[12]), ch(p.r[13], p.dr[13], p.a[13], p.da[13]), ch(p.r[14], p.dr[14], p.a[14], p.da[14]), ch(p.r[15], p.dr[15], p.a[15], p.da[15])
+
+	// Blend G channel (4 at a time)
+	p.g[0], p.g[1], p.g[2], p.g[3] = ch(p.g[0], p.dg[0], p.a[0], p.da[0]), ch(p.g[1], p.dg[1], p.a[1], p.da[1]), ch(p.g[2], p.dg[2], p.a[2], p.da[2]), ch(p.g[3], p.dg[3], p.a[3], p.da[3])
+	p.g[4], p.g[5], p.g[6], p.g[7] = ch(p.g[4], p.dg[4], p.a[4], p.da[4]), ch(p.g[5], p.dg[5], p.a[5], p.da[5]), ch(p.g[6], p.dg[6], p.a[6], p.da[6]), ch(p.g[7], p.dg[7], p.a[7], p.da[7])
+	p.g[8], p.g[9], p.g[10], p.g[11] = ch(p.g[8], p.dg[8], p.a[8], p.da[8]), ch(p.g[9], p.dg[9], p.a[9], p.da[9]), ch(p.g[10], p.dg[10], p.a[10], p.da[10]), ch(p.g[11], p.dg[11], p.a[11], p.da[11])
+	p.g[12], p.g[13], p.g[14], p.g[15] = ch(p.g[12], p.dg[12], p.a[12], p.da[12]), ch(p.g[13], p.dg[13], p.a[13], p.da[13]), ch(p.g[14], p.dg[14], p.a[14], p.da[14]), ch(p.g[15], p.dg[15], p.a[15], p.da[15])
+
+	// Blend B channel (4 at a time)
+	p.b[0], p.b[1], p.b[2], p.b[3] = ch(p.b[0], p.db[0], p.a[0], p.da[0]), ch(p.b[1], p.db[1], p.a[1], p.da[1]), ch(p.b[2], p.db[2], p.a[2], p.da[2]), ch(p.b[3], p.db[3], p.a[3], p.da[3])
+	p.b[4], p.b[5], p.b[6], p.b[7] = ch(p.b[4], p.db[4], p.a[4], p.da[4]), ch(p.b[5], p.db[5], p.a[5], p.da[5]), ch(p.b[6], p.db[6], p.a[6], p.da[6]), ch(p.b[7], p.db[7], p.a[7], p.da[7])
+	p.b[8], p.b[9], p.b[10], p.b[11] = ch(p.b[8], p.db[8], p.a[8], p.da[8]), ch(p.b[9], p.db[9], p.a[9], p.da[9]), ch(p.b[10], p.db[10], p.a[10], p.da[10]), ch(p.b[11], p.db[11], p.a[11], p.da[11])
+	p.b[12], p.b[13], p.b[14], p.b[15] = ch(p.b[12], p.db[12], p.a[12], p.da[12]), ch(p.b[13], p.db[13], p.a[13], p.da[13]), ch(p.b[14], p.db[14], p.a[14], p.da[14]), ch(p.b[15], p.db[15], p.a[15], p.da[15])
+
+	// Alpha channel: source_over formula (4 at a time)
+	invSa0, invSa1, invSa2, invSa3 := uint16(255-p.a[0]), uint16(255-p.a[1]), uint16(255-p.a[2]), uint16(255-p.a[3])
+	invSa4, invSa5, invSa6, invSa7 := uint16(255-p.a[4]), uint16(255-p.a[5]), uint16(255-p.a[6]), uint16(255-p.a[7])
+	invSa8, invSa9, invSa10, invSa11 := uint16(255-p.a[8]), uint16(255-p.a[9]), uint16(255-p.a[10]), uint16(255-p.a[11])
+	invSa12, invSa13, invSa14, invSa15 := uint16(255-p.a[12]), uint16(255-p.a[13]), uint16(255-p.a[14]), uint16(255-p.a[15])
+
+	p.a[0], p.a[1], p.a[2], p.a[3] = p.a[0]+uint16((uint32(p.da[0])*uint32(invSa0)+255)>>8), p.a[1]+uint16((uint32(p.da[1])*uint32(invSa1)+255)>>8), p.a[2]+uint16((uint32(p.da[2])*uint32(invSa2)+255)>>8), p.a[3]+uint16((uint32(p.da[3])*uint32(invSa3)+255)>>8)
+	p.a[4], p.a[5], p.a[6], p.a[7] = p.a[4]+uint16((uint32(p.da[4])*uint32(invSa4)+255)>>8), p.a[5]+uint16((uint32(p.da[5])*uint32(invSa5)+255)>>8), p.a[6]+uint16((uint32(p.da[6])*uint32(invSa6)+255)>>8), p.a[7]+uint16((uint32(p.da[7])*uint32(invSa7)+255)>>8)
+	p.a[8], p.a[9], p.a[10], p.a[11] = p.a[8]+uint16((uint32(p.da[8])*uint32(invSa8)+255)>>8), p.a[9]+uint16((uint32(p.da[9])*uint32(invSa9)+255)>>8), p.a[10]+uint16((uint32(p.da[10])*uint32(invSa10)+255)>>8), p.a[11]+uint16((uint32(p.da[11])*uint32(invSa11)+255)>>8)
+	p.a[12], p.a[13], p.a[14], p.a[15] = p.a[12]+uint16((uint32(p.da[12])*uint32(invSa12)+255)>>8), p.a[13]+uint16((uint32(p.da[13])*uint32(invSa13)+255)>>8), p.a[14]+uint16((uint32(p.da[14])*uint32(invSa14)+255)>>8), p.a[15]+uint16((uint32(p.da[15])*uint32(invSa15)+255)>>8)
 }
 
 //go:fix inline
 func (p *LowPipeline) Exclusion() {
-	for i := 0; i < LOW_STAGE_WIDTH; i += 8 {
-		for j := 0; j < 8; j++ {
-			// Formula: s + d - 2 * div255(s * d)
-			prod := uint32(p.r[i+j]) * uint32(p.dr[i+j])
-			p.r[i+j] = uint16(uint32(p.r[i+j]) + uint32(p.dr[i+j]) - 2*((prod+255)>>8))
-
-			prod = uint32(p.g[i+j]) * uint32(p.dg[i+j])
-			p.g[i+j] = uint16(uint32(p.g[i+j]) + uint32(p.dg[i+j]) - 2*((prod+255)>>8))
-
-			prod = uint32(p.b[i+j]) * uint32(p.db[i+j])
-			p.b[i+j] = uint16(uint32(p.b[i+j]) + uint32(p.db[i+j]) - 2*((prod+255)>>8))
-
-			// Alpha channel: source_over formula
-			invSa := 255 - p.a[i+j]
-			p.a[i+j] = uint16(uint32(p.a[i+j]) + (uint32(p.da[i+j])*uint32(invSa)+255)>>8)
-		}
+	// Formula: s + d - 2 * div255(s * d)
+	ch := func(s, d uint16) uint16 {
+		prod := uint32(s) * uint32(d)
+		return uint16(uint32(s) + uint32(d) - 2*((prod+255)>>8))
 	}
 
+	// Blend R channel (4 at a time)
+	p.r[0], p.r[1], p.r[2], p.r[3] = ch(p.r[0], p.dr[0]), ch(p.r[1], p.dr[1]), ch(p.r[2], p.dr[2]), ch(p.r[3], p.dr[3])
+	p.r[4], p.r[5], p.r[6], p.r[7] = ch(p.r[4], p.dr[4]), ch(p.r[5], p.dr[5]), ch(p.r[6], p.dr[6]), ch(p.r[7], p.dr[7])
+	p.r[8], p.r[9], p.r[10], p.r[11] = ch(p.r[8], p.dr[8]), ch(p.r[9], p.dr[9]), ch(p.r[10], p.dr[10]), ch(p.r[11], p.dr[11])
+	p.r[12], p.r[13], p.r[14], p.r[15] = ch(p.r[12], p.dr[12]), ch(p.r[13], p.dr[13]), ch(p.r[14], p.dr[14]), ch(p.r[15], p.dr[15])
+
+	// Blend G channel (4 at a time)
+	p.g[0], p.g[1], p.g[2], p.g[3] = ch(p.g[0], p.dg[0]), ch(p.g[1], p.dg[1]), ch(p.g[2], p.dg[2]), ch(p.g[3], p.dg[3])
+	p.g[4], p.g[5], p.g[6], p.g[7] = ch(p.g[4], p.dg[4]), ch(p.g[5], p.dg[5]), ch(p.g[6], p.dg[6]), ch(p.g[7], p.dg[7])
+	p.g[8], p.g[9], p.g[10], p.g[11] = ch(p.g[8], p.dg[8]), ch(p.g[9], p.dg[9]), ch(p.g[10], p.dg[10]), ch(p.g[11], p.dg[11])
+	p.g[12], p.g[13], p.g[14], p.g[15] = ch(p.g[12], p.dg[12]), ch(p.g[13], p.dg[13]), ch(p.g[14], p.dg[14]), ch(p.g[15], p.dg[15])
+
+	// Blend B channel (4 at a time)
+	p.b[0], p.b[1], p.b[2], p.b[3] = ch(p.b[0], p.db[0]), ch(p.b[1], p.db[1]), ch(p.b[2], p.db[2]), ch(p.b[3], p.db[3])
+	p.b[4], p.b[5], p.b[6], p.b[7] = ch(p.b[4], p.db[4]), ch(p.b[5], p.db[5]), ch(p.b[6], p.db[6]), ch(p.b[7], p.db[7])
+	p.b[8], p.b[9], p.b[10], p.b[11] = ch(p.b[8], p.db[8]), ch(p.b[9], p.db[9]), ch(p.b[10], p.db[10]), ch(p.b[11], p.db[11])
+	p.b[12], p.b[13], p.b[14], p.b[15] = ch(p.b[12], p.db[12]), ch(p.b[13], p.db[13]), ch(p.b[14], p.db[14]), ch(p.b[15], p.db[15])
+
+	// Alpha channel: source_over formula (4 at a time)
+	invSa0, invSa1, invSa2, invSa3 := uint16(255-p.a[0]), uint16(255-p.a[1]), uint16(255-p.a[2]), uint16(255-p.a[3])
+	invSa4, invSa5, invSa6, invSa7 := uint16(255-p.a[4]), uint16(255-p.a[5]), uint16(255-p.a[6]), uint16(255-p.a[7])
+	invSa8, invSa9, invSa10, invSa11 := uint16(255-p.a[8]), uint16(255-p.a[9]), uint16(255-p.a[10]), uint16(255-p.a[11])
+	invSa12, invSa13, invSa14, invSa15 := uint16(255-p.a[12]), uint16(255-p.a[13]), uint16(255-p.a[14]), uint16(255-p.a[15])
+
+	p.a[0], p.a[1], p.a[2], p.a[3] = p.a[0]+uint16((uint32(p.da[0])*uint32(invSa0)+255)>>8), p.a[1]+uint16((uint32(p.da[1])*uint32(invSa1)+255)>>8), p.a[2]+uint16((uint32(p.da[2])*uint32(invSa2)+255)>>8), p.a[3]+uint16((uint32(p.da[3])*uint32(invSa3)+255)>>8)
+	p.a[4], p.a[5], p.a[6], p.a[7] = p.a[4]+uint16((uint32(p.da[4])*uint32(invSa4)+255)>>8), p.a[5]+uint16((uint32(p.da[5])*uint32(invSa5)+255)>>8), p.a[6]+uint16((uint32(p.da[6])*uint32(invSa6)+255)>>8), p.a[7]+uint16((uint32(p.da[7])*uint32(invSa7)+255)>>8)
+	p.a[8], p.a[9], p.a[10], p.a[11] = p.a[8]+uint16((uint32(p.da[8])*uint32(invSa8)+255)>>8), p.a[9]+uint16((uint32(p.da[9])*uint32(invSa9)+255)>>8), p.a[10]+uint16((uint32(p.da[10])*uint32(invSa10)+255)>>8), p.a[11]+uint16((uint32(p.da[11])*uint32(invSa11)+255)>>8)
+	p.a[12], p.a[13], p.a[14], p.a[15] = p.a[12]+uint16((uint32(p.da[12])*uint32(invSa12)+255)>>8), p.a[13]+uint16((uint32(p.da[13])*uint32(invSa13)+255)>>8), p.a[14]+uint16((uint32(p.da[14])*uint32(invSa14)+255)>>8), p.a[15]+uint16((uint32(p.da[15])*uint32(invSa15)+255)>>8)
 }
 
 //go:fix inline
 func (p *LowPipeline) HardLight() {
-	for i := 0; i < LOW_STAGE_WIDTH; i += 8 {
-		for j := 0; j < 8; j++ {
-			// Formula: div255(s * inv(da) + d * inv(sa) + (2*s <= sa ? 2*s*d : sa*da - 2*(sa-s)*(da-d)))
-			invDa := uint32(255 - p.da[i+j])
-			invSa := uint32(255 - p.a[i+j])
-			sa := uint32(p.a[i+j])
-			da := uint32(p.da[i+j])
+	// Formula: div255(s * inv(da) + d * inv(sa) + (2*s <= sa ? 2*s*d : sa*da - 2*(sa-s)*(da-d)))
+	ch := func(s, d, sa, da, invSa, invDa uint16) uint16 {
+		s32, d32 := uint32(s), uint32(d)
+		sa32, da32 := uint32(sa), uint32(da)
+		invSa32, invDa32 := uint32(invSa), uint32(invDa)
 
-			// R channel
-			s := uint32(p.r[i+j])
-			d := uint32(p.dr[i+j])
-			term := s*invDa + d*invSa
-			if 2*s <= sa {
-				term += 2 * s * d
-			} else {
-				term += sa*da - 2*(sa-s)*(da-d)
-			}
-			p.r[i+j] = uint16((term + 255) >> 8)
+		// Base term: s * inv(da) + d * inv(sa)
+		term := s32*invDa32 + d32*invSa32
 
-			// G channel
-			s = uint32(p.g[i+j])
-			d = uint32(p.dg[i+j])
-			term = s*invDa + d*invSa
-			if 2*s <= sa {
-				term += 2 * s * d
-			} else {
-				term += sa*da - 2*(sa-s)*(da-d)
-			}
-			p.g[i+j] = uint16((term + 255) >> 8)
-
-			// B channel
-			s = uint32(p.b[i+j])
-			d = uint32(p.db[i+j])
-			term = s*invDa + d*invSa
-			if 2*s <= sa {
-				term += 2 * s * d
-			} else {
-				term += sa*da - 2*(sa-s)*(da-d)
-			}
-			p.b[i+j] = uint16((term + 255) >> 8)
-
-			// Alpha channel: source_over formula
-			p.a[i+j] = uint16(uint32(p.a[i+j]) + (uint32(p.da[i+j])*invSa+255)>>8)
+		// Branch term
+		if 2*s32 <= sa32 {
+			term += 2 * s32 * d32
+		} else {
+			term += sa32*da32 - 2*(sa32-s32)*(da32-d32)
 		}
+
+		return uint16((term + 255) >> 8)
 	}
+
+	// Precompute inverse alpha values (4 at a time)
+	invSa0, invSa1, invSa2, invSa3 := uint16(255-p.a[0]), uint16(255-p.a[1]), uint16(255-p.a[2]), uint16(255-p.a[3])
+	invSa4, invSa5, invSa6, invSa7 := uint16(255-p.a[4]), uint16(255-p.a[5]), uint16(255-p.a[6]), uint16(255-p.a[7])
+	invSa8, invSa9, invSa10, invSa11 := uint16(255-p.a[8]), uint16(255-p.a[9]), uint16(255-p.a[10]), uint16(255-p.a[11])
+	invSa12, invSa13, invSa14, invSa15 := uint16(255-p.a[12]), uint16(255-p.a[13]), uint16(255-p.a[14]), uint16(255-p.a[15])
+
+	invDa0, invDa1, invDa2, invDa3 := uint16(255-p.da[0]), uint16(255-p.da[1]), uint16(255-p.da[2]), uint16(255-p.da[3])
+	invDa4, invDa5, invDa6, invDa7 := uint16(255-p.da[4]), uint16(255-p.da[5]), uint16(255-p.da[6]), uint16(255-p.da[7])
+	invDa8, invDa9, invDa10, invDa11 := uint16(255-p.da[8]), uint16(255-p.da[9]), uint16(255-p.da[10]), uint16(255-p.da[11])
+	invDa12, invDa13, invDa14, invDa15 := uint16(255-p.da[12]), uint16(255-p.da[13]), uint16(255-p.da[14]), uint16(255-p.da[15])
+
+	// Blend R channel (4 at a time)
+	p.r[0], p.r[1], p.r[2], p.r[3] = ch(p.r[0], p.dr[0], p.a[0], p.da[0], invSa0, invDa0), ch(p.r[1], p.dr[1], p.a[1], p.da[1], invSa1, invDa1), ch(p.r[2], p.dr[2], p.a[2], p.da[2], invSa2, invDa2), ch(p.r[3], p.dr[3], p.a[3], p.da[3], invSa3, invDa3)
+	p.r[4], p.r[5], p.r[6], p.r[7] = ch(p.r[4], p.dr[4], p.a[4], p.da[4], invSa4, invDa4), ch(p.r[5], p.dr[5], p.a[5], p.da[5], invSa5, invDa5), ch(p.r[6], p.dr[6], p.a[6], p.da[6], invSa6, invDa6), ch(p.r[7], p.dr[7], p.a[7], p.da[7], invSa7, invDa7)
+	p.r[8], p.r[9], p.r[10], p.r[11] = ch(p.r[8], p.dr[8], p.a[8], p.da[8], invSa8, invDa8), ch(p.r[9], p.dr[9], p.a[9], p.da[9], invSa9, invDa9), ch(p.r[10], p.dr[10], p.a[10], p.da[10], invSa10, invDa10), ch(p.r[11], p.dr[11], p.a[11], p.da[11], invSa11, invDa11)
+	p.r[12], p.r[13], p.r[14], p.r[15] = ch(p.r[12], p.dr[12], p.a[12], p.da[12], invSa12, invDa12), ch(p.r[13], p.dr[13], p.a[13], p.da[13], invSa13, invDa13), ch(p.r[14], p.dr[14], p.a[14], p.da[14], invSa14, invDa14), ch(p.r[15], p.dr[15], p.a[15], p.da[15], invSa15, invDa15)
+
+	// Blend G channel (4 at a time)
+	p.g[0], p.g[1], p.g[2], p.g[3] = ch(p.g[0], p.dg[0], p.a[0], p.da[0], invSa0, invDa0), ch(p.g[1], p.dg[1], p.a[1], p.da[1], invSa1, invDa1), ch(p.g[2], p.dg[2], p.a[2], p.da[2], invSa2, invDa2), ch(p.g[3], p.dg[3], p.a[3], p.da[3], invSa3, invDa3)
+	p.g[4], p.g[5], p.g[6], p.g[7] = ch(p.g[4], p.dg[4], p.a[4], p.da[4], invSa4, invDa4), ch(p.g[5], p.dg[5], p.a[5], p.da[5], invSa5, invDa5), ch(p.g[6], p.dg[6], p.a[6], p.da[6], invSa6, invDa6), ch(p.g[7], p.dg[7], p.a[7], p.da[7], invSa7, invDa7)
+	p.g[8], p.g[9], p.g[10], p.g[11] = ch(p.g[8], p.dg[8], p.a[8], p.da[8], invSa8, invDa8), ch(p.g[9], p.dg[9], p.a[9], p.da[9], invSa9, invDa9), ch(p.g[10], p.dg[10], p.a[10], p.da[10], invSa10, invDa10), ch(p.g[11], p.dg[11], p.a[11], p.da[11], invSa11, invDa11)
+	p.g[12], p.g[13], p.g[14], p.g[15] = ch(p.g[12], p.dg[12], p.a[12], p.da[12], invSa12, invDa12), ch(p.g[13], p.dg[13], p.a[13], p.da[13], invSa13, invDa13), ch(p.g[14], p.dg[14], p.a[14], p.da[14], invSa14, invDa14), ch(p.g[15], p.dg[15], p.a[15], p.da[15], invSa15, invDa15)
+
+	// Blend B channel (4 at a time)
+	p.b[0], p.b[1], p.b[2], p.b[3] = ch(p.b[0], p.db[0], p.a[0], p.da[0], invSa0, invDa0), ch(p.b[1], p.db[1], p.a[1], p.da[1], invSa1, invDa1), ch(p.b[2], p.db[2], p.a[2], p.da[2], invSa2, invDa2), ch(p.b[3], p.db[3], p.a[3], p.da[3], invSa3, invDa3)
+	p.b[4], p.b[5], p.b[6], p.b[7] = ch(p.b[4], p.db[4], p.a[4], p.da[4], invSa4, invDa4), ch(p.b[5], p.db[5], p.a[5], p.da[5], invSa5, invDa5), ch(p.b[6], p.db[6], p.a[6], p.da[6], invSa6, invDa6), ch(p.b[7], p.db[7], p.a[7], p.da[7], invSa7, invDa7)
+	p.b[8], p.b[9], p.b[10], p.b[11] = ch(p.b[8], p.db[8], p.a[8], p.da[8], invSa8, invDa8), ch(p.b[9], p.db[9], p.a[9], p.da[9], invSa9, invDa9), ch(p.b[10], p.db[10], p.a[10], p.da[10], invSa10, invDa10), ch(p.b[11], p.db[11], p.a[11], p.da[11], invSa11, invDa11)
+	p.b[12], p.b[13], p.b[14], p.b[15] = ch(p.b[12], p.db[12], p.a[12], p.da[12], invSa12, invDa12), ch(p.b[13], p.db[13], p.a[13], p.da[13], invSa13, invDa13), ch(p.b[14], p.db[14], p.a[14], p.da[14], invSa14, invDa14), ch(p.b[15], p.db[15], p.a[15], p.da[15], invSa15, invDa15)
+
+	// Alpha channel: source_over formula (4 at a time)
+	p.a[0], p.a[1], p.a[2], p.a[3] = p.a[0]+uint16((uint32(p.da[0])*uint32(invSa0)+255)>>8), p.a[1]+uint16((uint32(p.da[1])*uint32(invSa1)+255)>>8), p.a[2]+uint16((uint32(p.da[2])*uint32(invSa2)+255)>>8), p.a[3]+uint16((uint32(p.da[3])*uint32(invSa3)+255)>>8)
+	p.a[4], p.a[5], p.a[6], p.a[7] = p.a[4]+uint16((uint32(p.da[4])*uint32(invSa4)+255)>>8), p.a[5]+uint16((uint32(p.da[5])*uint32(invSa5)+255)>>8), p.a[6]+uint16((uint32(p.da[6])*uint32(invSa6)+255)>>8), p.a[7]+uint16((uint32(p.da[7])*uint32(invSa7)+255)>>8)
+	p.a[8], p.a[9], p.a[10], p.a[11] = p.a[8]+uint16((uint32(p.da[8])*uint32(invSa8)+255)>>8), p.a[9]+uint16((uint32(p.da[9])*uint32(invSa9)+255)>>8), p.a[10]+uint16((uint32(p.da[10])*uint32(invSa10)+255)>>8), p.a[11]+uint16((uint32(p.da[11])*uint32(invSa11)+255)>>8)
+	p.a[12], p.a[13], p.a[14], p.a[15] = p.a[12]+uint16((uint32(p.da[12])*uint32(invSa12)+255)>>8), p.a[13]+uint16((uint32(p.da[13])*uint32(invSa13)+255)>>8), p.a[14]+uint16((uint32(p.da[14])*uint32(invSa14)+255)>>8), p.a[15]+uint16((uint32(p.da[15])*uint32(invSa15)+255)>>8)
 }
 
 //go:fix inline
 func (p *LowPipeline) Lighten() {
-	for i := 0; i < LOW_STAGE_WIDTH; i += 8 {
-		for j := 0; j < 8; j++ {
-			// Formula: s + d - div255(min(s * da, d * sa))
-			prod1 := uint32(p.r[i+j]) * uint32(p.da[i+j])
-			prod2 := uint32(p.dr[i+j]) * uint32(p.a[i+j])
-			minProd := u16min(uint16(prod2), uint16(prod1))
-			p.r[i+j] = uint16(uint32(p.r[i+j]) + uint32(p.dr[i+j]) - ((uint32(minProd) + 255) >> 8))
-
-			prod1 = uint32(p.g[i+j]) * uint32(p.da[i+j])
-			prod2 = uint32(p.dg[i+j]) * uint32(p.a[i+j])
-			minProd = u16min(uint16(prod2), uint16(prod1))
-			p.g[i+j] = uint16(uint32(p.g[i+j]) + uint32(p.dg[i+j]) - ((uint32(minProd) + 255) >> 8))
-
-			prod1 = uint32(p.b[i+j]) * uint32(p.da[i+j])
-			prod2 = uint32(p.db[i+j]) * uint32(p.a[i+j])
-			minProd = u16min(uint16(prod2), uint16(prod1))
-			p.b[i+j] = uint16(uint32(p.b[i+j]) + uint32(p.db[i+j]) - ((uint32(minProd) + 255) >> 8))
-
-			// Alpha channel: source_over formula
-			invSa := 255 - p.a[i+j]
-			p.a[i+j] = uint16(uint32(p.a[i+j]) + (uint32(p.da[i+j])*uint32(invSa)+255)>>8)
-		}
+	// Formula: s + d - div255(min(s * da, d * sa))
+	ch := func(s, d, sa, da uint16) uint16 {
+		prod1 := uint32(s) * uint32(da)
+		prod2 := uint32(d) * uint32(sa)
+		minProd := u16min(uint16(prod2), uint16(prod1))
+		return uint16(uint32(s) + uint32(d) - ((uint32(minProd) + 255) >> 8))
 	}
+
+	// Blend R channel (4 at a time)
+	p.r[0], p.r[1], p.r[2], p.r[3] = ch(p.r[0], p.dr[0], p.a[0], p.da[0]), ch(p.r[1], p.dr[1], p.a[1], p.da[1]), ch(p.r[2], p.dr[2], p.a[2], p.da[2]), ch(p.r[3], p.dr[3], p.a[3], p.da[3])
+	p.r[4], p.r[5], p.r[6], p.r[7] = ch(p.r[4], p.dr[4], p.a[4], p.da[4]), ch(p.r[5], p.dr[5], p.a[5], p.da[5]), ch(p.r[6], p.dr[6], p.a[6], p.da[6]), ch(p.r[7], p.dr[7], p.a[7], p.da[7])
+	p.r[8], p.r[9], p.r[10], p.r[11] = ch(p.r[8], p.dr[8], p.a[8], p.da[8]), ch(p.r[9], p.dr[9], p.a[9], p.da[9]), ch(p.r[10], p.dr[10], p.a[10], p.da[10]), ch(p.r[11], p.dr[11], p.a[11], p.da[11])
+	p.r[12], p.r[13], p.r[14], p.r[15] = ch(p.r[12], p.dr[12], p.a[12], p.da[12]), ch(p.r[13], p.dr[13], p.a[13], p.da[13]), ch(p.r[14], p.dr[14], p.a[14], p.da[14]), ch(p.r[15], p.dr[15], p.a[15], p.da[15])
+
+	// Blend G channel (4 at a time)
+	p.g[0], p.g[1], p.g[2], p.g[3] = ch(p.g[0], p.dg[0], p.a[0], p.da[0]), ch(p.g[1], p.dg[1], p.a[1], p.da[1]), ch(p.g[2], p.dg[2], p.a[2], p.da[2]), ch(p.g[3], p.dg[3], p.a[3], p.da[3])
+	p.g[4], p.g[5], p.g[6], p.g[7] = ch(p.g[4], p.dg[4], p.a[4], p.da[4]), ch(p.g[5], p.dg[5], p.a[5], p.da[5]), ch(p.g[6], p.dg[6], p.a[6], p.da[6]), ch(p.g[7], p.dg[7], p.a[7], p.da[7])
+	p.g[8], p.g[9], p.g[10], p.g[11] = ch(p.g[8], p.dg[8], p.a[8], p.da[8]), ch(p.g[9], p.dg[9], p.a[9], p.da[9]), ch(p.g[10], p.dg[10], p.a[10], p.da[10]), ch(p.g[11], p.dg[11], p.a[11], p.da[11])
+	p.g[12], p.g[13], p.g[14], p.g[15] = ch(p.g[12], p.dg[12], p.a[12], p.da[12]), ch(p.g[13], p.dg[13], p.a[13], p.da[13]), ch(p.g[14], p.dg[14], p.a[14], p.da[14]), ch(p.g[15], p.dg[15], p.a[15], p.da[15])
+
+	// Blend B channel (4 at a time)
+	p.b[0], p.b[1], p.b[2], p.b[3] = ch(p.b[0], p.db[0], p.a[0], p.da[0]), ch(p.b[1], p.db[1], p.a[1], p.da[1]), ch(p.b[2], p.db[2], p.a[2], p.da[2]), ch(p.b[3], p.db[3], p.a[3], p.da[3])
+	p.b[4], p.b[5], p.b[6], p.b[7] = ch(p.b[4], p.db[4], p.a[4], p.da[4]), ch(p.b[5], p.db[5], p.a[5], p.da[5]), ch(p.b[6], p.db[6], p.a[6], p.da[6]), ch(p.b[7], p.db[7], p.a[7], p.da[7])
+	p.b[8], p.b[9], p.b[10], p.b[11] = ch(p.b[8], p.db[8], p.a[8], p.da[8]), ch(p.b[9], p.db[9], p.a[9], p.da[9]), ch(p.b[10], p.db[10], p.a[10], p.da[10]), ch(p.b[11], p.db[11], p.a[11], p.da[11])
+	p.b[12], p.b[13], p.b[14], p.b[15] = ch(p.b[12], p.db[12], p.a[12], p.da[12]), ch(p.b[13], p.db[13], p.a[13], p.da[13]), ch(p.b[14], p.db[14], p.a[14], p.da[14]), ch(p.b[15], p.db[15], p.a[15], p.da[15])
+
+	// Alpha channel: source_over formula (4 at a time)
+	invSa0, invSa1, invSa2, invSa3 := uint16(255-p.a[0]), uint16(255-p.a[1]), uint16(255-p.a[2]), uint16(255-p.a[3])
+	invSa4, invSa5, invSa6, invSa7 := uint16(255-p.a[4]), uint16(255-p.a[5]), uint16(255-p.a[6]), uint16(255-p.a[7])
+	invSa8, invSa9, invSa10, invSa11 := uint16(255-p.a[8]), uint16(255-p.a[9]), uint16(255-p.a[10]), uint16(255-p.a[11])
+	invSa12, invSa13, invSa14, invSa15 := uint16(255-p.a[12]), uint16(255-p.a[13]), uint16(255-p.a[14]), uint16(255-p.a[15])
+
+	p.a[0], p.a[1], p.a[2], p.a[3] = p.a[0]+uint16((uint32(p.da[0])*uint32(invSa0)+255)>>8), p.a[1]+uint16((uint32(p.da[1])*uint32(invSa1)+255)>>8), p.a[2]+uint16((uint32(p.da[2])*uint32(invSa2)+255)>>8), p.a[3]+uint16((uint32(p.da[3])*uint32(invSa3)+255)>>8)
+	p.a[4], p.a[5], p.a[6], p.a[7] = p.a[4]+uint16((uint32(p.da[4])*uint32(invSa4)+255)>>8), p.a[5]+uint16((uint32(p.da[5])*uint32(invSa5)+255)>>8), p.a[6]+uint16((uint32(p.da[6])*uint32(invSa6)+255)>>8), p.a[7]+uint16((uint32(p.da[7])*uint32(invSa7)+255)>>8)
+	p.a[8], p.a[9], p.a[10], p.a[11] = p.a[8]+uint16((uint32(p.da[8])*uint32(invSa8)+255)>>8), p.a[9]+uint16((uint32(p.da[9])*uint32(invSa9)+255)>>8), p.a[10]+uint16((uint32(p.da[10])*uint32(invSa10)+255)>>8), p.a[11]+uint16((uint32(p.da[11])*uint32(invSa11)+255)>>8)
+	p.a[12], p.a[13], p.a[14], p.a[15] = p.a[12]+uint16((uint32(p.da[12])*uint32(invSa12)+255)>>8), p.a[13]+uint16((uint32(p.da[13])*uint32(invSa13)+255)>>8), p.a[14]+uint16((uint32(p.da[14])*uint32(invSa14)+255)>>8), p.a[15]+uint16((uint32(p.da[15])*uint32(invSa15)+255)>>8)
 }
 
 //go:fix inline
 func (p *LowPipeline) Overlay() {
-	for i := 0; i < LOW_STAGE_WIDTH; i += 8 {
-		for j := 0; j < 8; j++ {
-			sa := uint32(p.a[i+j])
-			da := uint32(p.da[i+j])
-			sr, sg, sb := uint32(p.r[i+j]), uint32(p.g[i+j]), uint32(p.b[i+j])
-			dr, dg, db := uint32(p.dr[i+j]), uint32(p.dg[i+j]), uint32(p.db[i+j])
-			invSaVal, invDaVal := uint32(255-p.a[i+j]), uint32(255-p.da[i+j])
+	// Precompute inverse alpha values (4 at a time)
+	invSa0, invSa1, invSa2, invSa3 := uint16(255-p.a[0]), uint16(255-p.a[1]), uint16(255-p.a[2]), uint16(255-p.a[3])
+	invSa4, invSa5, invSa6, invSa7 := uint16(255-p.a[4]), uint16(255-p.a[5]), uint16(255-p.a[6]), uint16(255-p.a[7])
+	invSa8, invSa9, invSa10, invSa11 := uint16(255-p.a[8]), uint16(255-p.a[9]), uint16(255-p.a[10]), uint16(255-p.a[11])
+	invSa12, invSa13, invSa14, invSa15 := uint16(255-p.a[12]), uint16(255-p.a[13]), uint16(255-p.a[14]), uint16(255-p.a[15])
 
-			// R channel
-			term := sr*invDaVal + dr*invSaVal
-			if 2*dr <= da {
-				term += 2 * sr * dr
-			} else {
-				term += sa*da - 2*(sa-sr)*(da-dr)
-			}
-			p.r[i+j] = uint16((term + 255) >> 8)
+	invDa0, invDa1, invDa2, invDa3 := uint16(255-p.da[0]), uint16(255-p.da[1]), uint16(255-p.da[2]), uint16(255-p.da[3])
+	invDa4, invDa5, invDa6, invDa7 := uint16(255-p.da[4]), uint16(255-p.da[5]), uint16(255-p.da[6]), uint16(255-p.da[7])
+	invDa8, invDa9, invDa10, invDa11 := uint16(255-p.da[8]), uint16(255-p.da[9]), uint16(255-p.da[10]), uint16(255-p.da[11])
+	invDa12, invDa13, invDa14, invDa15 := uint16(255-p.da[12]), uint16(255-p.da[13]), uint16(255-p.da[14]), uint16(255-p.da[15])
 
-			// G channel
-			term = sg*invDaVal + dg*invSaVal
-			if 2*dg <= da {
-				term += 2 * sg * dg
-			} else {
-				term += sa*da - 2*(sa-sg)*(da-dg)
-			}
-			p.g[i+j] = uint16((term + 255) >> 8)
+	ch := func(s, d, sa, da, invSa, invDa uint16) uint16 {
+		s32, d32 := uint32(s), uint32(d)
+		sa32, da32 := uint32(sa), uint32(da)
+		invSa32, invDa32 := uint32(invSa), uint32(invDa)
 
-			// B channel
-			term = sb*invDaVal + db*invSaVal
-			if 2*db <= da {
-				term += 2 * sb * db
-			} else {
-				term += sa*da - 2*(sa-sb)*(da-db)
-			}
-			p.b[i+j] = uint16((term + 255) >> 8)
+		// Base term: s * inv(da) + d * inv(sa)
+		term := s32*invDa32 + d32*invSa32
 
-			// Alpha channel: source_over formula
-			p.a[i+j] = uint16(sa + (da*invSaVal+255)>>8)
+		// Branch term
+		if 2*d32 <= da32 {
+			term += 2 * s32 * d32
+		} else {
+			term += sa32*da32 - 2*(sa32-s32)*(da32-d32)
 		}
+
+		return uint16((term + 255) >> 8)
 	}
+
+	p.r[0], p.r[1], p.r[2], p.r[3] = ch(p.r[0], p.dr[0], p.a[0], p.da[0], invSa0, invDa0), ch(p.r[1], p.dr[1], p.a[1], p.da[1], invSa1, invDa1), ch(p.r[2], p.dr[2], p.a[2], p.da[2], invSa2, invDa2), ch(p.r[3], p.dr[3], p.a[3], p.da[3], invSa3, invDa3)
+	p.r[4], p.r[5], p.r[6], p.r[7] = ch(p.r[4], p.dr[4], p.a[4], p.da[4], invSa4, invDa4), ch(p.r[5], p.dr[5], p.a[5], p.da[5], invSa5, invDa5), ch(p.r[6], p.dr[6], p.a[6], p.da[6], invSa6, invDa6), ch(p.r[7], p.dr[7], p.a[7], p.da[7], invSa7, invDa7)
+	p.r[8], p.r[9], p.r[10], p.r[11] = ch(p.r[8], p.dr[8], p.a[8], p.da[8], invSa8, invDa8), ch(p.r[9], p.dr[9], p.a[9], p.da[9], invSa9, invDa9), ch(p.r[10], p.dr[10], p.a[10], p.da[10], invSa10, invDa10), ch(p.r[11], p.dr[11], p.a[11], p.da[11], invSa11, invDa11)
+	p.r[12], p.r[13], p.r[14], p.r[15] = ch(p.r[12], p.dr[12], p.a[12], p.da[12], invSa12, invDa12), ch(p.r[13], p.dr[13], p.a[13], p.da[13], invSa13, invDa13), ch(p.r[14], p.dr[14], p.a[14], p.da[14], invSa14, invDa14), ch(p.r[15], p.dr[15], p.a[15], p.da[15], invSa15, invDa15)
+
+	p.g[0], p.g[1], p.g[2], p.g[3] = ch(p.g[0], p.dg[0], p.a[0], p.da[0], invSa0, invDa0), ch(p.g[1], p.dg[1], p.a[1], p.da[1], invSa1, invDa1), ch(p.g[2], p.dg[2], p.a[2], p.da[2], invSa2, invDa2), ch(p.g[3], p.dg[3], p.a[3], p.da[3], invSa3, invDa3)
+	p.g[4], p.g[5], p.g[6], p.g[7] = ch(p.g[4], p.dg[4], p.a[4], p.da[4], invSa4, invDa4), ch(p.g[5], p.dg[5], p.a[5], p.da[5], invSa5, invDa5), ch(p.g[6], p.dg[6], p.a[6], p.da[6], invSa6, invDa6), ch(p.g[7], p.dg[7], p.a[7], p.da[7], invSa7, invDa7)
+	p.g[8], p.g[9], p.g[10], p.g[11] = ch(p.g[8], p.dg[8], p.a[8], p.da[8], invSa8, invDa8), ch(p.g[9], p.dg[9], p.a[9], p.da[9], invSa9, invDa9), ch(p.g[10], p.dg[10], p.a[10], p.da[10], invSa10, invDa10), ch(p.g[11], p.dg[11], p.a[11], p.da[11], invSa11, invDa11)
+	p.g[12], p.g[13], p.g[14], p.g[15] = ch(p.g[12], p.dg[12], p.a[12], p.da[12], invSa12, invDa12), ch(p.g[13], p.dg[13], p.a[13], p.da[13], invSa13, invDa13), ch(p.g[14], p.dg[14], p.a[14], p.da[14], invSa14, invDa14), ch(p.g[15], p.dg[15], p.a[15], p.da[15], invSa15, invDa15)
+
+	p.b[0], p.b[1], p.b[2], p.b[3] = ch(p.b[0], p.db[0], p.a[0], p.da[0], invSa0, invDa0), ch(p.b[1], p.db[1], p.a[1], p.da[1], invSa1, invDa1), ch(p.b[2], p.db[2], p.a[2], p.da[2], invSa2, invDa2), ch(p.b[3], p.db[3], p.a[3], p.da[3], invSa3, invDa3)
+	p.b[4], p.b[5], p.b[6], p.b[7] = ch(p.b[4], p.db[4], p.a[4], p.da[4], invSa4, invDa4), ch(p.b[5], p.db[5], p.a[5], p.da[5], invSa5, invDa5), ch(p.b[6], p.db[6], p.a[6], p.da[6], invSa6, invDa6), ch(p.b[7], p.db[7], p.a[7], p.da[7], invSa7, invDa7)
+	p.b[8], p.b[9], p.b[10], p.b[11] = ch(p.b[8], p.db[8], p.a[8], p.da[8], invSa8, invDa8), ch(p.b[9], p.db[9], p.a[9], p.da[9], invSa9, invDa9), ch(p.b[10], p.db[10], p.a[10], p.da[10], invSa10, invDa10), ch(p.b[11], p.db[11], p.a[11], p.da[11], invSa11, invDa11)
+	p.b[12], p.b[13], p.b[14], p.b[15] = ch(p.b[12], p.db[12], p.a[12], p.da[12], invSa12, invDa12), ch(p.b[13], p.db[13], p.a[13], p.da[13], invSa13, invDa13), ch(p.b[14], p.db[14], p.a[14], p.da[14], invSa14, invDa14), ch(p.b[15], p.db[15], p.a[15], p.da[15], invSa15, invDa15)
+
+	p.a[0], p.a[1], p.a[2], p.a[3] = p.a[0]+uint16((uint32(p.da[0])*uint32(invSa0)+255)>>8), p.a[1]+uint16((uint32(p.da[1])*uint32(invSa1)+255)>>8), p.a[2]+uint16((uint32(p.da[2])*uint32(invSa2)+255)>>8), p.a[3]+uint16((uint32(p.da[3])*uint32(invSa3)+255)>>8)
+	p.a[4], p.a[5], p.a[6], p.a[7] = p.a[4]+uint16((uint32(p.da[4])*uint32(invSa4)+255)>>8), p.a[5]+uint16((uint32(p.da[5])*uint32(invSa5)+255)>>8), p.a[6]+uint16((uint32(p.da[6])*uint32(invSa6)+255)>>8), p.a[7]+uint16((uint32(p.da[7])*uint32(invSa7)+255)>>8)
+	p.a[8], p.a[9], p.a[10], p.a[11] = p.a[8]+uint16((uint32(p.da[8])*uint32(invSa8)+255)>>8), p.a[9]+uint16((uint32(p.da[9])*uint32(invSa9)+255)>>8), p.a[10]+uint16((uint32(p.da[10])*uint32(invSa10)+255)>>8), p.a[11]+uint16((uint32(p.da[11])*uint32(invSa11)+255)>>8)
+	p.a[12], p.a[13], p.a[14], p.a[15] = p.a[12]+uint16((uint32(p.da[12])*uint32(invSa12)+255)>>8), p.a[13]+uint16((uint32(p.da[13])*uint32(invSa13)+255)>>8), p.a[14]+uint16((uint32(p.da[14])*uint32(invSa14)+255)>>8), p.a[15]+uint16((uint32(p.da[15])*uint32(invSa15)+255)>>8)
 }
 
 //go:fix inline
@@ -1309,25 +1144,115 @@ func (p *LowPipeline) Luminosity() {
 
 //go:fix inline
 func (p *LowPipeline) SourceOverRgba() {
-	// TODO
-	for i := 0; i < LOW_STAGE_WIDTH; i += 8 {
-		invSa0 := 255 - p.a[i]
-		p.r[i] = uint16(uint32(p.r[i]) + (uint32(p.dr[i])*uint32(invSa0)+255)>>8)
-		p.g[i] = uint16(uint32(p.g[i]) + (uint32(p.dg[i])*uint32(invSa0)+255)>>8)
-		p.b[i] = uint16(uint32(p.b[i]) + (uint32(p.db[i])*uint32(invSa0)+255)>>8)
-		p.a[i] = uint16(uint32(p.a[i]) + (uint32(p.da[i])*uint32(invSa0)+255)>>8)
-	}
+	// Load destination RGBA (4 pixels at a time, unrolled)
+	baseIdx := (p.dy*p.pixmap.RealWidth + p.dx) * 4
+	data := p.pixmap.Data[baseIdx : baseIdx+LOW_STAGE_WIDTH*4]
+
+	// Load dr (red channel)
+	p.dr[0], p.dr[1], p.dr[2], p.dr[3] = uint16(data[0]), uint16(data[4]), uint16(data[8]), uint16(data[12])
+	p.dr[4], p.dr[5], p.dr[6], p.dr[7] = uint16(data[16]), uint16(data[20]), uint16(data[24]), uint16(data[28])
+	p.dr[8], p.dr[9], p.dr[10], p.dr[11] = uint16(data[32]), uint16(data[36]), uint16(data[40]), uint16(data[44])
+	p.dr[12], p.dr[13], p.dr[14], p.dr[15] = uint16(data[48]), uint16(data[52]), uint16(data[56]), uint16(data[60])
+
+	// Load dg (green channel)
+	p.dg[0], p.dg[1], p.dg[2], p.dg[3] = uint16(data[1]), uint16(data[5]), uint16(data[9]), uint16(data[13])
+	p.dg[4], p.dg[5], p.dg[6], p.dg[7] = uint16(data[17]), uint16(data[21]), uint16(data[25]), uint16(data[29])
+	p.dg[8], p.dg[9], p.dg[10], p.dg[11] = uint16(data[33]), uint16(data[37]), uint16(data[41]), uint16(data[45])
+	p.dg[12], p.dg[13], p.dg[14], p.dg[15] = uint16(data[49]), uint16(data[53]), uint16(data[57]), uint16(data[61])
+
+	// Load db (blue channel)
+	p.db[0], p.db[1], p.db[2], p.db[3] = uint16(data[2]), uint16(data[6]), uint16(data[10]), uint16(data[14])
+	p.db[4], p.db[5], p.db[6], p.db[7] = uint16(data[18]), uint16(data[22]), uint16(data[26]), uint16(data[30])
+	p.db[8], p.db[9], p.db[10], p.db[11] = uint16(data[34]), uint16(data[38]), uint16(data[42]), uint16(data[46])
+	p.db[12], p.db[13], p.db[14], p.db[15] = uint16(data[50]), uint16(data[54]), uint16(data[58]), uint16(data[62])
+
+	// Load da (alpha channel)
+	p.da[0], p.da[1], p.da[2], p.da[3] = uint16(data[3]), uint16(data[7]), uint16(data[11]), uint16(data[15])
+	p.da[4], p.da[5], p.da[6], p.da[7] = uint16(data[19]), uint16(data[23]), uint16(data[27]), uint16(data[31])
+	p.da[8], p.da[9], p.da[10], p.da[11] = uint16(data[35]), uint16(data[39]), uint16(data[43]), uint16(data[47])
+	p.da[12], p.da[13], p.da[14], p.da[15] = uint16(data[51]), uint16(data[55]), uint16(data[59]), uint16(data[63])
+
+	// source_over blend: src + dst * inv(src_alpha)
+	// inv(a) = 255 - a
+	// div255(v) = (v + 255) >> 8
+	invSa0, invSa1, invSa2, invSa3 := uint16(255-p.a[0]), uint16(255-p.a[1]), uint16(255-p.a[2]), uint16(255-p.a[3])
+	invSa4, invSa5, invSa6, invSa7 := uint16(255-p.a[4]), uint16(255-p.a[5]), uint16(255-p.a[6]), uint16(255-p.a[7])
+	invSa8, invSa9, invSa10, invSa11 := uint16(255-p.a[8]), uint16(255-p.a[9]), uint16(255-p.a[10]), uint16(255-p.a[11])
+	invSa12, invSa13, invSa14, invSa15 := uint16(255-p.a[12]), uint16(255-p.a[13]), uint16(255-p.a[14]), uint16(255-p.a[15])
+
+	// Blend all 16 pixels (4 at a time, unrolled)
+	p.r[0], p.r[1], p.r[2], p.r[3] = p.r[0]+uint16((uint32(p.dr[0])*uint32(invSa0)+255)>>8), p.r[1]+uint16((uint32(p.dr[1])*uint32(invSa1)+255)>>8), p.r[2]+uint16((uint32(p.dr[2])*uint32(invSa2)+255)>>8), p.r[3]+uint16((uint32(p.dr[3])*uint32(invSa3)+255)>>8)
+	p.r[4], p.r[5], p.r[6], p.r[7] = p.r[4]+uint16((uint32(p.dr[4])*uint32(invSa4)+255)>>8), p.r[5]+uint16((uint32(p.dr[5])*uint32(invSa5)+255)>>8), p.r[6]+uint16((uint32(p.dr[6])*uint32(invSa6)+255)>>8), p.r[7]+uint16((uint32(p.dr[7])*uint32(invSa7)+255)>>8)
+	p.r[8], p.r[9], p.r[10], p.r[11] = p.r[8]+uint16((uint32(p.dr[8])*uint32(invSa8)+255)>>8), p.r[9]+uint16((uint32(p.dr[9])*uint32(invSa9)+255)>>8), p.r[10]+uint16((uint32(p.dr[10])*uint32(invSa10)+255)>>8), p.r[11]+uint16((uint32(p.dr[11])*uint32(invSa11)+255)>>8)
+	p.r[12], p.r[13], p.r[14], p.r[15] = p.r[12]+uint16((uint32(p.dr[12])*uint32(invSa12)+255)>>8), p.r[13]+uint16((uint32(p.dr[13])*uint32(invSa13)+255)>>8), p.r[14]+uint16((uint32(p.dr[14])*uint32(invSa14)+255)>>8), p.r[15]+uint16((uint32(p.dr[15])*uint32(invSa15)+255)>>8)
+
+	p.g[0], p.g[1], p.g[2], p.g[3] = p.g[0]+uint16((uint32(p.dg[0])*uint32(invSa0)+255)>>8), p.g[1]+uint16((uint32(p.dg[1])*uint32(invSa1)+255)>>8), p.g[2]+uint16((uint32(p.dg[2])*uint32(invSa2)+255)>>8), p.g[3]+uint16((uint32(p.dg[3])*uint32(invSa3)+255)>>8)
+	p.g[4], p.g[5], p.g[6], p.g[7] = p.g[4]+uint16((uint32(p.dg[4])*uint32(invSa4)+255)>>8), p.g[5]+uint16((uint32(p.dg[5])*uint32(invSa5)+255)>>8), p.g[6]+uint16((uint32(p.dg[6])*uint32(invSa6)+255)>>8), p.g[7]+uint16((uint32(p.dg[7])*uint32(invSa7)+255)>>8)
+	p.g[8], p.g[9], p.g[10], p.g[11] = p.g[8]+uint16((uint32(p.dg[8])*uint32(invSa8)+255)>>8), p.g[9]+uint16((uint32(p.dg[9])*uint32(invSa9)+255)>>8), p.g[10]+uint16((uint32(p.dg[10])*uint32(invSa10)+255)>>8), p.g[11]+uint16((uint32(p.dg[11])*uint32(invSa11)+255)>>8)
+	p.g[12], p.g[13], p.g[14], p.g[15] = p.g[12]+uint16((uint32(p.dg[12])*uint32(invSa12)+255)>>8), p.g[13]+uint16((uint32(p.dg[13])*uint32(invSa13)+255)>>8), p.g[14]+uint16((uint32(p.dg[14])*uint32(invSa14)+255)>>8), p.g[15]+uint16((uint32(p.dg[15])*uint32(invSa15)+255)>>8)
+
+	p.b[0], p.b[1], p.b[2], p.b[3] = p.b[0]+uint16((uint32(p.db[0])*uint32(invSa0)+255)>>8), p.b[1]+uint16((uint32(p.db[1])*uint32(invSa1)+255)>>8), p.b[2]+uint16((uint32(p.db[2])*uint32(invSa2)+255)>>8), p.b[3]+uint16((uint32(p.db[3])*uint32(invSa3)+255)>>8)
+	p.b[4], p.b[5], p.b[6], p.b[7] = p.b[4]+uint16((uint32(p.db[4])*uint32(invSa4)+255)>>8), p.b[5]+uint16((uint32(p.db[5])*uint32(invSa5)+255)>>8), p.b[6]+uint16((uint32(p.db[6])*uint32(invSa6)+255)>>8), p.b[7]+uint16((uint32(p.db[7])*uint32(invSa7)+255)>>8)
+	p.b[8], p.b[9], p.b[10], p.b[11] = p.b[8]+uint16((uint32(p.db[8])*uint32(invSa8)+255)>>8), p.b[9]+uint16((uint32(p.db[9])*uint32(invSa9)+255)>>8), p.b[10]+uint16((uint32(p.db[10])*uint32(invSa10)+255)>>8), p.b[11]+uint16((uint32(p.db[11])*uint32(invSa11)+255)>>8)
+	p.b[12], p.b[13], p.b[14], p.b[15] = p.b[12]+uint16((uint32(p.db[12])*uint32(invSa12)+255)>>8), p.b[13]+uint16((uint32(p.db[13])*uint32(invSa13)+255)>>8), p.b[14]+uint16((uint32(p.db[14])*uint32(invSa14)+255)>>8), p.b[15]+uint16((uint32(p.db[15])*uint32(invSa15)+255)>>8)
+
+	p.a[0], p.a[1], p.a[2], p.a[3] = p.a[0]+uint16((uint32(p.da[0])*uint32(invSa0)+255)>>8), p.a[1]+uint16((uint32(p.da[1])*uint32(invSa1)+255)>>8), p.a[2]+uint16((uint32(p.da[2])*uint32(invSa2)+255)>>8), p.a[3]+uint16((uint32(p.da[3])*uint32(invSa3)+255)>>8)
+	p.a[4], p.a[5], p.a[6], p.a[7] = p.a[4]+uint16((uint32(p.da[4])*uint32(invSa4)+255)>>8), p.a[5]+uint16((uint32(p.da[5])*uint32(invSa5)+255)>>8), p.a[6]+uint16((uint32(p.da[6])*uint32(invSa6)+255)>>8), p.a[7]+uint16((uint32(p.da[7])*uint32(invSa7)+255)>>8)
+	p.a[8], p.a[9], p.a[10], p.a[11] = p.a[8]+uint16((uint32(p.da[8])*uint32(invSa8)+255)>>8), p.a[9]+uint16((uint32(p.da[9])*uint32(invSa9)+255)>>8), p.a[10]+uint16((uint32(p.da[10])*uint32(invSa10)+255)>>8), p.a[11]+uint16((uint32(p.da[11])*uint32(invSa11)+255)>>8)
+	p.a[12], p.a[13], p.a[14], p.a[15] = p.a[12]+uint16((uint32(p.da[12])*uint32(invSa12)+255)>>8), p.a[13]+uint16((uint32(p.da[13])*uint32(invSa13)+255)>>8), p.a[14]+uint16((uint32(p.da[14])*uint32(invSa14)+255)>>8), p.a[15]+uint16((uint32(p.da[15])*uint32(invSa15)+255)>>8)
+
+	// Store result back to destination (4 pixels at a time, unrolled)
+	data[0], data[4], data[8], data[12] = uint8(p.r[0]), uint8(p.r[1]), uint8(p.r[2]), uint8(p.r[3])
+	data[16], data[20], data[24], data[28] = uint8(p.r[4]), uint8(p.r[5]), uint8(p.r[6]), uint8(p.r[7])
+	data[32], data[36], data[40], data[44] = uint8(p.r[8]), uint8(p.r[9]), uint8(p.r[10]), uint8(p.r[11])
+	data[48], data[52], data[56], data[60] = uint8(p.r[12]), uint8(p.r[13]), uint8(p.r[14]), uint8(p.r[15])
+
+	data[1], data[5], data[9], data[13] = uint8(p.g[0]), uint8(p.g[1]), uint8(p.g[2]), uint8(p.g[3])
+	data[17], data[21], data[25], data[29] = uint8(p.g[4]), uint8(p.g[5]), uint8(p.g[6]), uint8(p.g[7])
+	data[33], data[37], data[41], data[45] = uint8(p.g[8]), uint8(p.g[9]), uint8(p.g[10]), uint8(p.g[11])
+	data[49], data[53], data[57], data[61] = uint8(p.g[12]), uint8(p.g[13]), uint8(p.g[14]), uint8(p.g[15])
+
+	data[2], data[6], data[10], data[14] = uint8(p.b[0]), uint8(p.b[1]), uint8(p.b[2]), uint8(p.b[3])
+	data[18], data[22], data[26], data[30] = uint8(p.b[4]), uint8(p.b[5]), uint8(p.b[6]), uint8(p.b[7])
+	data[34], data[38], data[42], data[46] = uint8(p.b[8]), uint8(p.b[9]), uint8(p.b[10]), uint8(p.b[11])
+	data[50], data[54], data[58], data[62] = uint8(p.b[12]), uint8(p.b[13]), uint8(p.b[14]), uint8(p.b[15])
+
+	data[3], data[7], data[11], data[15] = uint8(p.a[0]), uint8(p.a[1]), uint8(p.a[2]), uint8(p.a[3])
+	data[19], data[23], data[27], data[31] = uint8(p.a[4]), uint8(p.a[5]), uint8(p.a[6]), uint8(p.a[7])
+	data[35], data[39], data[43], data[47] = uint8(p.a[8]), uint8(p.a[9]), uint8(p.a[10]), uint8(p.a[11])
+	data[51], data[55], data[59], data[63] = uint8(p.a[12]), uint8(p.a[13]), uint8(p.a[14]), uint8(p.a[15])
 }
 
 //go:fix inline
 func (p *LowPipeline) SourceOverRgbaTail() {
-	// TODO
-	for i := 0; i < LOW_STAGE_WIDTH; i += 8 {
-		invSa0 := 255 - p.a[i]
-		p.r[i] = uint16(uint32(p.r[i]) + (uint32(p.dr[i])*uint32(invSa0)+255)>>8)
-		p.g[i] = uint16(uint32(p.g[i]) + (uint32(p.dg[i])*uint32(invSa0)+255)>>8)
-		p.b[i] = uint16(uint32(p.b[i]) + (uint32(p.db[i])*uint32(invSa0)+255)>>8)
-		p.a[i] = uint16(uint32(p.a[i]) + (uint32(p.da[i])*uint32(invSa0)+255)>>8)
+	// Load destination RGBA for tail pixels
+	baseIdx := (p.dy*p.pixmap.RealWidth + p.dx) * 4
+	data := p.pixmap.Data[baseIdx : baseIdx+p.tail*4]
+
+	for i := 0; i < p.tail; i++ {
+		off := i * 4
+		p.dr[i] = uint16(data[off])
+		p.dg[i] = uint16(data[off+1])
+		p.db[i] = uint16(data[off+2])
+		p.da[i] = uint16(data[off+3])
+	}
+
+	// source_over blend: src + dst * inv(src_alpha)
+	for i := 0; i < p.tail; i++ {
+		invSa := uint16(255 - p.a[i])
+		p.r[i] = p.r[i] + uint16((uint32(p.dr[i])*uint32(invSa)+255)>>8)
+		p.g[i] = p.g[i] + uint16((uint32(p.dg[i])*uint32(invSa)+255)>>8)
+		p.b[i] = p.b[i] + uint16((uint32(p.db[i])*uint32(invSa)+255)>>8)
+		p.a[i] = p.a[i] + uint16((uint32(p.da[i])*uint32(invSa)+255)>>8)
+	}
+
+	// Store result back
+	for i := 0; i < p.tail; i++ {
+		off := i * 4
+		data[off] = uint8(p.r[i])
+		data[off+1] = uint8(p.g[i])
+		data[off+2] = uint8(p.b[i])
+		data[off+3] = uint8(p.a[i])
 	}
 }
 
@@ -1542,11 +1467,18 @@ func (p *LowPipeline) Gradient() {
 func (p *LowPipeline) EvenlySpaced2StopGradient() {
 	factor := p.ctx.EvenlySpaced2StopGradient.Factor
 	bias := p.ctx.EvenlySpaced2StopGradient.Bias
-	for i := 0; i < LOW_STAGE_WIDTH; i += 8 {
-		p.r[i] = uint16(factor.R*float32(p.r[i]) + bias.R)
-		p.g[i] = uint16(factor.G*float32(p.g[i]) + bias.G)
-		p.b[i] = uint16(factor.B*float32(p.b[i]) + bias.B)
-		p.a[i] = uint16(factor.A*float32(p.a[i]) + bias.A)
+	for i := 0; i < LOW_STAGE_WIDTH; i++ {
+		t := math.Float32frombits(uint32(p.r[i]) | uint32(p.g[i])<<16)
+
+		rf := t*factor.R + bias.R
+		gf := t*factor.G + bias.G
+		bf := t*factor.B + bias.B
+		af := t*factor.A + bias.A
+
+		p.r[i] = uint16(rf*255.0 + 0.5)
+		p.g[i] = uint16(gf*255.0 + 0.5)
+		p.b[i] = uint16(bf*255.0 + 0.5)
+		p.a[i] = uint16(af*255.0 + 0.5)
 	}
 }
 
@@ -1573,13 +1505,17 @@ func (p *LowPipeline) XYToRadius() {
 		x[i] = float32(math.Sqrt(float64(x[i]*x[i] + y[i]*y[i])))
 	}
 
-	// Split result back to r,g (b,a are set to 0)
+	// Split x back to r,g and y back to b,a (matching Rust implementation)
 	for i := 0; i < LOW_STAGE_WIDTH; i++ {
-		bits := math.Float32bits(x[i])
-		p.r[i] = uint16(bits & 0xFFFF)
-		p.g[i] = uint16(bits >> 16)
-		p.b[i] = 0
-		p.a[i] = 0
+		// Split x radius back to r, g
+		xBits := math.Float32bits(x[i])
+		p.r[i] = uint16(xBits & 0xFFFF)
+		p.g[i] = uint16(xBits >> 16)
+
+		// Split y radius back to b, a
+		yBits := math.Float32bits(y[i])
+		p.b[i] = uint16(yBits & 0xFFFF)
+		p.a[i] = uint16(yBits >> 16)
 	}
 }
 
