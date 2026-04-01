@@ -1,0 +1,58 @@
+// Copyright 2006 The Android Open Source Project
+// Copyright 2020 Yevhenii Reizner
+// Copyright 2026 LumiFloat
+//
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+package blitter
+
+import (
+	"github.com/lumifloat/tinyskia/internal/path"
+)
+
+// Mask is used to describe alpha bitmaps.
+type Mask struct {
+	Image    [2]uint8
+	Bounds   path.ScreenIntRect
+	RowBytes uint32
+}
+
+// Blitter is responsible for actually writing pixels into memory.
+//
+// Besides efficiency, they handle clipping and antialiasing.
+// An object that implements Blitter contains all the context needed to generate pixels
+// for the destination and how src/generated pixels map to the destination.
+// The coordinates passed to the blit_* calls are in destination pixel space.
+type Blitter interface {
+	// Blits a horizontal run of one or more pixels.
+	BlitH(x uint32, y uint32, width uint32)
+
+	// Blits a horizontal run of antialiased pixels.
+	//
+	// runs[] is a *sparse* zero-terminated run-length encoding of spans of constant alpha values.
+	//
+	// The runs[] and antialias[] work together to represent long runs of pixels with the same
+	// alphas. The runs[] contains the number of pixels with the same alpha, and antialias[]
+	// contain the coverage value for that number of pixels. The runs[] (and antialias[]) are
+	// encoded in a clever way. The runs array is zero terminated, and has enough entries for
+	// each pixel plus one, in most cases some of the entries will not contain valid data. An entry
+	// in the runs array contains the number of pixels (np) that have the same alpha value. The
+	// next np value is found np entries away. For example, if runs[0] = 7, then the next valid
+	// entry will by at runs[7]. The runs array and antialias[] are coupled by index. So, if the
+	// np entry is at runs[45] = 12 then the alpha value can be found at antialias[45] = 0x88.
+	// This would mean to use an alpha value of 0x88 for the next 12 pixels starting at pixel 45.
+	BlitAntiH(x uint32, y uint32, antialias []uint8, runs []uint16)
+
+	// Blits a vertical run of pixels with a constant alpha value.
+	BlitV(x uint32, y uint32, height uint32, alpha uint8)
+
+	BlitAntiH2(x uint32, y uint32, alpha0 uint8, alpha1 uint8)
+
+	BlitAntiV2(x uint32, y uint32, alpha0 uint8, alpha1 uint8)
+
+	// Blits a solid rectangle one or more pixels wide.
+	BlitRect(rect path.ScreenIntRect)
+
+	// Blits a pattern of pixels defined by a rectangle-clipped mask.
+	BlitMask(mask Mask, clip path.ScreenIntRect)
+}
