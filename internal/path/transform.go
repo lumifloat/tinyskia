@@ -44,8 +44,8 @@ func Identity() Transform {
 func NewTransform(sx, ky, kx, sy, tx, ty float32) Transform {
 	return Transform{
 		SX: sx,
-		KY: ky,
 		KX: kx,
+		KY: ky,
 		SY: sy,
 		TX: tx,
 		TY: ty,

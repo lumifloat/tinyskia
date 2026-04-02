@@ -7,8 +7,6 @@
 package pipeline
 
 import (
-	"math"
-
 	"github.com/chewxy/math32"
 )
 
@@ -206,8 +204,8 @@ func (p *HighPipeline) Gather() {
 	const FACTOR = 1.0 / 255.0
 
 	ulpsub := func(v float32) float32 {
-		bits := math.Float32bits(v)
-		return math.Float32frombits(bits - 1)
+		bits := math32.Float32bits(v)
+		return math32.Float32frombits(bits - 1)
 	}
 
 	w := ulpsub(float32(p.pixmapSrc.Size.Width()))
@@ -1862,13 +1860,15 @@ func samplePixel(pixmap *PixmapCtx, ctx *SamplerCtx, x, y float32, r, g, b, a *f
 	width := float32(pixmap.Size.Width())
 	height := float32(pixmap.Size.Height())
 	switch ctx.SpreadMode {
-	case 0:
-	case 1:
-		x = x - float32(math.Floor(float64(x*width)))*ctx.InvWidth
-		y = y - float32(math.Floor(float64(y*height)))*ctx.InvHeight
-	case 2:
+	case 0: // Pad
+		// Do nothing
+	case 1: // Reflect
 		x = exclusiveReflect(x, width, ctx.InvWidth)
 		y = exclusiveReflect(y, height, ctx.InvHeight)
+	case 2: // Repeat
+		// repeat: x = x - floor(x * invWidth) * width
+		x = x - math32.Floor(x*ctx.InvWidth)*width
+		y = y - math32.Floor(y*ctx.InvHeight)*height
 	}
 	ix := int(x)
 	iy := int(y)
