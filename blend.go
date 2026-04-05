@@ -71,6 +71,10 @@ const (
 	BlendModeLuminosity
 )
 
+func (dc *Context) SetGlobalCompositeOperation(blendMode BlendMode) {
+	dc.blendMode = blendMode
+}
+
 func (b BlendMode) ShouldPreScaleCoverage() bool {
 	// The most important things we do here are:
 	//   1) never pre-scale with rgb coverage if the blend mode involves a source-alpha term;
