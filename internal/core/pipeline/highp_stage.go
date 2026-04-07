@@ -242,6 +242,7 @@ func (p *HighPipeline) MaskU8() {
 	}
 
 	if c[0] == 0 && c[1] == 0 && c[2] == 0 && c[3] == 0 && c[4] == 0 && c[5] == 0 && c[6] == 0 && c[7] == 0 {
+		p.stop = true
 		return
 	}
 

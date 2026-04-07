@@ -79,6 +79,7 @@ type LineEdge struct {
 // NewLineEdge creates a new LineEdge from two points.
 func NewLineEdge(p0, p1 path.Point, shift int32) *LineEdge {
 	scale := float32(int32(1) << (shift + 6))
+	
 	x0 := int32(p0.X * scale)
 	y0 := int32(p0.Y * scale)
 	x1 := int32(p1.X * scale)

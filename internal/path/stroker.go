@@ -238,6 +238,11 @@ func newPathStroker() *PathStroker {
 	}
 }
 
+// NewPathStroker creates a new path stroker.
+func NewPathStroker() *PathStroker {
+	return newPathStroker()
+}
+
 // ComputeResolutionScale
 // Computes a resolution scale.
 // Resolution scale is the "intended" resolution for the output. Default is 1.0.
@@ -410,7 +415,7 @@ func (s *PathStroker) lineTo(p Point, iter *PathSegmentsIter) {
 	if !ok {
 		return
 	}
-
+	
 	s.outer.LineTo(p.X+normal.X, p.Y+normal.Y)
 	s.inner.LineTo(p.X-normal.X, p.Y-normal.Y)
 
@@ -778,7 +783,7 @@ func (s *PathStroker) finishContour(close bool, currIsLine bool) {
 				s.outer,
 			)
 			s.outer.reversePathTo(s.inner)
-
+			
 			// cap the start
 			if s.prevIsLine {
 				otherPath = s.inner
@@ -1118,7 +1123,9 @@ func (s *PathStroker) finish(isLine bool) *Path {
 	buf := s.outer
 	s.outer = NewPathBuilder()
 
-	return buf.Finish()
+	result := buf.Finish()
+	
+	return result
 }
 
 func (s *PathStroker) hasOnlyMoveTo() bool {

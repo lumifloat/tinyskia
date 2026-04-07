@@ -31,7 +31,8 @@ const (
 type LineJoin int
 
 const (
-	LineJoinRound LineJoin = iota
+	LineJoinMiter LineJoin = iota
+	LineJoinRound
 	LineJoinBevel
 )
 
@@ -61,15 +62,13 @@ type Context struct {
 	fillStyle       Style
 	strokeStyle     Style
 	pathBuilder     *path.PathBuilder
-	start           path.Point
-	current         path.Point
-	hasCurrent      bool
 	dashes          []float64
 	dashOffset      float64
 	lineWidth       float64
 	lineCap         LineCap
 	lineJoin        LineJoin
 	fillRule        FillRule
+	font            *Font
 	fontFace        font.Face
 	fontHeight      float64
 	transform       path.Transform
@@ -78,6 +77,7 @@ type Context struct {
 	colorspace      color2.ColorSpace
 	forceHQPipeline bool
 	stack           []*Context
+	contextLost     bool // Tracks if the rendering context was lost
 }
 
 func NewContext(width, height int) *Context {
@@ -110,25 +110,16 @@ func NewContextForRGBA(im *image.RGBA) *Context {
 		pathBuilder:     path.NewPathBuilder(),
 		lineWidth:       1,
 		lineCap:         LineCapRound,
-		lineJoin:        LineJoinRound,
+		lineJoin:        LineJoinMiter,
 		fillRule:        FillRuleWinding,
-		fontFace:        nil, // Will be set when font support is added
+		fontFace:        nil,
 		fontHeight:      0,
 		transform:       path.NewTransformDefault(),
 		blendMode:       BlendModeSourceOver,
 		antiAlias:       true,
 		colorspace:      color2.ColorSpaceLinear,
-		forceHQPipeline: false,
+		forceHQPipeline: true,
 	}
-}
-
-// GetCurrentPoint will return the current point and if there is a current point.
-// The point will have been transformed by the context's transformation matrix.
-func (dc *Context) GetCurrentPoint() (path.Point, bool) {
-	if dc.hasCurrent {
-		return dc.current, true
-	}
-	return path.Point{}, false
 }
 
 // Image returns the image that has been drawn by this context.
@@ -154,34 +145,6 @@ func (dc *Context) SavePNG(path string) error {
 // EncodePNG encodes the image as a PNG and writes it to the provided io.Writer.
 func (dc *Context) EncodePNG(w io.Writer) error {
 	return png.Encode(w, dc.Image())
-}
-
-// State Management (Push/Pop)
-
-// Push saves the current state of the context for later retrieval. These
-// can be nested.
-func (dc *Context) Push() {
-	x := *dc
-	dc.stack = append(dc.stack, &x)
-}
-
-// Pop restores the last saved context state from the stack.
-func (dc *Context) Pop() {
-	before := *dc
-	s := dc.stack
-	x, s := s[len(s)-1], s[:len(s)-1]
-	*dc = *x
-	dc.mask = before.mask
-	dc.im = before.im
-	pathData := before.pathBuilder.Finish()
-	dc.pathBuilder = path.NewPathBuilder()
-	if pathData != nil {
-		// Restore path data if needed
-	}
-	dc.start = before.start
-	dc.current = before.current
-	dc.hasCurrent = before.hasCurrent
-	dc.stack = s
 }
 
 // SetDash sets the current dash pattern to use. Call with zero arguments to
@@ -237,6 +200,11 @@ func (dc *Context) SetLineJoinBevel() {
 	dc.lineJoin = LineJoinBevel
 }
 
+// SetLineJoinMiter sets the line join to miter.
+func (dc *Context) SetLineJoinMiter() {
+	dc.lineJoin = LineJoinMiter
+}
+
 func (dc *Context) SetFillRule(fillRule FillRule) {
 	dc.fillRule = fillRule
 }
@@ -252,6 +220,10 @@ func (dc *Context) SetFillRuleEvenOdd() {
 // SetAntiAlias enables or disables anti-aliasing.
 func (dc *Context) SetAntiAlias(aa bool) {
 	dc.antiAlias = aa
+}
+
+func (dc *Context) SetForceHQPipeline(force bool) {
+	dc.forceHQPipeline = force
 }
 
 // SetFillStyle sets current fill style.
@@ -339,7 +311,7 @@ func parseHexByte(s string) uint8 {
 // SetRGBA255 sets the current color. r, g, b, a values should be between 0 and
 // 255, inclusive.
 func (dc *Context) SetRGBA255(r, g, b, a int) {
-	dc.SetColor(color.NRGBA{uint8(r), uint8(g), uint8(b), uint8(a)})
+	dc.SetColor(color.RGBA{uint8(r), uint8(g), uint8(b), uint8(a)})
 }
 
 // SetRGB255 sets the current color. r, g, b values should be between 0 and 255,
@@ -351,7 +323,7 @@ func (dc *Context) SetRGB255(r, g, b int) {
 // SetRGBA sets the current color. r, g, b, a values should be between 0 and 1,
 // inclusive.
 func (dc *Context) SetRGBA(r, g, b, a float64) {
-	dc.SetColor(color.NRGBA{
+	dc.SetColor(color.RGBA{
 		uint8(r * 255),
 		uint8(g * 255),
 		uint8(b * 255),
@@ -365,81 +337,11 @@ func (dc *Context) SetRGB(r, g, b float64) {
 	dc.SetRGBA(r, g, b, 1)
 }
 
-// MoveTo starts a new subpath within the current path starting at the
-// specified point.
-func (dc *Context) MoveTo(x, y float64) {
-	p := path.Point{X: float32(x), Y: float32(y)}
-	dc.pathBuilder.MoveTo(p.X, p.Y)
-	dc.start = p
-	dc.current = p
-	dc.hasCurrent = true
-}
-
-// LineTo adds a line segment to the current path starting at the current
-// point. If there is no current point, it is equivalent to MoveTo(x, y)
-func (dc *Context) LineTo(x, y float64) {
-	if !dc.hasCurrent {
-		dc.MoveTo(x, y)
-	} else {
-		p := path.Point{X: float32(x), Y: float32(y)}
-		dc.pathBuilder.LineTo(p.X, p.Y)
-		dc.current = p
-	}
-}
-
-// QuadraticTo adds a quadratic bezier curve to the current path starting at
-// the current point. If there is no current point, it first performs
-// MoveTo(x1, y1)
-func (dc *Context) QuadraticTo(x1, y1, x2, y2 float64) {
-	if !dc.hasCurrent {
-		dc.MoveTo(x1, y1)
-	}
-	p1 := path.Point{X: float32(x1), Y: float32(y1)}
-	p2 := path.Point{X: float32(x2), Y: float32(y2)}
-	dc.pathBuilder.QuadTo(p1.X, p1.Y, p2.X, p2.Y)
-	dc.current = p2
-}
-
-// CubicTo adds a cubic bezier curve to the current path starting at the
-// current point. If there is no current point, it first performs
-// MoveTo(x1, y1).
-func (dc *Context) CubicTo(x1, y1, x2, y2, x3, y3 float64) {
-	if !dc.hasCurrent {
-		dc.MoveTo(x1, y1)
-	}
-	p1 := path.Point{X: float32(x1), Y: float32(y1)}
-	p2 := path.Point{X: float32(x2), Y: float32(y2)}
-	p3 := path.Point{X: float32(x3), Y: float32(y3)}
-	dc.pathBuilder.CubicTo(p1.X, p1.Y, p2.X, p2.Y, p3.X, p3.Y)
-	dc.current = p3
-}
-
-// ClosePath adds a line segment from the current point to the beginning
-// of the current subpath. If there is no current point, this is a no-op.
-func (dc *Context) ClosePath() {
-	if dc.hasCurrent {
-		dc.pathBuilder.Close()
-	}
-}
-
-// ClearPath clears the current path. There is no current point after this
-// operation.
-func (dc *Context) ClearPath() {
-	dc.pathBuilder.Clear()
-	dc.hasCurrent = false
-}
-
-// NewSubPath starts a new subpath within the current path. There is no current
-// point after this operation.
-func (dc *Context) NewSubPath() {
-	dc.hasCurrent = false
-}
-
 // Fill fills the current path with the current color. Open subpaths
 // are implicity closed. The path is cleared after this operation.
 func (dc *Context) Fill() {
 	dc.FillPreserve()
-	dc.ClearPath()
+	dc.BeginPath()
 }
 
 // FillPreserve fills the current path with the current color. Open subpaths
@@ -480,7 +382,7 @@ func (dc *Context) FillPreserve() {
 // operation.
 func (dc *Context) Stroke() {
 	dc.StrokePreserve()
-	dc.ClearPath()
+	dc.BeginPath()
 }
 
 // StrokePreserve strokes the current path with the current color, line width,
@@ -514,6 +416,8 @@ func (dc *Context) StrokePreserve() {
 	// Convert LineJoin from context enum to path stroker enum
 	var lineJoin path.LineJoin
 	switch dc.lineJoin {
+	case LineJoinMiter:
+		lineJoin = path.LineJoinMiter
 	case LineJoinRound:
 		lineJoin = path.LineJoinRound
 	case LineJoinBevel:
@@ -540,24 +444,10 @@ func (dc *Context) StrokePreserve() {
 		stroke.Dash = path.NewStrokeDash(dashArray, float32(dc.dashOffset))
 	}
 
-	// Compute resolution scale based on transform
-	resScale := path.ComputeResolutionScale(dc.transform)
-
-	// Stroke the path to get a filled outline
-	stroker := path.NewPathStroker()
-	strokedPath := stroker.Stroke(transformedPath, *stroke, resScale)
-	if strokedPath == nil {
-		return
-	}
-
-	// For lineWidth <= 1, disable AA to ensure visibility
-	// AA makes very thin lines nearly invisible due to low coverage
-	useAA := dc.antiAlias && dc.lineWidth > 1.0
-
-	// Fill the stroked path
+	// Prepare paint and blitter
 	paint := &Paint{
-		Shader:          toShader(dc.strokeStyle, path.NewTransformDefault()),
-		AntiAlias:       useAA,
+		Shader:          toShader(dc.strokeStyle, dc.transform),
+		AntiAlias:       dc.antiAlias,
 		BlendMode:       dc.blendMode,
 		Colorspace:      dc.colorspace,
 		ForceHQPipeline: dc.forceHQPipeline,
@@ -569,11 +459,22 @@ func (dc *Context) StrokePreserve() {
 	blitter := paint.blitter(dc.im.Pix, maskData, dc.Width(), dc.Height())
 	screen, _ := path.NewScreenIntRectFromXYWH(0, 0, uint32(dc.Width()), uint32(dc.Height()))
 
-	// Use AA or non-AA fill based on line width
-	if useAA {
-		scan.FillPathAA(strokedPath, int(dc.fillRule), screen, blitter)
+	// Compute resolution scale based on transform
+	resScale := path.ComputeResolutionScale(dc.transform)
+
+	// Stroke the path to get a filled outline
+	stroker := path.NewPathStroker()
+	strokedPath := stroker.Stroke(transformedPath, *stroke, resScale)
+	if strokedPath == nil {
+		return
+	}
+
+	// Fill the stroked path
+	// Always use Winding rule for stroke (matches gg library behavior)
+	if dc.antiAlias {
+		scan.FillPathAA(strokedPath, int(FillRuleWinding), screen, blitter)
 	} else {
-		scan.FillPath(strokedPath, int(dc.fillRule), screen, blitter)
+		scan.FillPath(strokedPath, int(FillRuleWinding), screen, blitter)
 	}
 }
 
@@ -582,7 +483,7 @@ func (dc *Context) StrokePreserve() {
 // The path is cleared after this operation.
 func (dc *Context) Clip() {
 	dc.ClipPreserve()
-	dc.ClearPath()
+	dc.BeginPath()
 }
 
 // ClipPreserve updates the clipping region by intersecting the current
@@ -625,17 +526,21 @@ func (dc *Context) ClipPreserve() {
 		clipMask.Pix[i] = tempRGBA.Pix[i*4+3] // Alpha channel
 	}
 
-	// Intersect with existing mask (same as gg's draw.DrawMask with draw.Over)
+	// Intersect with existing mask (take minimum of alpha values)
 	if dc.mask == nil {
 		dc.mask = clipMask
 	} else {
-		// Create new mask by combining old mask and clip mask
+		// Create new mask by intersecting old mask and clip mask
+		// Intersection = min(old_alpha, clip_alpha) for each pixel
 		mask := image.NewAlpha(image.Rect(0, 0, width, height))
 		for i := range mask.Pix {
-			// draw.Over compositing: result = clip + old * (1 - clip_alpha/255)
-			clipAlpha := uint32(clipMask.Pix[i])
-			oldAlpha := uint32(dc.mask.Pix[i])
-			mask.Pix[i] = uint8(clipAlpha + oldAlpha*(255-clipAlpha)/255)
+			clipAlpha := clipMask.Pix[i]
+			oldAlpha := dc.mask.Pix[i]
+			if clipAlpha < oldAlpha {
+				mask.Pix[i] = clipAlpha
+			} else {
+				mask.Pix[i] = oldAlpha
+			}
 		}
 		dc.mask = mask
 	}
@@ -729,239 +634,66 @@ func (dc *Context) SetPixel(x, y int) {
 	dc.im.Pix[offset+3] = uint8(a >> 8)
 }
 
-// DrawPoint is like DrawCircle but ensures that a circle of the specified
-// size is drawn regardless of the current transformation matrix. The position
-// is still transformed, but not the shape of the point.
-func (dc *Context) DrawPoint(x, y, r float64) {
-	// Save current transform
-	savedTransform := dc.transform
-	// Reset to identity to draw point without transformation
-	dc.Identity()
-	// Draw circle at the transformed position
-	dc.DrawCircle(x, y, r)
-	// Restore transform
-	dc.transform = savedTransform
-}
-
-// DrawLine draws a line segment from (x1,y1) to (x2,y2).
-func (dc *Context) DrawLine(x1, y1, x2, y2 float64) {
-	dc.MoveTo(x1, y1)
-	dc.LineTo(x2, y2)
-	dc.Stroke()
-}
-
-// DrawRectangle draws a rectangle at (x,y) with the specified width and height.
-func (dc *Context) DrawRectangle(x, y, w, h float64) {
-	dc.NewSubPath()
-	dc.MoveTo(x, y)
-	dc.LineTo(x+w, y)
-	dc.LineTo(x+w, y+h)
-	dc.LineTo(x, y+h)
-	dc.ClosePath()
-}
-
-// DrawRoundedRectangle draws a rounded rectangle at (x,y) with the specified width, height and corner radius.
-func (dc *Context) DrawRoundedRectangle(x, y, w, h, r float64) {
-	dc.NewSubPath()
-	if w <= 0 || h <= 0 {
-		return
-	}
-	if r <= 0 {
-		// Degenerate case - just a rectangle
-		dc.DrawRectangle(x, y, w, h)
-		return
-	}
-
-	// Clamp radius to half the dimensions
-	if r > w/2 {
-		r = w / 2
-	}
-	if r > h/2 {
-		r = h / 2
-	}
-
-	// Move to starting point (right edge of top-left corner)
-	dc.MoveTo(x+r, y)
-
-	// Top edge
-	dc.LineTo(x+w-r, y)
-
-	// Top-right corner - draw as arc
-	dc.drawCornerArc(x+w-r, y+r, r, -math.Pi/2, 0)
-
-	// Right edge
-	dc.LineTo(x+w, y+h-r)
-
-	// Bottom-right corner
-	dc.drawCornerArc(x+w-r, y+h-r, r, 0, math.Pi/2)
-
-	// Bottom edge
-	dc.LineTo(x+r, y+h)
-
-	// Bottom-left corner
-	dc.drawCornerArc(x+r, y+h-r, r, math.Pi/2, math.Pi)
-
-	// Left edge
-	dc.LineTo(x, y+r)
-
-	// Top-left corner
-	dc.drawCornerArc(x+r, y+r, r, math.Pi, 3*math.Pi/2)
-
-	dc.ClosePath()
-}
-
-// drawCornerArc draws a quarter-circle arc for rounded rectangle corners
-func (dc *Context) drawCornerArc(cx, cy, r, startAngle, endAngle float64) {
-	const kappa = 0.5522847498307935
-
-	sx := cx + r*math.Cos(startAngle)
-	sy := cy + r*math.Sin(startAngle)
-	ex := cx + r*math.Cos(endAngle)
-	ey := cy + r*math.Sin(endAngle)
-
-	cp1x := sx - kappa*r*math.Sin(startAngle)
-	cp1y := sy + kappa*r*math.Cos(startAngle)
-	cp2x := ex + kappa*r*math.Sin(endAngle)
-	cp2y := ey - kappa*r*math.Cos(endAngle)
-
-	dc.CubicTo(cp1x, cp1y, cp2x, cp2y, ex, ey)
-}
-
-// DrawEllipse draws an ellipse centered at (x,y) with the specified x and y radii.
-func (dc *Context) DrawEllipse(x, y, rx, ry float64) {
-	dc.NewSubPath()
-	if rx <= 0 || ry <= 0 {
-		return
-	}
-
-	// Approximate ellipse with 4 cubic bezier curves
-	// Using kappa constant for circle approximation
-	const kappa = 0.5522847498307935
-	cx := kappa * rx
-	cy := kappa * ry
-
-	x0 := x - rx
-	y0 := y - ry
-	x1 := x + rx
-	y1 := y + ry
-
-	dc.MoveTo(x, y0)
-	dc.CubicTo(x+cx, y0, x1, y-cy, x1, y)
-	dc.CubicTo(x1, y+cy, x+cx, y1, x, y1)
-	dc.CubicTo(x-cx, y1, x0, y+cy, x0, y)
-	dc.CubicTo(x0, y-cy, x-cx, y0, x, y0)
-	dc.ClosePath()
-}
-
-// DrawEllipticalArc draws an elliptical arc centered at (x,y) with the specified radii and angle range.
-func (dc *Context) DrawEllipticalArc(x, y, rx, ry, angle1, angle2 float64) {
-	dc.NewSubPath()
-	if rx <= 0 || ry <= 0 {
-		return
-	}
-
-	// Normalize angles to [0, 2π)
-	angle1 = math.Mod(angle1, 2*math.Pi)
-	if angle1 < 0 {
-		angle1 += 2 * math.Pi
-	}
-	angle2 = math.Mod(angle2, 2*math.Pi)
-	if angle2 < 0 {
-		angle2 += 2 * math.Pi
-	}
-
-	// Calculate sweep angle
-	sweep := angle2 - angle1
-	if sweep < 0 {
-		sweep += 2 * math.Pi
-	}
-
-	// Approximate with bezier curves
-	// Split into segments of at most 90 degrees
-	numSegments := int(math.Ceil(sweep / (math.Pi / 2)))
-	if numSegments < 1 {
-		numSegments = 1
-	}
-	segmentAngle := sweep / float64(numSegments)
-
-	// Kappa for elliptical arc approximation
-	kappa := 4.0 / 3.0 * math.Tan(segmentAngle/4.0)
-
-	for i := 0; i < numSegments; i++ {
-		startAngle := angle1 + float64(i)*segmentAngle
-		endAngle := startAngle + segmentAngle
-
-		// Start point
-		sx := x + rx*math.Cos(startAngle)
-		sy := y + ry*math.Sin(startAngle)
-
-		// End point
-		ex := x + rx*math.Cos(endAngle)
-		ey := y + ry*math.Sin(endAngle)
-
-		// Control points
-		cp1x := sx - kappa*rx*math.Sin(startAngle)
-		cp1y := sy + kappa*ry*math.Cos(startAngle)
-		cp2x := ex + kappa*rx*math.Sin(endAngle)
-		cp2y := ey - kappa*ry*math.Cos(endAngle)
-
-		if i == 0 {
-			dc.MoveTo(sx, sy)
-		}
-		dc.CubicTo(cp1x, cp1y, cp2x, cp2y, ex, ey)
-	}
-}
-
-// DrawArc draws a circular arc centered at (x,y) with the specified radius and angle range.
-func (dc *Context) DrawArc(x, y, r, angle1, angle2 float64) {
-	dc.DrawEllipticalArc(x, y, r, r, angle1, angle2)
-}
-
-// DrawCircle draws a circle centered at (x,y) with the specified radius.
-func (dc *Context) DrawCircle(x, y, r float64) {
-	dc.DrawEllipse(x, y, r, r)
-}
-
-// DrawRegularPolygon draws a regular polygon with n sides, centered at (x,y) with the specified radius and rotation.
-func (dc *Context) DrawRegularPolygon(n int, x, y, r, rotation float64) {
-	if n < 3 {
-		return
-	}
-	dc.NewSubPath()
-
-	angleStep := 2.0 * math.Pi / float64(n)
-
-	for i := 0; i < n; i++ {
-		angle := float64(i)*angleStep + rotation
-		pX := x + r*math.Cos(angle)
-		pY := y + r*math.Sin(angle)
-
-		if i == 0 {
-			dc.MoveTo(pX, pY)
-		} else {
-			dc.LineTo(pX, pY)
-		}
-	}
-	dc.ClosePath()
-}
-
 // DrawImage draws the specified image at the specified point.
 func (dc *Context) DrawImage(im image.Image, x, y int) {
-	// TODO: Implement using internal packages
+	// Get image dimensions
 	bounds := im.Bounds()
-	for py := 0; py < bounds.Dy(); py++ {
-		for px := 0; px < bounds.Dx(); px++ {
-			r, g, b, a := im.At(px+bounds.Min.X, py+bounds.Min.Y).RGBA()
-			dstX := x + px
-			dstY := y + py
-			if dstX >= 0 && dstX < dc.Width() && dstY >= 0 && dstY < dc.Height() {
-				offset := (dstY*dc.Width() + dstX) * 4
-				dc.im.Pix[offset] = uint8(r >> 8)
-				dc.im.Pix[offset+1] = uint8(g >> 8)
-				dc.im.Pix[offset+2] = uint8(b >> 8)
-				dc.im.Pix[offset+3] = uint8(a >> 8)
-			}
-		}
+	imgWidth := bounds.Dx()
+	imgHeight := bounds.Dy()
+
+	if imgWidth <= 0 || imgHeight <= 0 {
+		return
+	}
+
+	// Match Rust tiny-skia's draw_pixmap approach:
+	// 1. Create pattern with translation only
+	// 2. Transform both path and shader by dc.transform
+
+	// Step 1: Pattern starts with translation only
+	translateTransform := path.NewTransformFromTranslate(float32(x), float32(y))
+	patternShader := imageToPatternShader(im, RepeatNone, translateTransform)
+
+	// Step 2: Apply dc.transform to the pattern shader
+	patternShader.Transform(dc.transform)
+
+	// For the path, we need to apply BOTH translation and dc.transform
+	// Following Rust's approach: transform the rect by the combined transform
+	finalTransform := dc.transform.PreConcat(translateTransform)
+
+	// Create paint with the pattern shader
+	paint := &Paint{
+		Shader:          patternShader,
+		BlendMode:       dc.blendMode,
+		AntiAlias:       dc.antiAlias,
+		Colorspace:      dc.colorspace,
+		ForceHQPipeline: dc.forceHQPipeline,
+	}
+
+	// Create blitter
+	var maskData []uint8
+	if dc.mask != nil {
+		maskData = dc.mask.Pix
+	}
+	blitter := paint.blitter(dc.im.Pix, maskData, dc.Width(), dc.Height())
+	if blitter == nil {
+		return
+	}
+
+	// Create a rectangle path for the image bounds
+	screen, _ := path.NewScreenIntRectFromXYWH(0, 0, uint32(dc.Width()), uint32(dc.Height()))
+
+	rectPath := path.NewPathBuilder()
+	rect, _ := path.NewRectFromXYWH(0, 0, float32(imgWidth), float32(imgHeight))
+	rectPath.PushRect(rect)
+	finalPath := rectPath.Finish()
+
+	// Transform the path by the final transform
+	transformedPath := finalPath.Transform(finalTransform)
+
+	if dc.antiAlias {
+		scan.FillPathAA(transformedPath, int(dc.fillRule), screen, blitter)
+	} else {
+		scan.FillPath(transformedPath, int(dc.fillRule), screen, blitter)
 	}
 }
 
@@ -1007,7 +739,9 @@ func (dc *Context) ScaleAbout(sx, sy, x, y float64) {
 // Rotate updates the current matrix with a anticlockwise rotation.
 // Rotation occurs about the origin. Angle is specified in radians.
 func (dc *Context) Rotate(angle float64) {
-	rotateTransform := path.NewTransformFromRotate(float32(angle))
+	// NewTransformFromRotate expects degrees, so convert from radians
+	angleDegrees := angle * 180.0 / math.Pi
+	rotateTransform := path.NewTransformFromRotate(float32(angleDegrees))
 	dc.transform = dc.transform.PreConcat(rotateTransform)
 }
 

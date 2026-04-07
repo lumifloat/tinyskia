@@ -60,17 +60,9 @@ func Clip(src [2]Point, clip Rect, canCullToTheRight bool, points *[MAX_POINTS]P
 	if src[0].X < src[1].X {
 		index0, index1 = 0, 1
 		reverse = false
-	} else if src[0].X > src[1].X {
+	} else {
 		index0, index1 = 1, 0
 		reverse = true
-	} else {
-		// Vertical line: X coordinates are equal, use Y ordering
-		if src[0].Y <= src[1].Y {
-			index0, index1 = 0, 1
-		} else {
-			index0, index1 = 1, 0
-		}
-		reverse = false // Don't reverse for vertical lines
 	}
 
 	var result []Point

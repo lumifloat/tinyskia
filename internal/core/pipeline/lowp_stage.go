@@ -268,6 +268,12 @@ func (p *LowPipeline) MaskU8() {
 		c[i] = uint16(maskData[baseIdx+i])
 	}
 
+	if c[0] == 0 && c[1] == 0 && c[2] == 0 && c[3] == 0 && c[4] == 0 && c[5] == 0 && c[6] == 0 && c[7] == 0 &&
+		c[8] == 0 && c[9] == 0 && c[10] == 0 && c[11] == 0 && c[12] == 0 && c[13] == 0 && c[14] == 0 && c[15] == 0 {
+		p.stop = true
+		return
+	}
+
 	p.r[0], p.r[1], p.r[2], p.r[3] = (p.r[0]*c[0]+255)>>8, (p.r[1]*c[1]+255)>>8, (p.r[2]*c[2]+255)>>8, (p.r[3]*c[3]+255)>>8
 	p.r[4], p.r[5], p.r[6], p.r[7] = (p.r[4]*c[4]+255)>>8, (p.r[5]*c[5]+255)>>8, (p.r[6]*c[6]+255)>>8, (p.r[7]*c[7]+255)>>8
 	p.r[8], p.r[9], p.r[10], p.r[11] = (p.r[8]*c[8]+255)>>8, (p.r[9]*c[9]+255)>>8, (p.r[10]*c[10]+255)>>8, (p.r[11]*c[11]+255)>>8
@@ -291,11 +297,9 @@ func (p *LowPipeline) MaskU8() {
 
 //go:fix inline
 func (p *LowPipeline) ScaleU8() {
-	baseIdx := int(p.maskCtx.RealWidth)*p.dy + p.dx
-	maskData := p.maskCtx.Data
-
-	c0 := uint16(maskData[baseIdx])
-	c1 := uint16(maskData[baseIdx+1])
+	data := p.aaMaskCtx.CopyAtXY(p.dx, p.dy, p.tail)
+	c0 := uint16(data[0])
+	c1 := uint16(data[1])
 
 	p.r[0], p.r[1], p.r[2], p.r[3] = (p.r[0]*c0+255)>>8, (p.r[1]*c1+255)>>8, 0, 0
 	p.r[4], p.r[5], p.r[6], p.r[7] = 0, 0, 0, 0
@@ -320,11 +324,9 @@ func (p *LowPipeline) ScaleU8() {
 
 //go:fix inline
 func (p *LowPipeline) LerpU8() {
-	baseIdx := int(p.maskCtx.RealWidth)*p.dy + p.dx
-	maskData := p.maskCtx.Data
-
-	c0 := uint16(maskData[baseIdx])
-	c1 := uint16(maskData[baseIdx+1])
+	data := p.aaMaskCtx.CopyAtXY(p.dx, p.dy, p.tail)
+	c0 := uint16(data[0])
+	c1 := uint16(data[1])
 	invC0, invC1 := 255-c0, 255-c1
 
 	p.r[0], p.r[1], p.r[2], p.r[3] = (p.dr[0]*invC0+p.r[0]*c0+255)>>8, (p.dr[1]*invC1+p.r[1]*c1+255)>>8, 0, 0
@@ -350,7 +352,7 @@ func (p *LowPipeline) LerpU8() {
 
 //go:fix inline
 func (p *LowPipeline) Scale1Float() {
-	c := uint16(p.ctx.CurrentCoverage)
+	c := uint16(p.ctx.CurrentCoverage*255.0 + 0.5)
 
 	p.r[0], p.r[1], p.r[2], p.r[3] = (p.r[0]*c+255)>>8, (p.r[1]*c+255)>>8, (p.r[2]*c+255)>>8, (p.r[3]*c+255)>>8
 	p.r[4], p.r[5], p.r[6], p.r[7] = (p.r[4]*c+255)>>8, (p.r[5]*c+255)>>8, (p.r[6]*c+255)>>8, (p.r[7]*c+255)>>8
@@ -375,7 +377,7 @@ func (p *LowPipeline) Scale1Float() {
 
 //go:fix inline
 func (p *LowPipeline) Lerp1Float() {
-	c := int32(p.ctx.CurrentCoverage)
+	c := int32(p.ctx.CurrentCoverage*255.0 + 0.5)
 	invC := 255 - c
 
 	p.r[0], p.r[1], p.r[2], p.r[3] = uint16((int32(p.dr[0])*invC+int32(p.r[0])*c+128)>>8), uint16((int32(p.dr[1])*invC+int32(p.r[1])*c+128)>>8), uint16((int32(p.dr[2])*invC+int32(p.r[2])*c+128)>>8), uint16((int32(p.dr[3])*invC+int32(p.r[3])*c+128)>>8)

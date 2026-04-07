@@ -29,6 +29,7 @@ type LowPipeline struct {
 	tail      int
 	dx        int
 	dy        int
+	stop      bool
 }
 
 func StartLowPipeline(
@@ -53,8 +54,13 @@ func StartLowPipeline(
 			p.dx = x
 			p.dy = int(y)
 			p.tail = LOW_STAGE_WIDTH
+			p.stop = false
 
 			for _, stage := range stages {
+				if p.stop {
+					break
+				}
+
 				switch stage {
 				case StageMoveSourceToDestination:
 					// move_source_to_destination
@@ -310,8 +316,13 @@ func StartLowPipeline(
 			p.dx = x
 			p.dy = int(y)
 			p.tail = end - x
+			p.stop = false
 
 			for _, stage := range stages {
+				if p.stop {
+					break
+				}
+
 				switch stage {
 				case StageMoveSourceToDestination:
 					// move_source_to_destination
