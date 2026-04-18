@@ -17,7 +17,6 @@ import (
 	"github.com/lumifloat/tinyskia/internal/core/scan"
 	"github.com/lumifloat/tinyskia/internal/core/shader"
 	"github.com/lumifloat/tinyskia/internal/path"
-	"golang.org/x/image/font"
 )
 
 type LineCap int
@@ -69,8 +68,6 @@ type Context struct {
 	lineJoin        LineJoin
 	fillRule        FillRule
 	font            *Font
-	fontFace        font.Face
-	fontHeight      float64
 	transform       path.Transform
 	blendMode       BlendMode
 	antiAlias       bool
@@ -112,8 +109,6 @@ func NewContextForRGBA(im *image.RGBA) *Context {
 		lineCap:         LineCapRound,
 		lineJoin:        LineJoinMiter,
 		fillRule:        FillRuleWinding,
-		fontFace:        nil,
-		fontHeight:      0,
 		transform:       path.NewTransformDefault(),
 		blendMode:       BlendModeSourceOver,
 		antiAlias:       true,

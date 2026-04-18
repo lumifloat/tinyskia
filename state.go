@@ -57,8 +57,6 @@ func (dc *Context) Reset() {
 	dc.color = color.Transparent
 	dc.fillStyle = NewSolidPattern(color.Transparent)
 	dc.strokeStyle = NewSolidPattern(color.Transparent)
-	dc.fontFace = nil
-	dc.fontHeight = 0
 	dc.mask = nil
 	dc.contextLost = false
 }

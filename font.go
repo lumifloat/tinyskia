@@ -6,10 +6,10 @@
 package tinyskia
 
 import (
+	"fmt"
 	"io/ioutil"
 
 	"golang.org/x/image/font"
-	"golang.org/x/image/font/opentype"
 	"golang.org/x/image/font/sfnt"
 	"golang.org/x/image/math/fixed"
 
@@ -21,41 +21,26 @@ import (
 
 // Font holds font-related information
 type Font struct {
-	face    font.Face
 	ttf     *sfnt.Font  // Keep original SFNT font for glyph outlines
 	buf     sfnt.Buffer // Buffer for glyph operations
-	fsize   float64
+	size    float64
 	dpi     float64 // dots per inch
 	hinting font.Hinting
 }
 
 // NewFont creates a new Font with the specified SFNT font, size in points, and DPI.
 func NewFont(ttf *sfnt.Font, size, dpi float64) *Font {
-	face, err := opentype.NewFace(ttf, &opentype.FaceOptions{
-		Size:    size,
-		DPI:     dpi,
-		Hinting: font.HintingFull,
-	})
-	if err != nil {
-		panic(err)
-	}
 	return &Font{
-		face:    face,
 		ttf:     ttf,
-		fsize:   size,
+		size:    size,
 		dpi:     dpi,
 		hinting: font.HintingFull,
 	}
 }
 
-// Face returns the underlying font.Face
-func (f *Font) Face() font.Face {
-	return f.face
-}
-
 // Size returns the font size in points
 func (f *Font) Size() float64 {
-	return f.fsize
+	return f.size
 }
 
 // DPI returns the dots per inch
@@ -63,71 +48,125 @@ func (f *Font) DPI() float64 {
 	return f.dpi
 }
 
-// MeasureString calculates the width and height of a string when rendered with the current font.
-func (dc *Context) MeasureString(s string) (w, h float64) {
-	if dc.font == nil {
-		return 0, 0
-	}
+// TextMetrics holds text measurement information, similar to HTML5 Canvas TextMetrics.
+type TextMetrics struct {
+	// Width is the advance width of the text (inline box width).
+	Width float64
 
-	d := &font.Drawer{
-		Face: dc.font.Face(),
-	}
+	// ActualBoundingBoxLeft is the distance from the alignment point to the left side
+	// of the bounding rectangle. Positive values indicate left direction.
+	ActualBoundingBoxLeft float64
 
-	// Calculate width
-	adv := d.MeasureString(s)
-	w = float64(adv>>6) + float64(adv&63)/64.0
+	// ActualBoundingBoxRight is the distance from the alignment point to the right side
+	// of the bounding rectangle. Positive values indicate right direction.
+	ActualBoundingBoxRight float64
 
-	// Calculate height from font metrics
-	metrics := dc.font.Face().Metrics()
-	h = float64(metrics.Ascent+metrics.Descent) / 64.0
+	// FontBoundingBoxAscent is the distance from the baseline to the font's ascent metric,
+	// in CSS pixels. Positive values indicate upward direction.
+	FontBoundingBoxAscent float64
 
-	return w, h
+	// FontBoundingBoxDescent is the distance from the baseline to the font's descent metric,
+	// in CSS pixels. Positive values indicate downward direction.
+	FontBoundingBoxDescent float64
+
+	// ActualBoundingBoxAscent is the distance from the baseline to the top of the
+	// bounding rectangle of the given text. Positive values indicate upward.
+	ActualBoundingBoxAscent float64
+
+	// ActualBoundingBoxDescent is the distance from the baseline to the bottom of the
+	// bounding rectangle of the given text. Positive values indicate downward.
+	ActualBoundingBoxDescent float64
 }
 
-// MeasureMultilineString calculates the dimensions of a multi-line string.
-func (dc *Context) MeasureMultilineString(s string, lineSpacing float64) (width, height float64) {
-	lines := splitLines(s)
-	maxWidth := 0.0
+// MeasureText measures the given text and returns a TextMetrics object with detailed metrics.
+func (dc *Context) MeasureText(s string) TextMetrics {
+	if dc.font == nil || dc.font.ttf == nil || s == "" {
+		return TextMetrics{}
+	}
 
-	for _, line := range lines {
-		lineWidth, _ := dc.MeasureString(line)
-		if lineWidth > maxWidth {
-			maxWidth = lineWidth
+	ppem := fixed.Int26_6(dc.font.size * 64)
+	var advance fixed.Int26_6
+	var prev sfnt.GlyphIndex
+
+	// Track actual bounding box across all glyphs
+	minX, maxX := fixed.Int26_6(1<<30), fixed.Int26_6(-(1 << 30))
+	minY, maxY := fixed.Int26_6(1<<30), fixed.Int26_6(-(1 << 30))
+
+	for _, r := range s {
+		curr, err := dc.font.ttf.GlyphIndex(&dc.font.buf, r)
+		if err != nil || curr == 0 {
+			prev = 0
+			continue
+		}
+
+		if prev != 0 {
+			kern, err := dc.font.ttf.Kern(&dc.font.buf, prev, curr, ppem, dc.font.hinting)
+			if err == nil {
+				advance += kern
+			}
+		}
+		prev = curr
+
+		b, a, err := dc.font.ttf.GlyphBounds(&dc.font.buf, curr, ppem, dc.font.hinting)
+		if err != nil {
+			continue
+		}
+		advance += a
+		if b.Empty() {
+			// No visible glyphs
+			continue
+		}
+		if advance+b.Min.X < minX {
+			minX = advance + b.Min.X
+		}
+		if advance+b.Max.X > maxX {
+			maxX = advance + b.Max.X
+		}
+		if b.Min.Y < minY {
+			minY = b.Min.Y
+		}
+		if b.Max.Y > maxY {
+			maxY = b.Max.Y
 		}
 	}
 
-	width = maxWidth
-	height = float64(len(lines)) * dc.FontHeight() * lineSpacing
-	return width, height
-}
+	width := float64(advance>>6) + float64(advance&63)/64.0
 
-// WordWrap wraps text to fit within the specified width.
-func (dc *Context) WordWrap(text string, wrapWidth float64) []string {
-	words := splitWords(text)
-	if len(words) == 0 {
-		return []string{}
+	metrics, err := dc.font.ttf.Metrics(&dc.font.buf, ppem, dc.font.hinting)
+	var fontAscent, fontDescent float64
+	if err == nil {
+		fontAscent = float64(metrics.Ascent) / 64.0
+		fontDescent = float64(metrics.Descent) / 64.0
+	} else {
+		emSquare := float64(dc.font.ttf.UnitsPerEm())
+		scaleFactor := dc.font.size / emSquare
+		fontAscent = emSquare * scaleFactor * 0.8  // Typical ascent ratio
+		fontDescent = emSquare * scaleFactor * 0.2 // Typical descent ratio
 	}
 
-	var lines []string
-	currentLine := words[0]
-
-	for i := 1; i < len(words); i++ {
-		testLine := currentLine + " " + words[i]
-		testWidth, _ := dc.MeasureString(testLine)
-
-		if testWidth <= wrapWidth {
-			currentLine = testLine
-		} else {
-			lines = append(lines, currentLine)
-			currentLine = words[i]
-		}
+	var actualBBoxLeft, actualBBoxRight, actualBBoxAscent, actualBBoxDescent float64
+	if minX <= maxX {
+		actualBBoxLeft = -float64(minX) / 64.0
+		actualBBoxRight = float64(maxX) / 64.0
+		actualBBoxAscent = -float64(minY) / 64.0
+		actualBBoxDescent = float64(maxY) / 64.0
+	} else {
+		// No visible glyphs, use font metrics
+		actualBBoxLeft = 0
+		actualBBoxRight = width
+		actualBBoxAscent = fontAscent
+		actualBBoxDescent = fontDescent
 	}
 
-	if currentLine != "" {
-		lines = append(lines, currentLine)
+	return TextMetrics{
+		Width:                    width,
+		ActualBoundingBoxLeft:    actualBBoxLeft,
+		ActualBoundingBoxRight:   actualBBoxRight,
+		FontBoundingBoxAscent:    fontAscent,
+		FontBoundingBoxDescent:   fontDescent,
+		ActualBoundingBoxAscent:  actualBBoxAscent,
+		ActualBoundingBoxDescent: actualBBoxDescent,
 	}
-
-	return lines
 }
 
 // DrawString draws text at the specified position using TinySkia's rasterization.
@@ -148,8 +187,7 @@ func (dc *Context) DrawString(s string, x, y float64) {
 	fy := fixed.I(int(y))
 	dot := fixed.Point26_6{X: fx, Y: fy}
 
-	// Pre-calculate scale once for all glyphs (ppem = pixels per em)
-	ppem := fixed.Int26_6(dc.font.fsize * 64)
+	ppem := fixed.Int26_6(dc.font.size * 64)
 
 	// Cache space glyph advance width
 	var spaceAdvance fixed.Int26_6
@@ -271,194 +309,14 @@ func (dc *Context) segmentsToPath(segments sfnt.Segments, dot fixed.Point26_6) {
 	}
 }
 
-// calculateActualGlyphMetrics calculates the actual ascent and descent of a string
-// by examining the glyph outlines. This is more accurate than using font metrics.
-func (dc *Context) calculateActualGlyphMetrics(s string) (ascent, descent float64) {
-	if dc.font == nil || dc.font.ttf == nil {
-		return 0, 0
-	}
-
-	ppem := fixed.Int26_6(dc.font.fsize * 64)
-	minY, maxY := fixed.Int26_6(1<<30), fixed.Int26_6(-(1 << 30))
-	foundGlyph := false
-
-	for _, r := range s {
-		glyphIndex, err := dc.font.ttf.GlyphIndex(&dc.font.buf, r)
-		if err != nil || glyphIndex == 0 {
-			continue // Skip undefined glyphs
-		}
-
-		segments, err := dc.font.ttf.LoadGlyph(&dc.font.buf, glyphIndex, ppem, nil)
-		if err != nil {
-			continue
-		}
-
-		if len(segments) == 0 {
-			continue
-		}
-
-		// Find min and max Y in this glyph's segments
-		for _, seg := range segments {
-			switch seg.Op {
-			case sfnt.SegmentOpMoveTo, sfnt.SegmentOpLineTo:
-				if seg.Args[0].Y < minY {
-					minY = seg.Args[0].Y
-				}
-				if seg.Args[0].Y > maxY {
-					maxY = seg.Args[0].Y
-				}
-			case sfnt.SegmentOpQuadTo:
-				for i := 0; i < 2; i++ {
-					if seg.Args[i].Y < minY {
-						minY = seg.Args[i].Y
-					}
-					if seg.Args[i].Y > maxY {
-						maxY = seg.Args[i].Y
-					}
-				}
-			case sfnt.SegmentOpCubeTo:
-				for i := 0; i < 3; i++ {
-					if seg.Args[i].Y < minY {
-						minY = seg.Args[i].Y
-					}
-					if seg.Args[i].Y > maxY {
-						maxY = seg.Args[i].Y
-					}
-				}
-			}
-		}
-		foundGlyph = true
-	}
-
-	if !foundGlyph {
-		return 0, 0
-	}
-
-	// Convert from fixed point to float
-	// In sfnt: Y increases downward (same as screen coordinates)
-	// For anchor calculation, we need:
-	//   ascent = distance from baseline to the HIGHEST point = -minY (since Y-down)
-	//   descent = distance from baseline to the LOWEST point = maxY
-
-	if minY < 0 {
-		ascent = float64(-minY) / 64.0
-	}
-	if maxY > 0 {
-		descent = float64(maxY) / 64.0
-	}
-
-	return ascent, descent
-}
-
-// DrawStringAnchored draws text anchored at a specific point.
-// ax and ay should be in the range [0,1].
-// (0,0) anchors at top-left, (0.5,0.5) centers, (1,1) anchors at bottom-right.
-func (dc *Context) DrawStringAnchored(s string, x, y, ax, ay float64) {
-	if s == "" || dc.font == nil {
-		return
-	}
-
-	w, _ := dc.MeasureString(s)
-
-	// Calculate horizontal anchor offset
-	dx := w * ax
-
-	// For vertical positioning, we need to account for how glyphs actually render.
-	// After manual Y-flip (screenY = baselineY - glyphY):
-	//   - Glyph points with positive Y (above baseline) render HIGHER on screen
-	//   - Glyph points with negative Y (below baseline) render LOWER on screen
-	//   - The topmost rendered pixel is at: baselineY - max(glyphY)
-	//   - The bottommost rendered pixel is at: baselineY - min(glyphY)
-	//
-	// To achieve proper anchoring:
-	//   - When ay=0: top of glyphs should be at y
-	//   - When ay=0.5: middle of glyphs should be at y
-	//   - When ay=1: bottom of glyphs should be at y
-	//
-	// We calculate actual glyph extents and use that for positioning.
-
-	actualAscent, actualDescent := dc.calculateActualGlyphMetrics(s)
-	visualHeight := actualAscent + actualDescent
-
-	// Calculate dy based on visual height and anchor
-	dy := visualHeight * ay
-
-	// The key insight: after Y-flip, the top of the glyph is at (baseline - actualAscent)
-	// We want the top to be at (y - dy)
-	// So: baseline - actualAscent = y - dy
-	// Therefore: baseline = y - dy + actualAscent
-	adjustedY := y - dy + actualAscent
-
-	dc.DrawString(s, x-dx, adjustedY)
-}
-
-// DrawStringWrapped draws wrapped text with alignment.
-func (dc *Context) DrawStringWrapped(s string, x, y, ax, ay, width, lineSpacing float64, align Align) {
-	lines := dc.WordWrap(s, width)
-	_, lineHeight := dc.MeasureString("X")
-	totalHeight := float64(len(lines)) * lineHeight * lineSpacing
-
-	// Calculate starting position based on anchor
-	startY := y - totalHeight*ay
-
-	for i, line := range lines {
-		lineY := startY + float64(i)*lineHeight*lineSpacing
-		lineW, _ := dc.MeasureString(line)
-
-		var lineX float64
-		switch align {
-		case AlignLeft:
-			lineX = x - width*ax
-		case AlignCenter:
-			lineX = x - lineW/2
-		case AlignRight:
-			lineX = x - width*ax + (width - lineW)
-		default:
-			lineX = x - width*ax
-		}
-
-		dc.DrawString(line, lineX, lineY)
-	}
-}
-
-// splitLines splits a string by newline characters
-func splitLines(s string) []string {
-	var lines []string
-	start := 0
-	for i := 0; i < len(s); i++ {
-		if s[i] == '\n' {
-			lines = append(lines, s[start:i])
-			start = i + 1
-		}
-	}
-	lines = append(lines, s[start:])
-	return lines
-}
-
-// splitWords splits a string into words
-func splitWords(s string) []string {
-	var words []string
-	start := 0
-	for i := 0; i < len(s); i++ {
-		if s[i] == ' ' || s[i] == '\t' || s[i] == '\n' {
-			if i > start {
-				words = append(words, s[start:i])
-			}
-			start = i + 1
-		}
-	}
-	if start < len(s) {
-		words = append(words, s[start:])
-	}
-	return words
-}
-
 // LoadFontFace loads a TrueType font from a file.
 func (dc *Context) LoadFontFace(path string, points float64) error {
 	return dc.LoadFontFaceWithDPI(path, points, 72.0)
 }
 
 // LoadFontFaceWithDPI loads a TrueType font from a file with custom DPI.
+// Supports both single fonts (TTF/OTF) and font collections (TTC/OTC).
+// For collections, it loads the first font (index 0).
 func (dc *Context) LoadFontFaceWithDPI(path string, points, dpi float64) error {
 	// Load the font file
 	fontBytes, err := ioutil.ReadFile(path)
@@ -466,13 +324,26 @@ func (dc *Context) LoadFontFaceWithDPI(path string, points, dpi float64) error {
 		return err
 	}
 
-	// Parse the font using sfnt
+	// Try to parse as a collection first (TTC/OTC)
+	collection, err := sfnt.ParseCollection(fontBytes)
+	if err == nil && collection.NumFonts() > 0 {
+		// Successfully parsed as collection, use the first font
+		ttf, err := collection.Font(0)
+		if err != nil {
+			return fmt.Errorf("failed to get first font from collection: %v", err)
+		}
+		// Create font object with raw data
+		dc.font = NewFont(ttf, points, dpi)
+		return nil
+	}
+
+	// Not a collection or failed to parse as collection, try as single font
 	ttf, err := sfnt.Parse(fontBytes)
 	if err != nil {
 		return err
 	}
 
-	// Create font object
+	// Create font object with raw data
 	dc.font = NewFont(ttf, points, dpi)
 	return nil
 }
@@ -483,41 +354,35 @@ func (dc *Context) LoadFontFaceFromData(data []byte, points float64) error {
 }
 
 // LoadFontFaceFromDataWithDPI loads a TrueType font from byte data with custom DPI.
+// Supports both single fonts (TTF/OTF) and font collections (TTC/OTC).
+// For collections, it loads the first font (index 0).
 func (dc *Context) LoadFontFaceFromDataWithDPI(data []byte, points, dpi float64) error {
-	// Parse the font using sfnt
+	// Try to parse as a collection first (TTC/OTC)
+	collection, err := sfnt.ParseCollection(data)
+	if err == nil && collection.NumFonts() > 0 {
+		// Successfully parsed as collection, use the first font
+		ttf, err := collection.Font(0)
+		if err != nil {
+			return fmt.Errorf("failed to get first font from collection: %v", err)
+		}
+		dc.font = NewFont(ttf, points, dpi)
+		return nil
+	}
+
+	// Not a collection or failed to parse as collection, try as single font
 	ttf, err := sfnt.Parse(data)
 	if err != nil {
 		return err
 	}
 
-	// Create font object
 	dc.font = NewFont(ttf, points, dpi)
 	return nil
 }
 
 // SetFontFace sets the current font face.
 // Accepts either *Font (for vector rendering with outlines) or font.Face (for bitmap rendering).
-func (dc *Context) SetFontFace(f interface{}) {
-	switch v := f.(type) {
-	case *Font:
-		dc.font = v
-		dc.fontFace = v.face
-		dc.fontHeight = float64(v.face.Metrics().Height) / 64
-	case font.Face:
-		dc.fontFace = v
-		dc.font = nil // Clear font when using plain font.Face
-		dc.fontHeight = float64(v.Metrics().Height) / 64
-	}
-}
-
-// FontHeight returns the approximate height of the current font in pixels.
-func (dc *Context) FontHeight() float64 {
-	if dc.font == nil {
-		return 0
-	}
-
-	metrics := dc.font.Face().Metrics()
-	return float64(metrics.Ascent+metrics.Descent) / 64.0
+func (dc *Context) SetFontFace(f *Font) {
+	dc.font = f
 }
 
 // GetFont returns the current font
