@@ -176,10 +176,17 @@ func (dc *Context) DrawString(s string, x, y float64) {
 		return
 	}
 
-	// Get shader from fillStyle - default to black if not set
 	fillShader := toShader(dc.fillStyle, dc.transform)
 	if fillShader == nil {
 		fillShader = shader.NewSolidColor(color2.ColorBlack)
+	}
+
+	paint := &Paint{
+		Shader:          fillShader,
+		AntiAlias:       dc.antiAlias,
+		BlendMode:       dc.blendMode,
+		Colorspace:      dc.colorspace,
+		ForceHQPipeline: dc.forceHQPipeline,
 	}
 
 	// Convert coordinates to fixed point (26.6 format)
@@ -188,124 +195,82 @@ func (dc *Context) DrawString(s string, x, y float64) {
 	dot := fixed.Point26_6{X: fx, Y: fy}
 
 	ppem := fixed.Int26_6(dc.font.size * 64)
+	var prev sfnt.GlyphIndex
 
-	// Cache space glyph advance width
-	var spaceAdvance fixed.Int26_6
-	spaceGlyph, _ := dc.font.ttf.GlyphIndex(&dc.font.buf, ' ')
-	if spaceGlyph != 0 {
-		advance, err := dc.font.ttf.GlyphAdvance(&dc.font.buf, spaceGlyph, ppem, font.HintingNone)
-		if err == nil {
-			spaceAdvance = advance
-		}
-	}
+	pb := path.NewPathBuilder()
 
 	for _, r := range s {
-		// Get glyph index
-		glyphIndex, err := dc.font.ttf.GlyphIndex(&dc.font.buf, r)
-		if err != nil || glyphIndex == 0 {
-			// Glyph not found, advance by cached space width
-			dot.X += spaceAdvance
-			continue
-		}
-
-		// Load glyph segments
-		segments, err := dc.font.ttf.LoadGlyph(&dc.font.buf, glyphIndex, ppem, nil)
+		curr, err := dc.font.ttf.GlyphIndex(&dc.font.buf, r)
 		if err != nil {
-			dot.X += spaceAdvance
 			continue
 		}
 
-		// Skip empty glyphs but still advance
-		if len(segments) == 0 {
-			advance, _ := dc.font.ttf.GlyphAdvance(&dc.font.buf, glyphIndex, ppem, font.HintingNone)
-			dot.X += advance
+		if prev != 0 {
+			kern, err := dc.font.ttf.Kern(&dc.font.buf, prev, curr, ppem, dc.font.hinting)
+			if err == nil {
+				dot.X += kern
+			}
+		}
+		prev = curr
+
+		advance, err := dc.font.ttf.GlyphAdvance(&dc.font.buf, curr, ppem, dc.font.hinting)
+		if err != nil {
 			continue
 		}
 
-		// Convert glyph outline to path using a fresh path builder
-		glyphPathBuilder := path.NewPathBuilder()
-		// Temporarily replace the context's path builder
-		oldPathBuilder := dc.pathBuilder
-		dc.pathBuilder = glyphPathBuilder
-
-		// Convert segments to path
-		dc.segmentsToPath(segments, dot)
-
-		// Render this glyph
-		pathData := dc.pathBuilder.Finish()
-		if pathData != nil {
-			// Transform the path
-			var transformedPath *path.Path
-			if !dc.transform.IsIdentity() {
-				transformedPath = pathData.Transform(dc.transform)
-			} else {
-				transformedPath = pathData
-			}
-
-			// Create paint - disable AA for text rendering to avoid performance issues
-			paint := &Paint{
-				Shader:          fillShader,
-				AntiAlias:       false, // Disable AA for text to avoid O(n²) complexity
-				BlendMode:       dc.blendMode,
-				Colorspace:      dc.colorspace,
-				ForceHQPipeline: false,
-			}
-
-			var maskData []uint8
-			if dc.mask != nil {
-				maskData = dc.mask.Pix
-			}
-			blitter := paint.blitter(dc.im.Pix, maskData, dc.Width(), dc.Height())
-			screen, _ := path.NewScreenIntRectFromXYWH(0, 0, uint32(dc.Width()), uint32(dc.Height()))
-
-			// Use even-odd fill rule for text to correctly handle holes
-			scan.FillPathAA(transformedPath, int(FillRuleEvenOdd), screen, blitter)
+		segments, err := dc.font.ttf.LoadGlyph(&dc.font.buf, curr, ppem, nil)
+		if err != nil {
+			continue
 		}
 
-		// Restore the original path builder
-		dc.pathBuilder = oldPathBuilder
-
-		// Advance to next glyph position
-		advance, _ := dc.font.ttf.GlyphAdvance(&dc.font.buf, glyphIndex, ppem, font.HintingNone)
+		for _, seg := range segments {
+			switch seg.Op {
+			case sfnt.SegmentOpMoveTo:
+				pb.MoveTo(
+					float32(seg.Args[0].X+dot.X)/64.0,
+					float32(seg.Args[0].Y+dot.Y)/64.0,
+				)
+			case sfnt.SegmentOpLineTo:
+				pb.LineTo(
+					float32(seg.Args[0].X+dot.X)/64.0,
+					float32(seg.Args[0].Y+dot.Y)/64.0,
+				)
+			case sfnt.SegmentOpQuadTo:
+				pb.QuadTo(
+					float32(seg.Args[0].X+dot.X)/64.0,
+					float32(seg.Args[0].Y+dot.Y)/64.0,
+					float32(seg.Args[1].X+dot.X)/64.0,
+					float32(seg.Args[1].Y+dot.Y)/64.0,
+				)
+			case sfnt.SegmentOpCubeTo:
+				pb.CubicTo(
+					float32(seg.Args[0].X+dot.X)/64.0,
+					float32(seg.Args[0].Y+dot.Y)/64.0,
+					float32(seg.Args[1].X+dot.X)/64.0,
+					float32(seg.Args[1].Y+dot.Y)/64.0,
+					float32(seg.Args[2].X+dot.X)/64.0,
+					float32(seg.Args[2].Y+dot.Y)/64.0,
+				)
+			}
+		}
 		dot.X += advance
 	}
-}
+	p := pb.Finish()
 
-// segmentsToPath converts sfnt Segments to a path
-// sfnt segments use Y-down coordinate system (same as screen)
-func (dc *Context) segmentsToPath(segments sfnt.Segments, dot fixed.Point26_6) {
-	if len(segments) == 0 {
-		return
-	}
-
-	for _, seg := range segments {
-		switch seg.Op {
-		case sfnt.SegmentOpMoveTo:
-			// Convert from 26.6 fixed point to float32 and add offset
-			x := float32(seg.Args[0].X)/64.0 + float32(dot.X)/64.0
-			y := float32(seg.Args[0].Y)/64.0 + float32(dot.Y)/64.0
-			dc.pathBuilder.MoveTo(x, y)
-		case sfnt.SegmentOpLineTo:
-			x := float32(seg.Args[0].X)/64.0 + float32(dot.X)/64.0
-			y := float32(seg.Args[0].Y)/64.0 + float32(dot.Y)/64.0
-			dc.pathBuilder.LineTo(x, y)
-		case sfnt.SegmentOpQuadTo:
-			// Quadratic Bezier: control point, end point
-			ctrlX := float32(seg.Args[0].X)/64.0 + float32(dot.X)/64.0
-			ctrlY := float32(seg.Args[0].Y)/64.0 + float32(dot.Y)/64.0
-			endX := float32(seg.Args[1].X)/64.0 + float32(dot.X)/64.0
-			endY := float32(seg.Args[1].Y)/64.0 + float32(dot.Y)/64.0
-			dc.pathBuilder.QuadTo(ctrlX, ctrlY, endX, endY)
-		case sfnt.SegmentOpCubeTo:
-			// Cubic Bezier: two control points, end point
-			ctrl1X := float32(seg.Args[0].X)/64.0 + float32(dot.X)/64.0
-			ctrl1Y := float32(seg.Args[0].Y)/64.0 + float32(dot.Y)/64.0
-			ctrl2X := float32(seg.Args[1].X)/64.0 + float32(dot.X)/64.0
-			ctrl2Y := float32(seg.Args[1].Y)/64.0 + float32(dot.Y)/64.0
-			endX := float32(seg.Args[2].X)/64.0 + float32(dot.X)/64.0
-			endY := float32(seg.Args[2].Y)/64.0 + float32(dot.Y)/64.0
-			dc.pathBuilder.CubicTo(ctrl1X, ctrl1Y, ctrl2X, ctrl2Y, endX, endY)
+	if p != nil {
+		if !dc.transform.IsIdentity() {
+			p = p.Transform(dc.transform)
 		}
+
+		screen := path.NewScreenIntRectFromXYWHSafe(0, 0, uint32(dc.Width()), uint32(dc.Height()))
+		var maskData []uint8
+		if dc.mask != nil {
+			maskData = dc.mask.Pix
+		}
+
+		blitter := paint.blitter(dc.im.Pix, maskData, dc.Width(), dc.Height())
+
+		scan.FillPathAA(p, int(FillRuleEvenOdd), screen, blitter)
 	}
 }
 
