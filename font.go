@@ -169,9 +169,15 @@ func (dc *Context) MeasureText(s string) TextMetrics {
 	}
 }
 
-// DrawString draws text at the specified position using TinySkia's rasterization.
-// It converts each glyph outline to a path and fills it using FillPath.
-func (dc *Context) DrawString(s string, x, y float64) {
+func (dc *Context) FillText(s string, x, y float64) {
+	dc.drawText(s, x, y, false)
+}
+
+func (dc *Context) StrokeText(s string, x, y float64) {
+	dc.drawText(s, x, y, true)
+}
+
+func (dc *Context) drawText(s string, x, y float64, stroke bool) {
 	if dc.font == nil || s == "" || dc.font.ttf == nil {
 		return
 	}
@@ -189,7 +195,23 @@ func (dc *Context) DrawString(s string, x, y float64) {
 		ForceHQPipeline: dc.forceHQPipeline,
 	}
 
-	// Convert coordinates to fixed point (26.6 format)
+	metrics := dc.MeasureText(s)
+	textWidth := metrics.Width
+
+	var offsetX float64
+	switch dc.TextAlign {
+	case TextAlignLeft, TextAlignStart:
+		offsetX = 0
+	case TextAlignRight, TextAlignEnd:
+		offsetX = -textWidth
+	case TextAlignCenter:
+		offsetX = -textWidth / 2.0
+	default:
+		offsetX = 0
+	}
+
+	x = x + offsetX
+
 	fx := fixed.I(int(x))
 	fy := fixed.I(int(y))
 	dot := fixed.Point26_6{X: fx, Y: fy}
@@ -197,9 +219,8 @@ func (dc *Context) DrawString(s string, x, y float64) {
 	ppem := fixed.Int26_6(dc.font.size * 64)
 	var prev sfnt.GlyphIndex
 
-	pb := path.NewPathBuilder()
-
 	for _, r := range s {
+		pb := path.NewPathBuilder()
 		curr, err := dc.font.ttf.GlyphIndex(&dc.font.buf, r)
 		if err != nil {
 			continue
@@ -253,24 +274,24 @@ func (dc *Context) DrawString(s string, x, y float64) {
 				)
 			}
 		}
+		p := pb.Finish()
+
+		if p != nil {
+			if !dc.transform.IsIdentity() {
+				p = p.Transform(dc.transform)
+			}
+
+			screen := path.NewScreenIntRectFromXYWHSafe(0, 0, uint32(dc.Width()), uint32(dc.Height()))
+			var maskData []uint8
+			if dc.mask != nil {
+				maskData = dc.mask.Pix
+			}
+
+			blitter := paint.blitter(dc.im.Pix, maskData, dc.Width(), dc.Height())
+
+			scan.FillPathAA(p, int(FillRuleEvenOdd), screen, blitter)
+		}
 		dot.X += advance
-	}
-	p := pb.Finish()
-
-	if p != nil {
-		if !dc.transform.IsIdentity() {
-			p = p.Transform(dc.transform)
-		}
-
-		screen := path.NewScreenIntRectFromXYWHSafe(0, 0, uint32(dc.Width()), uint32(dc.Height()))
-		var maskData []uint8
-		if dc.mask != nil {
-			maskData = dc.mask.Pix
-		}
-
-		blitter := paint.blitter(dc.im.Pix, maskData, dc.Width(), dc.Height())
-
-		scan.FillPathAA(p, int(FillRuleEvenOdd), screen, blitter)
 	}
 }
 

@@ -31,6 +31,7 @@ type LineJoin int
 
 const (
 	LineJoinMiter LineJoin = iota
+	LineJoinMiterClip
 	LineJoinRound
 	LineJoinBevel
 )
@@ -42,17 +43,25 @@ const (
 	FillRuleEvenOdd
 )
 
-type Align int
+type TextAlign int
 
 const (
-	AlignLeft Align = iota
-	AlignCenter
-	AlignRight
+	// Align to the start edge of the text (left side in left-to-right text, right side in right-to-left text).
+	TextAlignStart TextAlign = iota
+	// Align to the end edge of the text (right side in left-to-right text, left side in right-to-left text).
+	TextAlignEnd
+	// Align to the left.
+	TextAlignLeft
+	// Align to the left.
+	TextAlignCenter
+	// Align to the center.
+	TextAlignRight
 )
 
 // Context is the main drawing context, similar to gg.Context.
 // It maintains drawing state and provides a canvas-like API.
 type Context struct {
+	*path2d
 	width           int
 	height          int
 	im              *image.RGBA
@@ -60,7 +69,6 @@ type Context struct {
 	color           color.Color
 	fillStyle       Style
 	strokeStyle     Style
-	pathBuilder     *path.PathBuilder
 	dashes          []float64
 	dashOffset      float64
 	lineWidth       float64
@@ -68,6 +76,7 @@ type Context struct {
 	lineJoin        LineJoin
 	fillRule        FillRule
 	font            *Font
+	TextAlign       TextAlign
 	transform       path.Transform
 	blendMode       BlendMode
 	antiAlias       bool
@@ -101,10 +110,11 @@ func imageToRGBA(im image.Image) *image.RGBA {
 func NewContextForRGBA(im *image.RGBA) *Context {
 	bounds := im.Bounds()
 	return &Context{
+		path2d: NewPath2D(),
+
 		width:           bounds.Dx(),
 		height:          bounds.Dy(),
 		im:              im,
-		pathBuilder:     path.NewPathBuilder(),
 		lineWidth:       1,
 		lineCap:         LineCapRound,
 		lineJoin:        LineJoinMiter,
@@ -140,6 +150,12 @@ func (dc *Context) SavePNG(path string) error {
 // EncodePNG encodes the image as a PNG and writes it to the provided io.Writer.
 func (dc *Context) EncodePNG(w io.Writer) error {
 	return png.Encode(w, dc.Image())
+}
+
+// BeginPath resets the current default path.
+func (dc *Context) BeginPath() {
+	dc.path2d.data = nil
+	dc.path2d.builder = path.NewPathBuilder()
 }
 
 // SetDash sets the current dash pattern to use. Call with zero arguments to
@@ -332,28 +348,22 @@ func (dc *Context) SetRGB(r, g, b float64) {
 	dc.SetRGBA(r, g, b, 1)
 }
 
-// Fill fills the current path with the current color. Open subpaths
-// are implicity closed. The path is cleared after this operation.
+// Fills the subpaths of the current default path with the current fill style, obeying the given fill rule.
 func (dc *Context) Fill() {
-	dc.FillPreserve()
-	dc.BeginPath()
+	dc.FillPath(dc.path2d)
 }
 
-// FillPreserve fills the current path with the current color. Open subpaths
-// are implicity closed. The path is preserved after this operation.
-func (dc *Context) FillPreserve() {
-	p := dc.pathBuilder.Finish()
-	if p == nil {
-		return
+// Fills the subpaths of the given path with the current fill style, obeying the given fill rule.
+func (dc *Context) FillPath(p *path2d) {
+	if p.data == nil {
+		p.data = p.builder.Finish()
 	}
 
-	// Both path and shader need to be transformed
-	// This matches tiny-skia's behavior where transform applies to both
-	var transformedPath *path.Path
+	var tp *path.Path
 	if !dc.transform.IsIdentity() {
-		transformedPath = p.Transform(dc.transform)
+		tp = p.data.Transform(dc.transform)
 	} else {
-		transformedPath = p
+		tp = p.data
 	}
 
 	paint := &Paint{
@@ -369,69 +379,39 @@ func (dc *Context) FillPreserve() {
 	}
 	blitter := paint.blitter(dc.im.Pix, maskData, dc.Width(), dc.Height())
 	screen, _ := path.NewScreenIntRectFromXYWH(0, 0, uint32(dc.Width()), uint32(dc.Height()))
-	scan.FillPathAA(transformedPath, int(dc.fillRule), screen, blitter)
-}
-
-// Stroke strokes the current path with the current color, line width,
-// line cap, line join and dash settings. The path is cleared after this
-// operation.
-func (dc *Context) Stroke() {
-	dc.StrokePreserve()
-	dc.BeginPath()
-}
-
-// StrokePreserve strokes the current path with the current color, line width,
-// line cap, line join and dash settings. The path is preserved after this
-// operation.
-func (dc *Context) StrokePreserve() {
-	pathData := dc.pathBuilder.Finish()
-	if pathData == nil {
-		return
-	}
-
-	// Apply transform to path
-	var transformedPath *path.Path
-	if !dc.transform.IsIdentity() {
-		transformedPath = pathData.Transform(dc.transform)
+	if dc.antiAlias {
+		scan.FillPathAA(tp, int(dc.fillRule), screen, blitter)
 	} else {
-		transformedPath = pathData
+		scan.FillPath(tp, int(dc.fillRule), screen, blitter)
+	}
+}
+
+// Stroke the subpaths of the current default path with the current stroke style.
+func (dc *Context) Stroke() {
+	dc.StrokePath(dc.path2d)
+}
+
+// StrokePath the subpaths of the given path with the current stroke style.
+func (dc *Context) StrokePath(p *path2d) {
+	if p.data == nil {
+		p.data = p.builder.Finish()
 	}
 
-	// Convert LineCap from context enum to path stroker enum
-	var lineCap path.LineCap
-	switch dc.lineCap {
-	case LineCapRound:
-		lineCap = path.LineCapRound
-	case LineCapButt:
-		lineCap = path.LineCapButt
-	case LineCapSquare:
-		lineCap = path.LineCapSquare
+	var tp *path.Path
+	if !dc.transform.IsIdentity() {
+		tp = p.data.Transform(dc.transform)
+	} else {
+		tp = p.data
 	}
 
-	// Convert LineJoin from context enum to path stroker enum
-	var lineJoin path.LineJoin
-	switch dc.lineJoin {
-	case LineJoinMiter:
-		lineJoin = path.LineJoinMiter
-	case LineJoinRound:
-		lineJoin = path.LineJoinRound
-	case LineJoinBevel:
-		lineJoin = path.LineJoinBevel
-	default:
-		lineJoin = path.LineJoinMiter // Default to Miter
-	}
-
-	// Build stroke options
 	stroke := &path.Stroke{
 		Width:      float32(dc.lineWidth),
-		LineCap:    lineCap,
-		LineJoin:   lineJoin,
+		LineCap:    path.LineCap(dc.lineCap),
+		LineJoin:   path.LineJoin(dc.lineJoin),
 		MiterLimit: 4.0, // Default miter limit
 	}
 
-	// Add dashing if specified
 	if len(dc.dashes) > 0 {
-		// Convert dashes from float64 to float32
 		dashArray := make([]float32, len(dc.dashes))
 		for i, d := range dc.dashes {
 			dashArray[i] = float32(d)
@@ -439,7 +419,6 @@ func (dc *Context) StrokePreserve() {
 		stroke.Dash = path.NewStrokeDash(dashArray, float32(dc.dashOffset))
 	}
 
-	// Prepare paint and blitter
 	paint := &Paint{
 		Shader:          toShader(dc.strokeStyle, dc.transform),
 		AntiAlias:       dc.antiAlias,
@@ -454,18 +433,14 @@ func (dc *Context) StrokePreserve() {
 	blitter := paint.blitter(dc.im.Pix, maskData, dc.Width(), dc.Height())
 	screen, _ := path.NewScreenIntRectFromXYWH(0, 0, uint32(dc.Width()), uint32(dc.Height()))
 
-	// Compute resolution scale based on transform
 	resScale := path.ComputeResolutionScale(dc.transform)
 
-	// Stroke the path to get a filled outline
 	stroker := path.NewPathStroker()
-	strokedPath := stroker.Stroke(transformedPath, *stroke, resScale)
+	strokedPath := stroker.Stroke(tp, *stroke, resScale)
 	if strokedPath == nil {
 		return
 	}
 
-	// Fill the stroked path
-	// Always use Winding rule for stroke (matches gg library behavior)
 	if dc.antiAlias {
 		scan.FillPathAA(strokedPath, int(FillRuleWinding), screen, blitter)
 	} else {
@@ -473,29 +448,22 @@ func (dc *Context) StrokePreserve() {
 	}
 }
 
-// Clip updates the clipping region by intersecting the current
-// clipping region with the current path as it would be filled by dc.Fill().
-// The path is cleared after this operation.
+// Further constrains the clipping region to the current default path, using the given fill rule to determine what points are in the path.
 func (dc *Context) Clip() {
-	dc.ClipPreserve()
-	dc.BeginPath()
+	dc.ClipPath(dc.path2d)
 }
 
-// ClipPreserve updates the clipping region by intersecting the current
-// clipping region with the current path as it would be filled by dc.Fill().
-// The path is preserved after this operation.
-func (dc *Context) ClipPreserve() {
-	pathData := dc.pathBuilder.Finish()
-	if pathData == nil {
-		return
+// Further constrains the clipping region to the given path, using the given fill rule to determine what points are in the path.
+func (dc *Context) ClipPath(p *path2d) {
+	if p.data == nil {
+		p.data = p.builder.Finish()
 	}
 
-	// Apply transform to path for clipping
-	var transformedPath *path.Path
+	var tp *path.Path
 	if !dc.transform.IsIdentity() {
-		transformedPath = pathData.Transform(dc.transform)
+		tp = p.data.Transform(dc.transform)
 	} else {
-		transformedPath = pathData
+		tp = p.data
 	}
 
 	// Create a temporary alpha mask for the clip path
@@ -514,7 +482,7 @@ func (dc *Context) ClipPreserve() {
 	}
 	blitter := paint.blitter(tempRGBA.Pix, nil, width, height)
 	screen, _ := path.NewScreenIntRectFromXYWH(0, 0, uint32(width), uint32(height))
-	scan.FillPathAA(transformedPath, int(dc.fillRule), screen, blitter)
+	scan.FillPathAA(tp, int(dc.fillRule), screen, blitter)
 
 	// Extract alpha channel from RGBA to Alpha mask
 	for i := 0; i < width*height; i++ {

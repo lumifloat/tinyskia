@@ -20,19 +20,20 @@ func (dc *Context) Save() {
 
 // Restore pops the top state on the stack, restoring the context to that state.
 func (dc *Context) Restore() {
-	before := *dc
-	s := dc.stack
-	x, s := s[len(s)-1], s[:len(s)-1]
-	*dc = *x
-	dc.mask = before.mask
-	dc.im = before.im
-	// Restore path builder state
-	pathData := before.pathBuilder.Finish()
-	dc.pathBuilder = path.NewPathBuilder()
-	if pathData != nil {
-		dc.pathBuilder.PushPath(pathData)
+	if len(dc.stack) == 0 {
+		return
 	}
-	dc.stack = s
+
+	currentIm := dc.im
+	currentMask := dc.mask
+
+	savedState := dc.stack[len(dc.stack)-1]
+	dc.stack = dc.stack[:len(dc.stack)-1]
+
+	*dc = *savedState
+
+	dc.im = currentIm
+	dc.mask = currentMask
 }
 
 // Reset resets the rendering context, which includes the backing buffer, the drawing state stack, path, and styles.
@@ -42,7 +43,7 @@ func (dc *Context) Reset() {
 	}
 
 	dc.stack = nil
-	dc.pathBuilder = path.NewPathBuilder()
+	dc.path2d = NewPath2D()
 	dc.dashes = nil
 	dc.dashOffset = 0
 	dc.lineWidth = 1

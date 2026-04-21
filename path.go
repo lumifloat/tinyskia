@@ -11,63 +11,79 @@ import (
 	"github.com/lumifloat/tinyskia/internal/path"
 )
 
-// BeginPath resets the current path.
-func (dc *Context) BeginPath() {
-	dc.pathBuilder.Clear()
+type path2d struct {
+	data    *path.Path
+	builder *path.PathBuilder
 }
 
-// ClosePath marks the current subpath as closed, and starts a new subpath with a point
-// the same as the start and end of the newly closed subpath.
-func (dc *Context) ClosePath() {
-	dc.pathBuilder.Close()
+func NewPath2D() *path2d {
+	return &path2d{builder: path.NewPathBuilder()}
 }
 
 // MoveTo creates a new subpath with the given point.
-func (dc *Context) MoveTo(x, y float64) {
-	p := path.Point{X: float32(x), Y: float32(y)}
-	dc.pathBuilder.MoveTo(p.X, p.Y)
+func (p *path2d) MoveTo(x, y float64) {
+	p1 := path.Point{X: float32(x), Y: float32(y)}
+	p.builder.MoveTo(p1.X, p1.Y)
+}
+
+// ClosePath Marks the current subpath as closed,
+// and starts a new subpath with a point the same as the start and end of the newly closed subpath.
+func (p *path2d) ClosePath() {
+	p.builder.Close()
 }
 
 // LineTo adds the given point to the current subpath, connected to the previous one by a straight line.
-func (dc *Context) LineTo(x, y float64) {
-	_, hasCurrent := dc.pathBuilder.LastPoint()
+func (p *path2d) LineTo(x, y float64) {
+	if p.data != nil {
+		p.data = nil
+	}
+	_, hasCurrent := p.builder.LastPoint()
 	if !hasCurrent {
-		dc.MoveTo(x, y)
+		p.MoveTo(x, y)
 		return
 	}
-	p := path.Point{X: float32(x), Y: float32(y)}
-	dc.pathBuilder.LineTo(p.X, p.Y)
+	p1 := path.Point{X: float32(x), Y: float32(y)}
+	p.builder.LineTo(p1.X, p1.Y)
 }
 
 // QuadraticCurveTo adds the given point to the current subpath, connected to the previous one
 // by a quadratic Bézier curve with the given control point.
-func (dc *Context) QuadraticCurveTo(x1, y1, x2, y2 float64) {
-	_, hasCurrent := dc.pathBuilder.LastPoint()
+func (p *path2d) QuadraticCurveTo(x1, y1, x2, y2 float64) {
+	if p.data != nil {
+		p.data = nil
+	}
+	_, hasCurrent := p.builder.LastPoint()
 	if !hasCurrent {
-		dc.MoveTo(x1, y1)
+		p.MoveTo(x1, y1)
 	}
 	p1 := path.Point{X: float32(x1), Y: float32(y1)}
 	p2 := path.Point{X: float32(x2), Y: float32(y2)}
-	dc.pathBuilder.QuadTo(p1.X, p1.Y, p2.X, p2.Y)
+	p.builder.QuadTo(p1.X, p1.Y, p2.X, p2.Y)
 }
 
 // BezierCurveTo adds the given point to the current subpath, connected to the previous one
 // by a cubic Bézier curve with the given control points.
-func (dc *Context) BezierCurveTo(cp1x, cp1y, cp2x, cp2y, x, y float64) {
-	_, hasCurrent := dc.pathBuilder.LastPoint()
+func (p *path2d) BezierCurveTo(cp1x, cp1y, cp2x, cp2y, x, y float64) {
+	if p.data != nil {
+		p.data = nil
+	}
+	_, hasCurrent := p.builder.LastPoint()
 	if !hasCurrent {
-		dc.MoveTo(cp1x, cp1y)
+		p.MoveTo(cp1x, cp1y)
 	}
 	p1 := path.Point{X: float32(cp1x), Y: float32(cp1y)}
 	p2 := path.Point{X: float32(cp2x), Y: float32(cp2y)}
 	p3 := path.Point{X: float32(x), Y: float32(y)}
-	dc.pathBuilder.CubicTo(p1.X, p1.Y, p2.X, p2.Y, p3.X, p3.Y)
+	p.builder.CubicTo(p1.X, p1.Y, p2.X, p2.Y, p3.X, p3.Y)
 }
 
 // ArcTo adds an arc with the given control points and radius to the current subpath,
 // connected to the previous point by a straight line.
-func (dc *Context) ArcTo(x1, y1, x2, y2, radius float64) {
-	currentPt, hasCurrent := dc.pathBuilder.LastPoint()
+func (p *path2d) ArcTo(x1, y1, x2, y2, radius float64) {
+	if p.data != nil {
+		p.data = nil
+	}
+	currentPt, hasCurrent := p.builder.LastPoint()
 	if !hasCurrent {
 		return
 	}
@@ -89,7 +105,7 @@ func (dc *Context) ArcTo(x1, y1, x2, y2, radius float64) {
 	len2 := math.Sqrt(dx2*dx2 + dy2*dy2)
 
 	if len1 < 1e-10 || len2 < 1e-10 {
-		dc.LineTo(x1, y1)
+		p.LineTo(x1, y1)
 		return
 	}
 
@@ -129,7 +145,7 @@ func (dc *Context) ArcTo(x1, y1, x2, y2, radius float64) {
 	dirLen := math.Sqrt(dirX*dirX + dirY*dirY)
 
 	if dirLen < 1e-10 {
-		dc.LineTo(x1, y1)
+		p.LineTo(x1, y1)
 		return
 	}
 
@@ -140,21 +156,27 @@ func (dc *Context) ArcTo(x1, y1, x2, y2, radius float64) {
 	cpx := float64(p1.X) + nx*cpDist
 	cpy := float64(p1.Y) + ny*cpDist
 
-	dc.LineTo(t1x, t1y)
-	dc.QuadraticCurveTo(cpx, cpy, t2x, t2y)
+	p.LineTo(t1x, t1y)
+	p.QuadraticCurveTo(cpx, cpy, t2x, t2y)
 }
 
 // Rect adds a new closed subpath to the path, representing the given rectangle.
-func (dc *Context) Rect(x, y, w, h float64) {
-	dc.MoveTo(x, y)
-	dc.LineTo(x+w, y)
-	dc.LineTo(x+w, y+h)
-	dc.LineTo(x, y+h)
-	dc.ClosePath()
+func (p *path2d) Rect(x, y, w, h float64) {
+	if p.data != nil {
+		p.data = nil
+	}
+	p.MoveTo(x, y)
+	p.LineTo(x+w, y)
+	p.LineTo(x+w, y+h)
+	p.LineTo(x, y+h)
+	p.ClosePath()
 }
 
 // RoundRect adds a new closed subpath to the path representing the given rounded rectangle.
-func (dc *Context) RoundRect(x, y, w, h float64, radii []float64) {
+func (p *path2d) RoundRect(x, y, w, h float64, radii []float64) {
+	if p.data != nil {
+		p.data = nil
+	}
 	if math.IsInf(x, 0) || math.IsNaN(x) ||
 		math.IsInf(y, 0) || math.IsNaN(y) ||
 		math.IsInf(w, 0) || math.IsNaN(w) ||
@@ -231,61 +253,64 @@ func (dc *Context) RoundRect(x, y, w, h float64, radii []float64) {
 		}
 	}
 
-	dc.MoveTo(x+rx[0], y)
+	p.MoveTo(x+rx[0], y)
 
 	if clockwise {
-		dc.LineTo(x+w-rx[1], y)
+		p.LineTo(x+w-rx[1], y)
 		if rx[1] > 0 || ry[1] > 0 {
 			radius := math.Max(rx[1], ry[1])
-			dc.Arc(x+w-rx[1], y+ry[1], radius, -math.Pi/2, 0, false)
+			p.Arc(x+w-rx[1], y+ry[1], radius, -math.Pi/2, 0, false)
 		}
-		dc.LineTo(x+w, y+h-ry[2])
+		p.LineTo(x+w, y+h-ry[2])
 		if rx[2] > 0 || ry[2] > 0 {
 			radius := math.Max(rx[2], ry[2])
-			dc.Arc(x+w-rx[2], y+h-ry[2], radius, 0, math.Pi/2, false)
+			p.Arc(x+w-rx[2], y+h-ry[2], radius, 0, math.Pi/2, false)
 		}
-		dc.LineTo(x+rx[3], y+h)
+		p.LineTo(x+rx[3], y+h)
 		if rx[3] > 0 || ry[3] > 0 {
 			radius := math.Max(rx[3], ry[3])
-			dc.Arc(x+rx[3], y+h-ry[3], radius, math.Pi/2, math.Pi, false)
+			p.Arc(x+rx[3], y+h-ry[3], radius, math.Pi/2, math.Pi, false)
 		}
-		dc.LineTo(x, y+ry[0])
+		p.LineTo(x, y+ry[0])
 		if rx[0] > 0 || ry[0] > 0 {
 			radius := math.Max(rx[0], ry[0])
-			dc.Arc(x+rx[0], y+ry[0], radius, math.Pi, 3*math.Pi/2, false)
+			p.Arc(x+rx[0], y+ry[0], radius, math.Pi, 3*math.Pi/2, false)
 		}
 	} else {
-		dc.LineTo(x, y+ry[0])
+		p.LineTo(x, y+ry[0])
 		if rx[0] > 0 || ry[0] > 0 {
 			radius := math.Max(rx[0], ry[0])
-			dc.Arc(x+rx[0], y+ry[0], radius, 3*math.Pi/2, math.Pi, false)
+			p.Arc(x+rx[0], y+ry[0], radius, 3*math.Pi/2, math.Pi, false)
 		}
-		dc.LineTo(x+w-rx[1], y)
+		p.LineTo(x+w-rx[1], y)
 		if rx[1] > 0 || ry[1] > 0 {
 			radius := math.Max(rx[1], ry[1])
-			dc.Arc(x+w-rx[1], y+ry[1], radius, math.Pi, -math.Pi/2, false)
+			p.Arc(x+w-rx[1], y+ry[1], radius, math.Pi, -math.Pi/2, false)
 		}
-		dc.LineTo(x+w, y+h-ry[2])
+		p.LineTo(x+w, y+h-ry[2])
 		if rx[2] > 0 || ry[2] > 0 {
 			radius := math.Max(rx[2], ry[2])
-			dc.Arc(x+w-rx[2], y+h-ry[2], radius, -math.Pi/2, 0, false)
+			p.Arc(x+w-rx[2], y+h-ry[2], radius, -math.Pi/2, 0, false)
 		}
-		dc.LineTo(x+rx[3], y+h)
+		p.LineTo(x+rx[3], y+h)
 		if rx[3] > 0 || ry[3] > 0 {
 			radius := math.Max(rx[3], ry[3])
-			dc.Arc(x+rx[3], y+h-ry[3], radius, 0, math.Pi/2, false)
+			p.Arc(x+rx[3], y+h-ry[3], radius, 0, math.Pi/2, false)
 		}
-		dc.LineTo(x, y+ry[0])
+		p.LineTo(x, y+ry[0])
 	}
 
-	dc.ClosePath()
+	p.ClosePath()
 }
 
 // Arc adds points to the subpath such that the arc described by the circumference of the circle
 // described by the arguments, starting at the given start angle and ending at the given end angle,
 // going in the given direction (defaulting to clockwise), is added to the path, connected to
 // the previous point by a straight line.
-func (dc *Context) Arc(x, y, radius, startAngle, endAngle float64, counterclockwise bool) {
+func (p *path2d) Arc(x, y, radius, startAngle, endAngle float64, counterclockwise bool) {
+	if p.data != nil {
+		p.data = nil
+	}
 	if counterclockwise {
 		startAngle, endAngle = endAngle, startAngle
 	}
@@ -306,14 +331,14 @@ func (dc *Context) Arc(x, y, radius, startAngle, endAngle float64, counterclockw
 		cy := 2*y1 - y0/2 - y2/2
 
 		if i == 0 {
-			_, hasCurrent := dc.pathBuilder.LastPoint()
+			_, hasCurrent := p.builder.LastPoint()
 			if hasCurrent {
-				dc.LineTo(x0, y0)
+				p.LineTo(x0, y0)
 			} else {
-				dc.MoveTo(x0, y0)
+				p.MoveTo(x0, y0)
 			}
 		}
-		dc.QuadraticCurveTo(cx, cy, x2, y2)
+		p.QuadraticCurveTo(cx, cy, x2, y2)
 	}
 }
 
@@ -321,7 +346,10 @@ func (dc *Context) Arc(x, y, radius, startAngle, endAngle float64, counterclockw
 // described by the arguments, starting at the given start angle and ending at the given end angle,
 // going in the given direction (defaulting to clockwise), is added to the path, connected to
 // the previous point by a straight line.
-func (dc *Context) Ellipse(x, y, radiusX, radiusY, rotation, startAngle, endAngle float64, counterclockwise bool) {
+func (p *path2d) Ellipse(x, y, radiusX, radiusY, rotation, startAngle, endAngle float64, counterclockwise bool) {
+	if p.data != nil {
+		p.data = nil
+	}
 	if counterclockwise {
 		startAngle, endAngle = endAngle, startAngle
 	}
@@ -352,13 +380,13 @@ func (dc *Context) Ellipse(x, y, radiusX, radiusY, rotation, startAngle, endAngl
 		cy := 2*y1 - y0/2 - y2/2
 
 		if i == 0 {
-			_, hasCurrent := dc.pathBuilder.LastPoint()
+			_, hasCurrent := p.builder.LastPoint()
 			if hasCurrent {
-				dc.LineTo(x0, y0)
+				p.LineTo(x0, y0)
 			} else {
-				dc.MoveTo(x0, y0)
+				p.MoveTo(x0, y0)
 			}
 		}
-		dc.QuadraticCurveTo(cx, cy, x2, y2)
+		p.QuadraticCurveTo(cx, cy, x2, y2)
 	}
 }
