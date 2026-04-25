@@ -9,6 +9,8 @@
 package path
 
 import (
+	"math"
+
 	"github.com/chewxy/math32"
 
 	"github.com/lumifloat/tinyskia/internal/numeric/scalar"
@@ -181,6 +183,195 @@ func (b *PathBuilder) cubicToPt(p1, p2, p Point) {
 	b.CubicTo(p1.X, p1.Y, p2.X, p2.Y, p.X, p.Y)
 }
 
+// ArcTo adds an arc tangent to two lines.
+func (b *PathBuilder) ArcTo(x1, y1, x2, y2, radius float32) {
+	b.injectMoveToIfNeeded()
+
+	if radius == 0 {
+		b.LineTo(x1, y1)
+		return
+	}
+
+	// Need to know our prev pt so we can construct tangent vectors
+	start, ok := b.LastPoint()
+	if !ok {
+		b.MoveTo(x1, y1)
+		return
+	}
+
+	// Need double precision for these calcs.
+	beforeX := float64(x1 - start.X)
+	beforeY := float64(y1 - start.Y)
+	afterX := float64(x2 - x1)
+	afterY := float64(y2 - y1)
+
+	beforeLen := math.Sqrt(beforeX*beforeX + beforeY*beforeY)
+	afterLen := math.Sqrt(afterX*afterX + afterY*afterY)
+
+	var beforeNX, beforeNY, afterNX, afterNY float64
+	if beforeLen > 1e-6 {
+		beforeNX = beforeX / beforeLen
+		beforeNY = beforeY / beforeLen
+	}
+	if afterLen > 1e-6 {
+		afterNX = afterX / afterLen
+		afterNY = afterY / afterLen
+	}
+
+	cosH := beforeNX*afterNX + beforeNY*afterNY
+	sinH := beforeNX*afterNY - beforeNY*afterNX
+
+	// If the previous point equals the first point, befored will be denormalized.
+	// If the two points equal, afterd will be denormalized.
+	// If the second point equals the first point, sinh will be zero.
+	// In all these cases, we cannot construct an arc, so we construct a line to the first point.
+	if math.IsNaN(beforeNX) || math.IsNaN(beforeNY) ||
+		math.IsNaN(afterNX) || math.IsNaN(afterNY) ||
+		scalar.IsNearlyZero(float32(sinH)) {
+		b.LineTo(x1, y1)
+		return
+	}
+
+	// Safe to convert back to floats now
+	dist := float32(math.Abs(float64(radius) * (1 - cosH) / sinH))
+
+	tangentX := x1 - dist*float32(beforeNX)
+	tangentY := y1 - dist*float32(beforeNY)
+
+	b.LineTo(tangentX, tangentY)
+
+	endX := x1 + dist*float32(afterNX)
+	endY := y1 + dist*float32(afterNY)
+
+	weight := float32(math.Sqrt(0.5 + cosH*0.5))
+
+	b.conicPointsTo(Point{x1, y1}, Point{endX, endY}, weight)
+}
+
+// ArcToOval adds an arc on the oval from startAngle through sweepAngle.
+func (b *PathBuilder) ArcToOval(oval Rect, startAngle, sweepAngle float32) {
+	if oval.Width() < 0 || oval.Height() < 0 {
+		return
+	}
+
+	startAngle = math32.Mod(startAngle, 360.0)
+
+	if sweepAngle == 0 && (startAngle == 0 || startAngle == 360) {
+		px := oval.Right()
+		py := (oval.Top() + oval.Bottom()) / 2
+		if len(b.verbs) == 0 {
+			b.MoveTo(px, py)
+		} else {
+			b.LineTo(px, py)
+		}
+		return
+	}
+
+	if oval.Width() == 0 && oval.Height() == 0 {
+		px := oval.Right()
+		py := oval.Top()
+		if len(b.verbs) == 0 {
+			b.MoveTo(px, py)
+		} else {
+			b.LineTo(px, py)
+		}
+		return
+	}
+
+	startRad := startAngle * float32(math.Pi) / 180.0
+	stopRad := (startAngle + sweepAngle) * float32(math.Pi) / 180.0
+
+	startV := Point{
+		scalar.CosSnapToZero(startRad),
+		scalar.SinSnapToZero(startRad),
+	}
+	stopV := Point{
+		scalar.CosSnapToZero(stopRad),
+		scalar.SinSnapToZero(stopRad),
+	}
+
+	if startV == stopV {
+		absSweep := math32.Abs(sweepAngle)
+		if absSweep < 360 && absSweep > 359 {
+			// Tweak the stop vector by a tiny angle
+			deltaRad := float32(1.0 / 512.0)
+			if sweepAngle < 0 {
+				deltaRad = -deltaRad
+			}
+			for startV == stopV {
+				stopRad -= deltaRad
+				stopV = Point{
+					scalar.CosSnapToZero(stopRad),
+					scalar.SinSnapToZero(stopRad),
+				}
+			}
+		}
+	}
+
+	// At this point, we know that the arc is not a lone point, but startV == stopV
+	// indicates that the sweepAngle is too small such that angles_to_unit_vectors
+	// cannot handle it.
+	if startV == stopV {
+		rx := oval.Width() / 2
+		ry := oval.Height() / 2
+		cx := (oval.Left() + oval.Right()) / 2
+		cy := (oval.Top() + oval.Bottom()) / 2
+		// Don't use SnapToZero here for tiny sweep + huge radius case
+		endRad := (startAngle + sweepAngle) * float32(math.Pi) / 180.0
+		px := cx + rx*math32.Cos(endRad)
+		py := cy + ry*math32.Sin(endRad)
+		if len(b.verbs) == 0 {
+			b.MoveTo(px, py)
+		} else {
+			b.LineTo(px, py)
+		}
+		return
+	}
+
+	var conics [5]conic
+	cx := (oval.Left() + oval.Right()) / 2
+	cy := (oval.Top() + oval.Bottom()) / 2
+
+	ts := NewTransformDefault().
+		PostScale(oval.Width()/2, oval.Height()/2).
+		PostTranslate(cx, cy)
+
+	dir := pathDirectionCW
+	if sweepAngle < 0 {
+		dir = pathDirectionCCW
+	}
+
+	conicsSlice := BuildUnitArc(startV, stopV, dir, ts, &conics)
+
+	if len(conicsSlice) > 0 {
+		firstPt := conicsSlice[0].Points[0]
+		if len(b.verbs) == 0 {
+			b.MoveTo(firstPt.X, firstPt.Y)
+		} else {
+			lastPt, _ := b.LastPoint()
+			if lastPt != firstPt {
+				b.LineTo(firstPt.X, firstPt.Y)
+			}
+		}
+
+		for _, c := range conicsSlice {
+			b.conicPointsTo(c.Points[1], c.Points[2], c.Weight)
+		}
+	} else {
+		rx := oval.Width() / 2
+		ry := oval.Height() / 2
+		cx := (oval.Left() + oval.Right()) / 2
+		cy := (oval.Top() + oval.Bottom()) / 2
+		px := cx + rx*stopV.X
+		py := cy + ry*stopV.Y
+		if len(b.verbs) == 0 {
+			b.MoveTo(px, py)
+		} else {
+			b.LineTo(px, py)
+		}
+	}
+}
+
 // Close closes the current contour.
 func (b *PathBuilder) Close() {
 	if len(b.verbs) > 0 {
@@ -270,6 +461,17 @@ func (b *PathBuilder) PushPath(other *Path) {
 	b.lastMoveToIndex = len(b.points)
 	b.verbs = append(b.verbs, other.verbs...)
 	b.points = append(b.points, other.points...)
+}
+
+// PushPathWithTransform adds a path with a transform applied to all points.
+func (b *PathBuilder) PushPathWithTransform(other *Path, ts Transform) {
+	b.lastMoveToIndex = len(b.points)
+	b.verbs = append(b.verbs, other.Verbs()...)
+
+	transformedPoints := make([]Point, len(other.Points()))
+	copy(transformedPoints, other.Points())
+	ts.MapPoints(transformedPoints)
+	b.points = append(b.points, transformedPoints...)
 }
 
 func (b *PathBuilder) pushPathBuilder(other *PathBuilder) {
