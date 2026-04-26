@@ -48,10 +48,6 @@ type Stroke struct {
 	// A stroke line join.
 	// Default: LineJoinMiter
 	LineJoin LineJoin
-
-	// A stroke dashing properties.
-	// Default: nil (no dashing)
-	Dash interface{}
 }
 
 func defaultStroke() Stroke {
@@ -60,7 +56,6 @@ func defaultStroke() Stroke {
 		MiterLimit: 4.0,
 		LineCap:    LineCapButt,
 		LineJoin:   LineJoinMiter,
-		Dash:       nil,
 	}
 }
 
@@ -415,7 +410,7 @@ func (s *PathStroker) lineTo(p Point, iter *PathSegmentsIter) {
 	if !ok {
 		return
 	}
-	
+
 	s.outer.LineTo(p.X+normal.X, p.Y+normal.Y)
 	s.inner.LineTo(p.X-normal.X, p.Y-normal.Y)
 
@@ -783,7 +778,7 @@ func (s *PathStroker) finishContour(close bool, currIsLine bool) {
 				s.outer,
 			)
 			s.outer.reversePathTo(s.inner)
-			
+
 			// cap the start
 			if s.prevIsLine {
 				otherPath = s.inner
@@ -1124,7 +1119,7 @@ func (s *PathStroker) finish(isLine bool) *Path {
 	s.outer = NewPathBuilder()
 
 	result := buf.Finish()
-	
+
 	return result
 }
 

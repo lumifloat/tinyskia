@@ -65,6 +65,24 @@ func IsNearlyZeroWithinTolerance(s, tolerance float32) bool {
 	return math32.Abs(s) <= tolerance
 }
 
+// SinSnapToZero returns sin(angle), snapping to 0 if the result is very close to 0.
+func SinSnapToZero(angle float32) float32 {
+	v := math32.Sin(angle)
+	if IsNearlyZero(v) {
+		return 0
+	}
+	return v
+}
+
+// CosSnapToZero returns cos(angle), snapping to 0 if the result is very close to 0.
+func CosSnapToZero(angle float32) float32 {
+	v := math32.Cos(angle)
+	if IsNearlyZero(v) {
+		return 0
+	}
+	return v
+}
+
 // AlmostEqualUlps compares two floats using Units in the Last Place.
 // From SkPathOpsTypes.
 func AlmostEqualUlps(a, b float32) bool {

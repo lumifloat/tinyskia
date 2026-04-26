@@ -18,7 +18,7 @@ type Paint struct {
 	// A paint shader.
 	Shader shader.Shader
 	// Paint blending mode.
-	BlendMode BlendMode
+	BlendMode CompositeOperation
 	// Enables anti-aliased painting.
 	AntiAlias bool
 	// Colorspace for blending.
@@ -31,7 +31,7 @@ type Paint struct {
 func DefaultPaint() Paint {
 	return Paint{
 		Shader:          shader.NewSolidColor(color.ColorBlack),
-		BlendMode:       BlendModeSourceOver,
+		BlendMode:       CompositeOperationSourceOver,
 		AntiAlias:       true,
 		Colorspace:      color.ColorSpaceLinear,
 		ForceHQPipeline: false,
@@ -59,9 +59,9 @@ func (p *Paint) blitter(data, mask []uint8, width, height int) *pipeline.RasterP
 	}
 
 	switch p.BlendMode {
-	case BlendModeDestination:
+	case CompositeOperationDestination:
 		return nil
-	case BlendModeDestinationIn:
+	case CompositeOperationDestinationIn:
 		if solid, ok := p.Shader.(*shader.SolidColor); ok && solid.IsOpaque() {
 			return nil
 		}
@@ -69,14 +69,14 @@ func (p *Paint) blitter(data, mask []uint8, width, height int) *pipeline.RasterP
 
 	// We can strength-reduce SourceOver into Source when opaque.
 	blendMode := p.BlendMode
-	if p.Shader.IsOpaque() && blendMode == BlendModeSourceOver && maskCtx == nil {
-		blendMode = BlendModeSource
+	if p.Shader.IsOpaque() && blendMode == CompositeOperationSourceOver && maskCtx == nil {
+		blendMode = CompositeOperationSource
 	}
 
 	// When we're drawing a constant color in Source mode, we can sometimes just memset.
 	var memset2dColor color.PremultipliedColorU8
 	var useMemset2dColor bool
-	if blendMode == BlendModeSource && maskCtx == nil {
+	if blendMode == CompositeOperationSource && maskCtx == nil {
 		if solid, ok := p.Shader.(*shader.SolidColor); ok {
 			memset2dColor = solid.Color().Premultiply().ToColorU8()
 			useMemset2dColor = true
@@ -84,8 +84,8 @@ func (p *Paint) blitter(data, mask []uint8, width, height int) *pipeline.RasterP
 	}
 
 	// Clear is just a transparent color memset.
-	if blendMode == BlendModeClear && !p.AntiAlias && maskCtx == nil {
-		blendMode = BlendModeSource
+	if blendMode == CompositeOperationClear && !p.AntiAlias && maskCtx == nil {
+		blendMode = CompositeOperationSource
 		memset2dColor = color.PremultipliedColorU8Transparent
 		useMemset2dColor = true
 	}
@@ -107,7 +107,7 @@ func (p *Paint) blitter(data, mask []uint8, width, height int) *pipeline.RasterP
 		if stage, ok := expand(p.Colorspace); ok {
 			blitAntiHRpBuilder.Push(stage)
 		}
-		if blendStage, ok := blendMode.ToStage(); ok {
+		if blendStage, ok := blendMode.stage(); ok {
 			blitAntiHRpBuilder.Push(blendStage)
 		}
 	} else {
@@ -115,7 +115,7 @@ func (p *Paint) blitter(data, mask []uint8, width, height int) *pipeline.RasterP
 		if stage, ok := expand(p.Colorspace); ok {
 			blitAntiHRpBuilder.Push(stage)
 		}
-		if blendStage, ok := blendMode.ToStage(); ok {
+		if blendStage, ok := blendMode.stage(); ok {
 			blitAntiHRpBuilder.Push(blendStage)
 		}
 		blitAntiHRpBuilder.Push(pipeline.StageLerp1Float)
@@ -137,16 +137,16 @@ func (p *Paint) blitter(data, mask []uint8, width, height int) *pipeline.RasterP
 		blitRectRpBuilder.Push(pipeline.StageMaskU8)
 	}
 
-	if blendMode == BlendModeSourceOver && maskCtx == nil {
+	if blendMode == CompositeOperationSourceOver && maskCtx == nil {
 		if stage, ok := compress(p.Colorspace); ok {
 			blitRectRpBuilder.Push(stage)
 		}
 		// TODO: ignore when dither_rate is non-zero
 		blitRectRpBuilder.Push(pipeline.StageSourceOverRgba)
 	} else {
-		if blendMode != BlendModeSource {
+		if blendMode != CompositeOperationSource {
 			blitRectRpBuilder.Push(pipeline.StageLoadDestination)
-			if blendStage, ok := blendMode.ToStage(); ok {
+			if blendStage, ok := blendMode.stage(); ok {
 				if stage, ok := expand(p.Colorspace); ok {
 					blitRectRpBuilder.Push(stage)
 				}
@@ -177,7 +177,7 @@ func (p *Paint) blitter(data, mask []uint8, width, height int) *pipeline.RasterP
 		if stage, ok := expand(p.Colorspace); ok {
 			blitMaskRpBuilder.Push(stage)
 		}
-		if blendStage, ok := blendMode.ToStage(); ok {
+		if blendStage, ok := blendMode.stage(); ok {
 			blitMaskRpBuilder.Push(blendStage)
 		}
 	} else {
@@ -185,7 +185,7 @@ func (p *Paint) blitter(data, mask []uint8, width, height int) *pipeline.RasterP
 		if stage, ok := expand(p.Colorspace); ok {
 			blitMaskRpBuilder.Push(stage)
 		}
-		if blendStage, ok := blendMode.ToStage(); ok {
+		if blendStage, ok := blendMode.stage(); ok {
 			blitMaskRpBuilder.Push(blendStage)
 		}
 		blitMaskRpBuilder.Push(pipeline.StageLerpU8)
@@ -295,4 +295,97 @@ func compress(self color.ColorSpace) (pipeline.Stage, bool) {
 		return pipeline.StageGammaCompressSrgb, true
 	}
 	return 0, false
+}
+
+func (b CompositeOperation) stage() (pipeline.Stage, bool) {
+	switch b {
+	case CompositeOperationClear:
+		return pipeline.StageClear, true
+	case CompositeOperationSource:
+		return 0, false // This stage is a no-op.
+	case CompositeOperationDestination:
+		return pipeline.StageMoveDestinationToSource, true
+	case CompositeOperationSourceOver:
+		return pipeline.StageSourceOver, true
+	case CompositeOperationDestinationOver:
+		return pipeline.StageDestinationOver, true
+	case CompositeOperationSourceIn:
+		return pipeline.StageSourceIn, true
+	case CompositeOperationDestinationIn:
+		return pipeline.StageDestinationIn, true
+	case CompositeOperationSourceOut:
+		return pipeline.StageSourceOut, true
+	case CompositeOperationDestinationOut:
+		return pipeline.StageDestinationOut, true
+	case CompositeOperationSourceAtop:
+		return pipeline.StageSourceAtop, true
+	case CompositeOperationDestinationAtop:
+		return pipeline.StageDestinationAtop, true
+	case CompositeOperationXor:
+		return pipeline.StageXor, true
+	case CompositeOperationPlus:
+		return pipeline.StagePlus, true
+	case CompositeOperationModulate:
+		return pipeline.StageModulate, true
+	case CompositeOperationScreen:
+		return pipeline.StageScreen, true
+	case CompositeOperationOverlay:
+		return pipeline.StageOverlay, true
+	case CompositeOperationDarken:
+		return pipeline.StageDarken, true
+	case CompositeOperationLighten:
+		return pipeline.StageLighten, true
+	case CompositeOperationColorDodge:
+		return pipeline.StageColorDodge, true
+	case CompositeOperationColorBurn:
+		return pipeline.StageColorBurn, true
+	case CompositeOperationHardLight:
+		return pipeline.StageHardLight, true
+	case CompositeOperationSoftLight:
+		return pipeline.StageSoftLight, true
+	case CompositeOperationDifference:
+		return pipeline.StageDifference, true
+	case CompositeOperationExclusion:
+		return pipeline.StageExclusion, true
+	case CompositeOperationMultiply:
+		return pipeline.StageMultiply, true
+	case CompositeOperationHue:
+		return pipeline.StageHue, true
+	case CompositeOperationSaturation:
+		return pipeline.StageSaturation, true
+	case CompositeOperationColor:
+		return pipeline.StageColor, true
+	case CompositeOperationLuminosity:
+		return pipeline.StageLuminosity, true
+	default:
+		return 0, false
+	}
+}
+
+func (b CompositeOperation) ShouldPreScaleCoverage() bool {
+	// The most important things we do here are:
+	//   1) never pre-scale with rgb coverage if the blend mode involves a source-alpha term;
+	//   2) always pre-scale Plus.
+	//
+	// When we pre-scale with rgb coverage, we scale each of source r,g,b, with a distinct value,
+	// and source alpha with one of those three values. This process destructively updates the
+	// source-alpha term, so we can't evaluate blend modes that need its original value.
+	//
+	// Plus always requires pre-scaling as a specific quirk of its implementation in
+	// RasterPipeline. This lets us put the clamp inside the blend mode itself rather
+	// than as a separate stage that'd come after the lerp.
+	//
+	// This function is a finer-grained breakdown of SkBlendMode_SupportsCoverageAsAlpha().
+	switch b {
+	case CompositeOperationDestination,
+		CompositeOperationDestinationOver,
+		CompositeOperationPlus,
+		CompositeOperationDestinationOut,
+		CompositeOperationSourceAtop,
+		CompositeOperationSourceOver,
+		CompositeOperationXor:
+		return true
+	default:
+		return false
+	}
 }

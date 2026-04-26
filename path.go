@@ -12,12 +12,27 @@ import (
 )
 
 type path2d struct {
-	data    *path.Path
 	builder *path.PathBuilder
 }
 
 func NewPath2D() *path2d {
 	return &path2d{builder: path.NewPathBuilder()}
+}
+
+// AddPath adds to the path the path given by the argument.
+func (p *path2d) AddPath(p0 *path2d) {
+	pp := p0.builder.Finish()
+	if pp != nil {
+		p.builder.PushPath(pp)
+	}
+}
+
+// AddPathWithTransform adds to the path the path given by the argument, transformed by the given transform.
+func (p *path2d) AddPathWithTransform(p0 *path2d, transform *matrix) {
+	pp := p0.builder.Finish()
+	if pp != nil {
+		p.builder.PushPathWithTransform(pp, transform.transform)
+	}
 }
 
 // MoveTo creates a new subpath with the given point.
@@ -34,9 +49,6 @@ func (p *path2d) ClosePath() {
 
 // LineTo adds the given point to the current subpath, connected to the previous one by a straight line.
 func (p *path2d) LineTo(x, y float64) {
-	if p.data != nil {
-		p.data = nil
-	}
 	_, hasCurrent := p.builder.LastPoint()
 	if !hasCurrent {
 		p.MoveTo(x, y)
@@ -49,9 +61,6 @@ func (p *path2d) LineTo(x, y float64) {
 // QuadraticCurveTo adds the given point to the current subpath, connected to the previous one
 // by a quadratic Bézier curve with the given control point.
 func (p *path2d) QuadraticCurveTo(x1, y1, x2, y2 float64) {
-	if p.data != nil {
-		p.data = nil
-	}
 	_, hasCurrent := p.builder.LastPoint()
 	if !hasCurrent {
 		p.MoveTo(x1, y1)
@@ -64,9 +73,6 @@ func (p *path2d) QuadraticCurveTo(x1, y1, x2, y2 float64) {
 // BezierCurveTo adds the given point to the current subpath, connected to the previous one
 // by a cubic Bézier curve with the given control points.
 func (p *path2d) BezierCurveTo(cp1x, cp1y, cp2x, cp2y, x, y float64) {
-	if p.data != nil {
-		p.data = nil
-	}
 	_, hasCurrent := p.builder.LastPoint()
 	if !hasCurrent {
 		p.MoveTo(cp1x, cp1y)
@@ -80,91 +86,22 @@ func (p *path2d) BezierCurveTo(cp1x, cp1y, cp2x, cp2y, x, y float64) {
 // ArcTo adds an arc with the given control points and radius to the current subpath,
 // connected to the previous point by a straight line.
 func (p *path2d) ArcTo(x1, y1, x2, y2, radius float64) {
-	if p.data != nil {
-		p.data = nil
-	}
-	currentPt, hasCurrent := p.builder.LastPoint()
-	if !hasCurrent {
-		return
-	}
-
-	if radius < 0 {
-		return
-	}
-
-	p0 := currentPt
-	p1 := path.Point{X: float32(x1), Y: float32(y1)}
-	p2 := path.Point{X: float32(x2), Y: float32(y2)}
-
-	dx1 := float64(p1.X - p0.X)
-	dy1 := float64(p1.Y - p0.Y)
-	dx2 := float64(p2.X - p1.X)
-	dy2 := float64(p2.Y - p1.Y)
-
-	len1 := math.Sqrt(dx1*dx1 + dy1*dy1)
-	len2 := math.Sqrt(dx2*dx2 + dy2*dy2)
-
-	if len1 < 1e-10 || len2 < 1e-10 {
-		p.LineTo(x1, y1)
-		return
-	}
-
-	ux1 := dx1 / len1
-	uy1 := dy1 / len1
-	ux2 := dx2 / len2
-	uy2 := dy2 / len2
-
-	cosAngle := ux1*ux2 + uy1*uy2
-	if cosAngle > 1.0 {
-		cosAngle = 1.0
-	} else if cosAngle < -1.0 {
-		cosAngle = -1.0
-	}
-	angle := math.Acos(cosAngle)
-
-	tanHalfAngle := math.Tan(angle / 2.0)
-	dist := radius / tanHalfAngle
-
-	if dist > len1 {
-		dist = len1
-	}
-	if dist > len2 {
-		dist = len2
-	}
-
-	t1x := float64(p1.X) - ux1*dist
-	t1y := float64(p1.Y) - uy1*dist
-	t2x := float64(p1.X) + ux2*dist
-	t2y := float64(p1.Y) + uy2*dist
-
-	midX := (t1x + t2x) / 2.0
-	midY := (t1y + t2y) / 2.0
-
-	dirX := midX - float64(p1.X)
-	dirY := midY - float64(p1.Y)
-	dirLen := math.Sqrt(dirX*dirX + dirY*dirY)
-
-	if dirLen < 1e-10 {
-		p.LineTo(x1, y1)
-		return
-	}
-
-	nx := dirX / dirLen
-	ny := dirY / dirLen
-
-	cpDist := radius / math.Sin(angle/2.0)
-	cpx := float64(p1.X) + nx*cpDist
-	cpy := float64(p1.Y) + ny*cpDist
-
-	p.LineTo(t1x, t1y)
-	p.QuadraticCurveTo(cpx, cpy, t2x, t2y)
+	p.builder.ArcTo(
+		float32(x1), float32(y1),
+		float32(x2), float32(y2),
+		float32(radius),
+	)
 }
 
 // Rect adds a new closed subpath to the path, representing the given rectangle.
 func (p *path2d) Rect(x, y, w, h float64) {
-	if p.data != nil {
-		p.data = nil
+	if math.IsInf(x, 0) || math.IsNaN(x) ||
+		math.IsInf(y, 0) || math.IsNaN(y) ||
+		math.IsInf(w, 0) || math.IsNaN(w) ||
+		math.IsInf(h, 0) || math.IsNaN(h) {
+		return
 	}
+
 	p.MoveTo(x, y)
 	p.LineTo(x+w, y)
 	p.LineTo(x+w, y+h)
@@ -174,9 +111,6 @@ func (p *path2d) Rect(x, y, w, h float64) {
 
 // RoundRect adds a new closed subpath to the path representing the given rounded rectangle.
 func (p *path2d) RoundRect(x, y, w, h float64, radii []float64) {
-	if p.data != nil {
-		p.data = nil
-	}
 	if math.IsInf(x, 0) || math.IsNaN(x) ||
 		math.IsInf(y, 0) || math.IsNaN(y) ||
 		math.IsInf(w, 0) || math.IsNaN(w) ||
@@ -184,7 +118,12 @@ func (p *path2d) RoundRect(x, y, w, h float64, radii []float64) {
 		return
 	}
 
-	if len(radii) == 0 || len(radii) > 4 {
+	if radii == nil {
+		p.Rect(x, y, w, h)
+		return
+	}
+
+	if (len(radii) == 0) || len(radii) > 4 {
 		return
 	}
 
@@ -308,38 +247,7 @@ func (p *path2d) RoundRect(x, y, w, h float64, radii []float64) {
 // going in the given direction (defaulting to clockwise), is added to the path, connected to
 // the previous point by a straight line.
 func (p *path2d) Arc(x, y, radius, startAngle, endAngle float64, counterclockwise bool) {
-	if p.data != nil {
-		p.data = nil
-	}
-	if counterclockwise {
-		startAngle, endAngle = endAngle, startAngle
-	}
-
-	const n = 16
-	for i := 0; i < n; i++ {
-		a1 := startAngle + (endAngle-startAngle)*float64(i)/n
-		a2 := startAngle + (endAngle-startAngle)*float64(i+1)/n
-
-		x0 := x + radius*math.Cos(a1)
-		y0 := y + radius*math.Sin(a1)
-		x1 := x + radius*math.Cos((a1+a2)/2)
-		y1 := y + radius*math.Sin((a1+a2)/2)
-		x2 := x + radius*math.Cos(a2)
-		y2 := y + radius*math.Sin(a2)
-
-		cx := 2*x1 - x0/2 - x2/2
-		cy := 2*y1 - y0/2 - y2/2
-
-		if i == 0 {
-			_, hasCurrent := p.builder.LastPoint()
-			if hasCurrent {
-				p.LineTo(x0, y0)
-			} else {
-				p.MoveTo(x0, y0)
-			}
-		}
-		p.QuadraticCurveTo(cx, cy, x2, y2)
-	}
+	p.Ellipse(x, y, radius, radius, 0, startAngle, endAngle, counterclockwise)
 }
 
 // Ellipse adds points to the subpath such that the arc described by the circumference of the ellipse
@@ -347,46 +255,47 @@ func (p *path2d) Arc(x, y, radius, startAngle, endAngle float64, counterclockwis
 // going in the given direction (defaulting to clockwise), is added to the path, connected to
 // the previous point by a straight line.
 func (p *path2d) Ellipse(x, y, radiusX, radiusY, rotation, startAngle, endAngle float64, counterclockwise bool) {
-	if p.data != nil {
-		p.data = nil
-	}
+	sweepAngle := endAngle - startAngle
 	if counterclockwise {
-		startAngle, endAngle = endAngle, startAngle
+		sweepAngle = -sweepAngle
 	}
 
-	const n = 16
-	cosRot := math.Cos(rotation)
-	sinRot := math.Sin(rotation)
+	oval, ok := path.NewRectFromXYWH(float32(x-radiusX), float32(y-radiusY), float32(radiusX*2), float32(radiusY*2))
+	if !ok {
+		return
+	}
 
-	for i := 0; i < n; i++ {
-		a1 := startAngle + (endAngle-startAngle)*float64(i)/n
-		a2 := startAngle + (endAngle-startAngle)*float64(i+1)/n
+	startDeg := float32(startAngle * 180.0 / math.Pi)
+	sweepDeg := float32(sweepAngle * 180.0 / math.Pi)
 
-		x0u := radiusX * math.Cos(a1)
-		y0u := radiusY * math.Sin(a1)
-		x1u := radiusX * math.Cos((a1+a2)/2)
-		y1u := radiusY * math.Sin((a1+a2)/2)
-		x2u := radiusX * math.Cos(a2)
-		y2u := radiusY * math.Sin(a2)
-
-		x0 := x + x0u*cosRot - y0u*sinRot
-		y0 := y + x0u*sinRot + y0u*cosRot
-		x1 := x + x1u*cosRot - y1u*sinRot
-		y1 := y + x1u*sinRot + y1u*cosRot
-		x2 := x + x2u*cosRot - y2u*sinRot
-		y2 := y + x2u*sinRot + y2u*cosRot
-
-		cx := 2*x1 - x0/2 - x2/2
-		cy := 2*y1 - y0/2 - y2/2
-
-		if i == 0 {
-			_, hasCurrent := p.builder.LastPoint()
-			if hasCurrent {
-				p.LineTo(x0, y0)
-			} else {
-				p.MoveTo(x0, y0)
-			}
+	if math.Abs(float64(sweepDeg)) >= 360 {
+		if sweepDeg > 0 {
+			sweepDeg = 359.9999
+		} else {
+			sweepDeg = -359.9999
 		}
-		p.QuadraticCurveTo(cx, cy, x2, y2)
 	}
+
+	if rotation == 0 {
+		p.builder.ArcToOval(oval, startDeg, sweepDeg)
+		return
+	}
+
+	pb := path.NewPathBuilder()
+	pb.ArcToOval(oval, startDeg, sweepDeg)
+
+	if pb.IsEmpty() {
+		return
+	}
+
+	rotationDeg := float32(rotation * 180.0 / math.Pi)
+	ts := path.NewTransformDefault().
+		PostRotateAt(rotationDeg, float32(x), float32(y))
+
+	arcPath := pb.Finish()
+	if arcPath == nil {
+		return
+	}
+
+	p.builder.PushPathWithTransform(arcPath, ts)
 }

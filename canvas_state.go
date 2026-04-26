@@ -1,4 +1,5 @@
-// Copyright 2016 Michael Fogleman
+// Copyright 2006 The Android Open Source Project
+// Copyright 2020 Yevhenii Reizner
 // Copyright 2026 LumiFloat
 //
 // Use of this source code is governed by a BSD-style license that can be
@@ -9,7 +10,6 @@ import (
 	"image/color"
 
 	color2 "github.com/lumifloat/tinyskia/internal/core/color"
-	"github.com/lumifloat/tinyskia/internal/path"
 )
 
 // Save pushes the current state onto the stack.
@@ -44,20 +44,19 @@ func (dc *Context) Reset() {
 
 	dc.stack = nil
 	dc.path2d = NewPath2D()
-	dc.dashes = nil
-	dc.dashOffset = 0
+	dc.lineDash = nil
+	dc.lineDashOffset = 0
 	dc.lineWidth = 1
 	dc.lineCap = LineCapRound
 	dc.lineJoin = LineJoinRound
 	dc.fillRule = FillRuleWinding
-	dc.transform = path.NewTransformDefault()
-	dc.blendMode = BlendModeSourceOver
+	dc.matrix = NewMatrixIdentity()
+	dc.composite = CompositeOperationSourceOver
 	dc.antiAlias = true
 	dc.colorspace = color2.ColorSpaceLinear
 	dc.forceHQPipeline = true
-	dc.color = color.Transparent
-	dc.fillStyle = NewSolidPattern(color.Transparent)
-	dc.strokeStyle = NewSolidPattern(color.Transparent)
+	dc.fillStyle = dc.CreateSolidColor(color.Transparent)
+	dc.strokeStyle = dc.CreateSolidColor(color.Transparent)
 	dc.mask = nil
 	dc.contextLost = false
 }
