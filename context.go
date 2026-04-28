@@ -50,8 +50,6 @@ type Context struct {
 	// Path
 	path2d *path2d
 
-	fillRule FillRule
-
 	// TextDrawingStyles
 	lang        string
 	font        *Font
@@ -97,7 +95,6 @@ func NewContextForRGBA(im *image.RGBA) *Context {
 		lineWidth:       1,
 		lineCap:         LineCapRound,
 		lineJoin:        LineJoinMiter,
-		fillRule:        FillRuleWinding,
 		matrix:          NewMatrixIdentity(),
 		composite:       CompositeOperationSourceOver,
 		antiAlias:       true,

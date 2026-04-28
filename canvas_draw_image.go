@@ -58,8 +58,8 @@ func (dc *Context) DrawImage(im image.Image, x, y float64) {
 	transformedPath := finalPath.Transform(finalTransform)
 
 	if dc.antiAlias {
-		scan.FillPathAA(transformedPath, int(dc.fillRule), screen, blitter)
+		scan.FillPathAA(transformedPath, int(FillRuleWinding), screen, blitter)
 	} else {
-		scan.FillPath(transformedPath, int(dc.fillRule), screen, blitter)
+		scan.FillPath(transformedPath, int(FillRuleWinding), screen, blitter)
 	}
 }

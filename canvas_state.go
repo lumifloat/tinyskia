@@ -49,7 +49,6 @@ func (dc *Context) Reset() {
 	dc.lineWidth = 1
 	dc.lineCap = LineCapRound
 	dc.lineJoin = LineJoinRound
-	dc.fillRule = FillRuleWinding
 	dc.matrix = NewMatrixIdentity()
 	dc.composite = CompositeOperationSourceOver
 	dc.antiAlias = true

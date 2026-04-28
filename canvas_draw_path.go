@@ -15,13 +15,23 @@ import (
 	"github.com/lumifloat/tinyskia/internal/path"
 )
 
-// Fills the subpaths of the current default path with the current fill style, obeying the given fill rule.
+// Fills the subpaths of the current default path with the current fill style.
 func (dc *Context) Fill() {
-	dc.FillPath(dc.path2d)
+	dc.FillPathWithFillRule(dc.path2d, FillRuleWinding)
 }
 
-// Fills the subpaths of the given path with the current fill style, obeying the given fill rule.
+// FillWithFillRule fills the subpaths of the current default path with the current fill style, obeying the given fill rule.
+func (dc *Context) FillWithFillRule(fillRule FillRule) {
+	dc.FillPathWithFillRule(dc.path2d, fillRule)
+}
+
+// FillPath fills the subpaths of the given path with the current fill style.
 func (dc *Context) FillPath(p *path2d) {
+	dc.FillPathWithFillRule(p, FillRuleWinding)
+}
+
+// FillPathWithFillRule fills the subpaths of the given path with the current fill style, obeying the given fill rule.
+func (dc *Context) FillPathWithFillRule(p *path2d, fillRule FillRule) {
 	pp := p.builder.Finish()
 	if pp == nil {
 		return
@@ -48,9 +58,9 @@ func (dc *Context) FillPath(p *path2d) {
 	blitter := paint.blitter(dc.im.Pix, maskData, dc.Width(), dc.Height())
 	screen, _ := path.NewScreenIntRectFromXYWH(0, 0, uint32(dc.Width()), uint32(dc.Height()))
 	if dc.antiAlias {
-		scan.FillPathAA(tp, int(dc.fillRule), screen, blitter)
+		scan.FillPathAA(tp, int(fillRule), screen, blitter)
 	} else {
-		scan.FillPath(tp, int(dc.fillRule), screen, blitter)
+		scan.FillPath(tp, int(fillRule), screen, blitter)
 	}
 }
 
@@ -162,7 +172,7 @@ func (dc *Context) ClipPath(p *path2d) {
 	}
 	blitter := paint.blitter(tempRGBA.Pix, nil, width, height)
 	screen, _ := path.NewScreenIntRectFromXYWH(0, 0, uint32(width), uint32(height))
-	scan.FillPathAA(tp, int(dc.fillRule), screen, blitter)
+	scan.FillPathAA(tp, int(FillRuleWinding), screen, blitter)
 
 	// Extract alpha channel from RGBA to Alpha mask
 	for i := 0; i < width*height; i++ {
