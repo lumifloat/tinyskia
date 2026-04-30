@@ -91,5 +91,5 @@ func TestGGBezier(t *testing.T) {
 			dc.Restore()
 		}
 	}
-	dc.SavePNG("out.png")
+	dc.SavePNG("gg_out.png")
 }
