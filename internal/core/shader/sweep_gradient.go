@@ -93,7 +93,7 @@ func (sg *SweepGradient) PushStages(cs color.ColorSpace, p *pipeline.RasterPipel
 		cs,
 		func(p *pipeline.RasterPipelineBuilder) {
 			p.Push(pipeline.StageXYToUnitAngle)
-			if scale != 1.0 || bias != 0.0 {
+			if scale != 1.0 && bias != 0.0 {
 				p.Push(pipeline.StageApplyConcentricScaleBias)
 			}
 		},

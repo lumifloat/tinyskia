@@ -7,6 +7,7 @@ package tinyskia
 
 import (
 	"image"
+	"math"
 
 	color2 "github.com/lumifloat/tinyskia/internal/core/color"
 	"github.com/lumifloat/tinyskia/internal/core/shader"
@@ -56,9 +57,9 @@ func toShader(style style, transform path.Transform) shader.Shader {
 		}
 
 		center := path.Point{X: float32(s.x), Y: float32(s.y)}
-		startAngle := float32(s.startAngle)
-		endAngle := startAngle + 360.0
-		return shader.NewSweepGradient(center, startAngle, endAngle, stops, shader.SpreadModePad, transform)
+		startAngle := float32(s.startAngle * 180.0 / math.Pi)
+		transform = transform.PreRotateAt(startAngle, center.X, center.Y)
+		return shader.NewSweepGradient(center, 0, 360, stops, shader.SpreadModePad, transform)
 	case *solidColor:
 		r, g, b, a := s.color.RGBA()
 		return shader.NewSolidColor(color2.ColorFromRGBA8(uint8(r>>8), uint8(g>>8), uint8(b>>8), uint8(a>>8)))

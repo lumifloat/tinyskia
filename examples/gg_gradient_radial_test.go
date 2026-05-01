@@ -14,7 +14,7 @@ import (
 )
 
 func TestGGGradientRadial(t *testing.T) {
-	dc := gg.NewContext(400, 200)
+	dc := gg.NewContext(200, 200)
 
 	grad := dc.CreateRadialGradient(100, 100, 10, 100, 120, 80)
 	grad.AddColorStop(0, color.RGBA{0, 255, 0, 255})

@@ -13,14 +13,14 @@ import (
 )
 
 func TestGGGradientLinear(t *testing.T) {
-	dc := gg.NewContext(500, 400)
+	dc := gg.NewContext(420, 330)
 
 	grad := dc.CreateLinearGradient(20, 320, 400, 20)
 	grad.AddColorStop(0, color.RGBA{0, 255, 0, 255})
 	grad.AddColorStop(1, color.RGBA{0, 0, 255, 255})
 	grad.AddColorStop(0.5, color.RGBA{255, 0, 0, 255})
 
-	dc.SetFillStyleSolidColor(color.White)
+	dc.SetStrokeStyleSolidColor(color.White)
 	dc.Rect(20, 20, 400-20, 300)
 	dc.Stroke()
 
