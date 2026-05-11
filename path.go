@@ -11,16 +11,16 @@ import (
 	"github.com/lumifloat/tinyskia/internal/path"
 )
 
-type path2d struct {
+type Path2D struct {
 	builder *path.PathBuilder
 }
 
-func NewPath2D() *path2d {
-	return &path2d{builder: path.NewPathBuilder()}
+func NewPath2D() *Path2D {
+	return &Path2D{builder: path.NewPathBuilder()}
 }
 
 // AddPath adds to the path the path given by the argument.
-func (p *path2d) AddPath(p0 *path2d) {
+func (p *Path2D) AddPath(p0 *Path2D) {
 	pp := p0.builder.Finish()
 	if pp != nil {
 		p.builder.PushPath(pp)
@@ -28,7 +28,7 @@ func (p *path2d) AddPath(p0 *path2d) {
 }
 
 // AddPathWithTransform adds to the path the path given by the argument, transformed by the given transform.
-func (p *path2d) AddPathWithTransform(p0 *path2d, transform *matrix) {
+func (p *Path2D) AddPathWithTransform(p0 *Path2D, transform *matrix) {
 	pp := p0.builder.Finish()
 	if pp != nil {
 		p.builder.PushPathWithTransform(pp, transform.transform)
@@ -36,19 +36,19 @@ func (p *path2d) AddPathWithTransform(p0 *path2d, transform *matrix) {
 }
 
 // MoveTo creates a new subpath with the given point.
-func (p *path2d) MoveTo(x, y float64) {
+func (p *Path2D) MoveTo(x, y float64) {
 	p1 := path.Point{X: float32(x), Y: float32(y)}
 	p.builder.MoveTo(p1.X, p1.Y)
 }
 
 // ClosePath Marks the current subpath as closed,
 // and starts a new subpath with a point the same as the start and end of the newly closed subpath.
-func (p *path2d) ClosePath() {
+func (p *Path2D) ClosePath() {
 	p.builder.Close()
 }
 
 // LineTo adds the given point to the current subpath, connected to the previous one by a straight line.
-func (p *path2d) LineTo(x, y float64) {
+func (p *Path2D) LineTo(x, y float64) {
 	_, hasCurrent := p.builder.LastPoint()
 	if !hasCurrent {
 		p.MoveTo(x, y)
@@ -60,7 +60,7 @@ func (p *path2d) LineTo(x, y float64) {
 
 // QuadraticCurveTo adds the given point to the current subpath, connected to the previous one
 // by a quadratic Bézier curve with the given control point.
-func (p *path2d) QuadraticCurveTo(x1, y1, x2, y2 float64) {
+func (p *Path2D) QuadraticCurveTo(x1, y1, x2, y2 float64) {
 	_, hasCurrent := p.builder.LastPoint()
 	if !hasCurrent {
 		p.MoveTo(x1, y1)
@@ -72,7 +72,7 @@ func (p *path2d) QuadraticCurveTo(x1, y1, x2, y2 float64) {
 
 // BezierCurveTo adds the given point to the current subpath, connected to the previous one
 // by a cubic Bézier curve with the given control points.
-func (p *path2d) BezierCurveTo(cp1x, cp1y, cp2x, cp2y, x, y float64) {
+func (p *Path2D) BezierCurveTo(cp1x, cp1y, cp2x, cp2y, x, y float64) {
 	_, hasCurrent := p.builder.LastPoint()
 	if !hasCurrent {
 		p.MoveTo(cp1x, cp1y)
@@ -85,7 +85,7 @@ func (p *path2d) BezierCurveTo(cp1x, cp1y, cp2x, cp2y, x, y float64) {
 
 // ArcTo adds an arc with the given control points and radius to the current subpath,
 // connected to the previous point by a straight line.
-func (p *path2d) ArcTo(x1, y1, x2, y2, radius float64) {
+func (p *Path2D) ArcTo(x1, y1, x2, y2, radius float64) {
 	p.builder.ArcTo(
 		float32(x1), float32(y1),
 		float32(x2), float32(y2),
@@ -94,7 +94,7 @@ func (p *path2d) ArcTo(x1, y1, x2, y2, radius float64) {
 }
 
 // Rect adds a new closed subpath to the path, representing the given rectangle.
-func (p *path2d) Rect(x, y, w, h float64) {
+func (p *Path2D) Rect(x, y, w, h float64) {
 	if math.IsInf(x, 0) || math.IsNaN(x) ||
 		math.IsInf(y, 0) || math.IsNaN(y) ||
 		math.IsInf(w, 0) || math.IsNaN(w) ||
@@ -110,7 +110,7 @@ func (p *path2d) Rect(x, y, w, h float64) {
 }
 
 // RoundRect adds a new closed subpath to the path representing the given rounded rectangle.
-func (p *path2d) RoundRect(x, y, w, h float64, radii []float64) {
+func (p *Path2D) RoundRect(x, y, w, h float64, radii []float64) {
 	if math.IsInf(x, 0) || math.IsNaN(x) ||
 		math.IsInf(y, 0) || math.IsNaN(y) ||
 		math.IsInf(w, 0) || math.IsNaN(w) ||
@@ -246,7 +246,7 @@ func (p *path2d) RoundRect(x, y, w, h float64, radii []float64) {
 // described by the arguments, starting at the given start angle and ending at the given end angle,
 // going in the given direction (defaulting to clockwise), is added to the path, connected to
 // the previous point by a straight line.
-func (p *path2d) Arc(x, y, radius, startAngle, endAngle float64, counterclockwise bool) {
+func (p *Path2D) Arc(x, y, radius, startAngle, endAngle float64, counterclockwise bool) {
 	p.Ellipse(x, y, radius, radius, 0, startAngle, endAngle, counterclockwise)
 }
 
@@ -254,7 +254,7 @@ func (p *path2d) Arc(x, y, radius, startAngle, endAngle float64, counterclockwis
 // described by the arguments, starting at the given start angle and ending at the given end angle,
 // going in the given direction (defaulting to clockwise), is added to the path, connected to
 // the previous point by a straight line.
-func (p *path2d) Ellipse(x, y, radiusX, radiusY, rotation, startAngle, endAngle float64, counterclockwise bool) {
+func (p *Path2D) Ellipse(x, y, radiusX, radiusY, rotation, startAngle, endAngle float64, counterclockwise bool) {
 	sweepAngle := endAngle - startAngle
 	if counterclockwise {
 		sweepAngle = -sweepAngle

@@ -26,12 +26,12 @@ func (dc *Context) FillWithFillRule(fillRule FillRule) {
 }
 
 // FillPath fills the subpaths of the given path with the current fill style.
-func (dc *Context) FillPath(p *path2d) {
+func (dc *Context) FillPath(p *Path2D) {
 	dc.FillPathWithFillRule(p, FillRuleWinding)
 }
 
 // FillPathWithFillRule fills the subpaths of the given path with the current fill style, obeying the given fill rule.
-func (dc *Context) FillPathWithFillRule(p *path2d, fillRule FillRule) {
+func (dc *Context) FillPathWithFillRule(p *Path2D, fillRule FillRule) {
 	pp := p.builder.Finish()
 	if pp == nil {
 		return
@@ -70,7 +70,7 @@ func (dc *Context) Stroke() {
 }
 
 // StrokePath the subpaths of the given path with the current stroke style.
-func (dc *Context) StrokePath(p *path2d) {
+func (dc *Context) StrokePath(p *Path2D) {
 	pp := p.builder.Finish()
 	if pp == nil {
 		return
@@ -143,7 +143,7 @@ func (dc *Context) Clip() {
 }
 
 // Further constrains the clipping region to the given path, using the given fill rule to determine what points are in the path.
-func (dc *Context) ClipPath(p *path2d) {
+func (dc *Context) ClipPath(p *Path2D) {
 	pp := p.builder.Finish()
 	if pp == nil {
 		return

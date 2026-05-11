@@ -48,7 +48,7 @@ type Context struct {
 	lineDashOffset float64
 
 	// Path
-	path2d *path2d
+	path2d *Path2D
 
 	// TextDrawingStyles
 	lang        string
