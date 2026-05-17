@@ -8,13 +8,15 @@ package examples
 import (
 	"image/color"
 	"math"
+	"os"
 	"testing"
 
 	gg "github.com/lumifloat/tinyskia"
 )
 
 func TestGGGradientConic(t *testing.T) {
-	dc := gg.NewContext(400, 400)
+	c := gg.NewCanvas(400, 400)
+	dc := c.GetContext()
 
 	grad1 := dc.CreateConicGradient(0, 200, 200)
 	grad1.AddColorStop(0.0, color.Black)
@@ -40,5 +42,9 @@ func TestGGGradientConic(t *testing.T) {
 	dc.Arc(200, 200, 150, 0, 2*math.Pi, false)
 	dc.Fill()
 
-	dc.SavePNG("gg_out.png")
+	fi, err := os.Create("gg_out.png")
+	if err != nil {
+		panic(err)
+	}
+	c.WritePNG(fi, nil)
 }

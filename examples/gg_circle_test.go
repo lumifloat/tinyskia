@@ -8,18 +8,24 @@ package examples
 import (
 	"image/color"
 	"math"
+	"os"
 	"testing"
 
 	gg "github.com/lumifloat/tinyskia"
 )
 
 func TestGGCircle(t *testing.T) {
-	dc := gg.NewContext(1000, 1000)
+	c := gg.NewCanvas(1000, 1000)
+	dc := c.GetContext()
 
 	dc.BeginPath()
 	dc.Arc(500, 500, 400, 0, 2*math.Pi, false)
 	dc.SetFillStyleSolidColor(color.RGBA{0, 0, 0, 255})
 	dc.Fill()
 
-	dc.SavePNG("gg_out.png")
+	fi, err := os.Create("gg_out.png")
+	if err != nil {
+		panic(err)
+	}
+	c.WritePNG(fi, nil)
 }

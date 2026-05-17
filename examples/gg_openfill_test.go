@@ -9,13 +9,15 @@ import (
 	"image/color"
 	"math"
 	"math/rand"
+	"os"
 	"testing"
 
 	gg "github.com/lumifloat/tinyskia"
 )
 
 func TestGGOpenFill(t *testing.T) {
-	dc := gg.NewContext(1000, 1000)
+	c := gg.NewCanvas(1000, 1000)
+	dc := c.GetContext()
 
 	for j := 0; j < 10; j++ {
 		for i := 0; i < 10; i++ {
@@ -38,5 +40,9 @@ func TestGGOpenFill(t *testing.T) {
 	dc.SetLineWidth(4)
 	dc.Stroke()
 
-	dc.SavePNG("gg_out.png")
+	fi, err := os.Create("gg_out.png")
+	if err != nil {
+		panic(err)
+	}
+	c.WritePNG(fi, nil)
 }

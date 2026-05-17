@@ -8,6 +8,7 @@ package examples
 import (
 	"image/color"
 	"math"
+	"os"
 	"testing"
 
 	gg "github.com/lumifloat/tinyskia"
@@ -15,7 +16,8 @@ import (
 
 func TestGGEllipse(t *testing.T) {
 	const S = 1024
-	dc := gg.NewContext(S, S)
+	c := gg.NewCanvas(S, S)
+	dc := c.GetContext()
 
 	dc.SetFillStyleSolidColor(color.RGBA{R: 0, G: 0, B: 0, A: 26})
 	for i := 0; i < 360; i += 15 {
@@ -33,5 +35,9 @@ func TestGGEllipse(t *testing.T) {
 		dc.DrawImage(im, S/2-float64(im.Bounds().Dx()/2), (S/2 - float64(im.Bounds().Dy()/2)))
 	}
 
-	dc.SavePNG("gg_out.png")
+	fi, err := os.Create("gg_out.png")
+	if err != nil {
+		panic(err)
+	}
+	c.WritePNG(fi, nil)
 }

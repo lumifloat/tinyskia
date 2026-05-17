@@ -8,6 +8,7 @@ package examples
 import (
 	"image/color"
 	"math/rand"
+	"os"
 	"testing"
 
 	gg "github.com/lumifloat/tinyskia"
@@ -73,7 +74,8 @@ func TestGGBezier(t *testing.T) {
 		W = 8
 		H = 8
 	)
-	dc := gg.NewContext(S*W, S*H)
+	c := gg.NewCanvas(S*W, S*H)
+	dc := c.GetContext()
 	dc.SetFillStyleSolidColor(color.RGBA{255, 255, 255, 255})
 	dc.FillRect(0, 0, float64(S*W), float64(S*H))
 
@@ -91,5 +93,9 @@ func TestGGBezier(t *testing.T) {
 			dc.Restore()
 		}
 	}
-	dc.SavePNG("gg_out.png")
+	fi, err := os.Create("gg_out.png")
+	if err != nil {
+		panic(err)
+	}
+	c.WritePNG(fi, nil)
 }

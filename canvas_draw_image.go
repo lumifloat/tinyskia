@@ -43,12 +43,12 @@ func (dc *Context) DrawImage(im image.Image, x, y float64) {
 	if dc.mask != nil {
 		maskData = dc.mask.Pix
 	}
-	blitter := paint.blitter(dc.im.Pix, maskData, dc.Width(), dc.Height())
+	blitter := paint.blitter(dc.canvas.im.Pix, maskData, dc.canvas.GetWidth(), dc.canvas.GetHeight())
 	if blitter == nil {
 		return
 	}
 
-	screen, _ := path.NewScreenIntRectFromXYWH(0, 0, uint32(dc.Width()), uint32(dc.Height()))
+	screen, _ := path.NewScreenIntRectFromXYWH(0, 0, uint32(dc.canvas.GetWidth()), uint32(dc.canvas.GetHeight()))
 
 	rectPath := path.NewPathBuilder()
 	rect, _ := path.NewRectFromXYWH(0, 0, float32(imgWidth), float32(imgHeight))

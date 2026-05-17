@@ -7,6 +7,7 @@ package examples
 
 import (
 	"image/color"
+	"os"
 	"testing"
 
 	gg "github.com/lumifloat/tinyskia"
@@ -23,7 +24,8 @@ func TestGGRotatedImage(t *testing.T) {
 	iw := im.Bounds().Dx()
 	ih := im.Bounds().Dy()
 
-	dc := gg.NewContext(W, H)
+	c := gg.NewCanvas(W, H)
+	dc := c.GetContext()
 
 	dc.SetStrokeStyleSolidColor(color.RGBA{255, 0, 0, 255}) // #ff0000
 	dc.SetLineWidth(1)
@@ -50,5 +52,9 @@ func TestGGRotatedImage(t *testing.T) {
 	dc.DrawImage(im, 100, 0)
 	dc.Restore()
 
-	dc.SavePNG("gg_out.png")
+	fi, err := os.Create("gg_out.png")
+	if err != nil {
+		panic(err)
+	}
+	c.WritePNG(fi, nil)
 }

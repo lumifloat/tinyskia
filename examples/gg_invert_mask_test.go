@@ -8,6 +8,7 @@ package examples
 import (
 	"image/color"
 	"math"
+	"os"
 	"testing"
 
 	gg "github.com/lumifloat/tinyskia"
@@ -15,7 +16,8 @@ import (
 
 func TestGGInvertMask(t *testing.T) {
 	const S = 1024
-	dc := gg.NewContext(S, S)
+	c := gg.NewCanvas(S, S)
+	dc := c.GetContext()
 	dc.SetFillStyleSolidColor(color.RGBA{0, 0, 0, 255})
 	dc.FillRect(0, 0, float64(S), float64(S))
 
@@ -25,5 +27,9 @@ func TestGGInvertMask(t *testing.T) {
 	dc.SetGlobalCompositeOperation(gg.CompositeOperationDestinationOut)
 	dc.Fill()
 
-	dc.SavePNG("gg_out.png")
+	fi, err := os.Create("gg_out.png")
+	if err != nil {
+		panic(err)
+	}
+	c.WritePNG(fi, nil)
 }

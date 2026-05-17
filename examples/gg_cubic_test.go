@@ -7,6 +7,7 @@ package examples
 
 import (
 	"image/color"
+	"os"
 	"testing"
 
 	gg "github.com/lumifloat/tinyskia"
@@ -14,7 +15,8 @@ import (
 
 func TestGGCubic(t *testing.T) {
 	const S = 1000
-	dc := gg.NewContext(S, S)
+	c := gg.NewCanvas(S, S)
+	dc := c.GetContext()
 	dc.SetFillStyleSolidColor(color.RGBA{255, 255, 255, 255})
 	dc.FillRect(0, 0, float64(S), float64(S))
 
@@ -47,5 +49,9 @@ func TestGGCubic(t *testing.T) {
 	dc.SetLineDash([]float64{4, 8, 1, 8})
 	dc.Stroke()
 
-	dc.SavePNG("gg_out.png")
+	fi, err := os.Create("gg_out.png")
+	if err != nil {
+		panic(err)
+	}
+	c.WritePNG(fi, nil)
 }

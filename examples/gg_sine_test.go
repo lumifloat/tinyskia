@@ -8,6 +8,7 @@ package examples
 import (
 	"image/color"
 	"math"
+	"os"
 	"testing"
 
 	gg "github.com/lumifloat/tinyskia"
@@ -16,7 +17,8 @@ import (
 func TestGGSine(t *testing.T) {
 	const W = 1200
 	const H = 60
-	dc := gg.NewContext(W, H)
+	c := gg.NewCanvas(W, H)
+	dc := c.GetContext()
 
 	dc.Translate(-W/2, -H/2)
 	dc.Scale(0.95, 0.75)
@@ -36,5 +38,9 @@ func TestGGSine(t *testing.T) {
 	dc.SetLineWidth(8)
 	dc.Stroke()
 
-	dc.SavePNG("gg_out.png")
+	fi, err := os.Create("gg_out.png")
+	if err != nil {
+		panic(err)
+	}
+	c.WritePNG(fi, nil)
 }

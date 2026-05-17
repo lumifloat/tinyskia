@@ -8,6 +8,7 @@ package examples
 import (
 	"image/color"
 	"math"
+	"os"
 	"testing"
 
 	gg "github.com/lumifloat/tinyskia"
@@ -26,7 +27,8 @@ func TestGGStar(t *testing.T) {
 	n := 5
 	points := Polygon(n, 512, 512, 400)
 
-	dc := gg.NewContext(1024, 1024)
+	c := gg.NewCanvas(1024, 1024)
+	dc := c.GetContext()
 	dc.SetFillStyleSolidColor(color.RGBA{255, 255, 255, 255})
 	dc.FillRect(0, 0, 1024, 1024)
 
@@ -43,5 +45,9 @@ func TestGGStar(t *testing.T) {
 	dc.SetLineWidth(16)
 	dc.Stroke()
 
-	dc.SavePNG("gg_out.png")
+	fi, err := os.Create("gg_out.png")
+	if err != nil {
+		panic(err)
+	}
+	c.WritePNG(fi, nil)
 }

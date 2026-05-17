@@ -8,6 +8,7 @@ package examples
 import (
 	"image/color"
 	"math/rand"
+	"os"
 	"testing"
 
 	gg "github.com/lumifloat/tinyskia"
@@ -16,7 +17,8 @@ import (
 func TestGGLines(t *testing.T) {
 	const W = 1024
 	const H = 1024
-	dc := gg.NewContext(W, H)
+	c := gg.NewCanvas(W, H)
+	dc := c.GetContext()
 	dc.SetFillStyleSolidColor(color.Black)
 	dc.FillRect(0, 0, float64(W), float64(H))
 	for i := 0; i < 1000; i++ {
@@ -41,5 +43,10 @@ func TestGGLines(t *testing.T) {
 		dc.LineTo(x2, y2)
 		dc.Stroke()
 	}
-	dc.SavePNG("gg_out.png")
+
+	fi, err := os.Create("gg_out.png")
+	if err != nil {
+		panic(err)
+	}
+	c.WritePNG(fi, nil)
 }

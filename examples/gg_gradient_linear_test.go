@@ -7,13 +7,15 @@ package examples
 
 import (
 	"image/color"
+	"os"
 	"testing"
 
 	gg "github.com/lumifloat/tinyskia"
 )
 
 func TestGGGradientLinear(t *testing.T) {
-	dc := gg.NewContext(420, 330)
+	c := gg.NewCanvas(420, 330)
+	dc := c.GetContext()
 
 	grad := dc.CreateLinearGradient(20, 320, 400, 20)
 	grad.AddColorStop(0, color.RGBA{0, 255, 0, 255})
@@ -43,5 +45,9 @@ func TestGGGradientLinear(t *testing.T) {
 	dc.ClosePath()
 	dc.Fill()
 
-	dc.SavePNG("gg_out.png")
+	fi, err := os.Create("gg_out.png")
+	if err != nil {
+		panic(err)
+	}
+	c.WritePNG(fi, nil)
 }

@@ -7,6 +7,7 @@ package examples
 
 import (
 	"image/color"
+	"os"
 	"testing"
 
 	gg "github.com/lumifloat/tinyskia"
@@ -18,7 +19,8 @@ func TestGGCrisp(t *testing.T) {
 	const Minor = 10
 	const Major = 100
 
-	dc := gg.NewContext(W, H)
+	c := gg.NewCanvas(W, H)
+	dc := c.GetContext()
 
 	// Fill white background
 	dc.SetFillStyleSolidColor(color.RGBA{255, 255, 255, 255})
@@ -56,5 +58,9 @@ func TestGGCrisp(t *testing.T) {
 	dc.SetLineWidth(1)
 	dc.Stroke()
 
-	dc.SavePNG("gg_out.png")
+	fi, err := os.Create("gg_out.png")
+	if err != nil {
+		panic(err)
+	}
+	c.WritePNG(fi, nil)
 }

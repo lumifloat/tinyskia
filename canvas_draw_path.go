@@ -55,8 +55,8 @@ func (dc *Context) FillPathWithFillRule(p *Path2D, fillRule FillRule) {
 	if dc.mask != nil {
 		maskData = dc.mask.Pix
 	}
-	blitter := paint.blitter(dc.im.Pix, maskData, dc.Width(), dc.Height())
-	screen, _ := path.NewScreenIntRectFromXYWH(0, 0, uint32(dc.Width()), uint32(dc.Height()))
+	blitter := paint.blitter(dc.canvas.im.Pix, maskData, dc.canvas.GetWidth(), dc.canvas.GetHeight())
+	screen, _ := path.NewScreenIntRectFromXYWH(0, 0, uint32(dc.canvas.GetWidth()), uint32(dc.canvas.GetHeight()))
 	if dc.antiAlias {
 		scan.FillPathAA(tp, int(fillRule), screen, blitter)
 	} else {
@@ -119,8 +119,8 @@ func (dc *Context) StrokePath(p *Path2D) {
 	if dc.mask != nil {
 		maskData = dc.mask.Pix
 	}
-	blitter := paint.blitter(dc.im.Pix, maskData, dc.Width(), dc.Height())
-	screen, _ := path.NewScreenIntRectFromXYWH(0, 0, uint32(dc.Width()), uint32(dc.Height()))
+	blitter := paint.blitter(dc.canvas.im.Pix, maskData, dc.canvas.GetWidth(), dc.canvas.GetHeight())
+	screen, _ := path.NewScreenIntRectFromXYWH(0, 0, uint32(dc.canvas.GetWidth()), uint32(dc.canvas.GetHeight()))
 
 	resScale := path.ComputeResolutionScale(dc.matrix.transform)
 
@@ -157,8 +157,8 @@ func (dc *Context) ClipPath(p *Path2D) {
 	}
 
 	// Create a temporary alpha mask for the clip path
-	width := dc.Width()
-	height := dc.Height()
+	width := dc.canvas.GetWidth()
+	height := dc.canvas.GetHeight()
 	clipMask := image.NewAlpha(image.Rect(0, 0, width, height))
 
 	// Render path to a temporary RGBA image first (blitter expects RGBA)

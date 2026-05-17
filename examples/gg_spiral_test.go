@@ -8,6 +8,7 @@ package examples
 import (
 	"image/color"
 	"math"
+	"os"
 	"testing"
 
 	gg "github.com/lumifloat/tinyskia"
@@ -16,7 +17,8 @@ import (
 func TestGGSpiral(t *testing.T) {
 	const S = 1024
 	const N = 2048
-	dc := gg.NewContext(S, S)
+	c := gg.NewCanvas(S, S)
+	dc := c.GetContext()
 	dc.SetFillStyleSolidColor(color.White)
 	dc.FillRect(0, 0, float64(S), float64(S))
 	dc.SetFillStyleSolidColor(color.Black)
@@ -33,5 +35,9 @@ func TestGGSpiral(t *testing.T) {
 		dc.Fill()
 	}
 
-	dc.SavePNG("gg_out.png")
+	fi, err := os.Create("gg_out.png")
+	if err != nil {
+		panic(err)
+	}
+	c.WritePNG(fi, nil)
 }

@@ -9,6 +9,7 @@ import (
 	"image/color"
 	"math"
 	"math/rand"
+	"os"
 	"testing"
 
 	gg "github.com/lumifloat/tinyskia"
@@ -27,7 +28,8 @@ func TestGGStars(t *testing.T) {
 	const W = 1200
 	const H = 120
 	const S = 100
-	dc := gg.NewContext(W, H)
+	c := gg.NewCanvas(W, H)
+	dc := c.GetContext()
 	dc.SetFillStyleSolidColor(color.RGBA{255, 255, 255, 255})
 	dc.FillRect(0, 0, float64(W), float64(H))
 
@@ -58,5 +60,9 @@ func TestGGStars(t *testing.T) {
 		dc.Restore()
 	}
 
-	dc.SavePNG("gg_out.png")
+	fi, err := os.Create("gg_out.png")
+	if err != nil {
+		panic(err)
+	}
+	c.WritePNG(fi, nil)
 }

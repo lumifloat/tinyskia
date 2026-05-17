@@ -6,6 +6,7 @@
 package examples
 
 import (
+	"os"
 	"testing"
 
 	gg "github.com/lumifloat/tinyskia"
@@ -33,10 +34,15 @@ func TestGGConcat(t *testing.T) {
 	}
 	height := s1.Y + s2.Y
 
-	dc := gg.NewContext(width, height)
+	c := gg.NewCanvas(width, height)
+	dc := c.GetContext()
 
 	dc.DrawImage(im1, 0, 0)
 	dc.DrawImage(im2, 0, float64(s1.Y))
 
-	dc.SavePNG("gg_out.png")
+	fi, err := os.Create("gg_out.png")
+	if err != nil {
+		panic(err)
+	}
+	c.WritePNG(fi, nil)
 }

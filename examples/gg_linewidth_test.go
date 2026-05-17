@@ -7,13 +7,15 @@ package examples
 
 import (
 	"image/color"
+	"os"
 	"testing"
 
 	gg "github.com/lumifloat/tinyskia"
 )
 
 func TestGGLineWidth(t *testing.T) {
-	dc := gg.NewContext(1000, 1000)
+	c := gg.NewCanvas(1000, 1000)
+	dc := c.GetContext()
 	dc.SetFillStyleSolidColor(color.White)
 	dc.FillRect(0, 0, 1000, 1000)
 	dc.SetStrokeStyleSolidColor(color.Black)
@@ -27,5 +29,9 @@ func TestGGLineWidth(t *testing.T) {
 		dc.Stroke()
 		w += 0.1
 	}
-	dc.SavePNG("gg_out.png")
+	fi, err := os.Create("gg_out.png")
+	if err != nil {
+		panic(err)
+	}
+	c.WritePNG(fi, nil)
 }

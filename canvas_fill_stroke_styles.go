@@ -22,12 +22,12 @@ func (dc *Context) SetFillStyleSolidColor(c color.Color) {
 }
 
 // SetFillStylePattern to change the fill style to a pattern.
-func (dc *Context) SetFillStylePattern(p pattern) {
+func (dc *Context) SetFillStylePattern(p Pattern) {
 	dc.fillStyle = p
 }
 
 // SetFillStyleGradient to change the fill style to a gradient.
-func (dc *Context) SetFillStyleGradient(g gradient) {
+func (dc *Context) SetFillStyleGradient(g Gradient) {
 	dc.fillStyle = g
 }
 
@@ -38,23 +38,23 @@ func (dc *Context) GetFillStyle() style {
 
 // GetFillStyleSolidColor returns the current fill style solid color.
 func (dc *Context) GetFillStyleSolidColor() color.Color {
-	if solid, ok := dc.fillStyle.(*solidColor); ok {
+	if solid, ok := dc.fillStyle.(*SolidColor); ok {
 		return solid.color
 	}
 	return nil
 }
 
 // GetFillStylePattern returns the current fill style pattern.
-func (dc *Context) GetFillStylePattern() pattern {
-	if pattern, ok := dc.fillStyle.(pattern); ok {
+func (dc *Context) GetFillStylePattern() Pattern {
+	if pattern, ok := dc.fillStyle.(Pattern); ok {
 		return pattern
 	}
 	return nil
 }
 
 // GetFillStyleGradient returns the current fill style gradient.
-func (dc *Context) GetFillStyleGradient() gradient {
-	if gradient, ok := dc.fillStyle.(gradient); ok {
+func (dc *Context) GetFillStyleGradient() Gradient {
+	if gradient, ok := dc.fillStyle.(Gradient); ok {
 		return gradient
 	}
 	return nil
@@ -71,12 +71,12 @@ func (dc *Context) SetStrokeStyleSolidColor(c color.Color) {
 }
 
 // SetStrokeStylePattern to change the stroke style to a pattern.
-func (dc *Context) SetStrokeStylePattern(p pattern) {
+func (dc *Context) SetStrokeStylePattern(p Pattern) {
 	dc.strokeStyle = p
 }
 
 // SetStrokeStyleGradient to change the stroke style to a gradient.
-func (dc *Context) SetStrokeStyleGradient(g gradient) {
+func (dc *Context) SetStrokeStyleGradient(g Gradient) {
 	dc.strokeStyle = g
 }
 
@@ -87,38 +87,38 @@ func (dc *Context) GetStrokeStyle() style {
 
 // GetStrokeStyleSolidColor returns the current stroke style solid color.
 func (dc *Context) GetStrokeStyleSolidColor() color.Color {
-	if solid, ok := dc.strokeStyle.(*solidColor); ok {
+	if solid, ok := dc.strokeStyle.(*SolidColor); ok {
 		return solid.color
 	}
 	return nil
 }
 
 // GetStrokeStylePattern returns the current stroke style pattern.
-func (dc *Context) GetStrokeStylePattern() pattern {
-	if pattern, ok := dc.strokeStyle.(pattern); ok {
+func (dc *Context) GetStrokeStylePattern() Pattern {
+	if pattern, ok := dc.strokeStyle.(Pattern); ok {
 		return pattern
 	}
 	return nil
 }
 
 // GetStrokeStyleGradient returns the current stroke style gradient.
-func (dc *Context) GetStrokeStyleGradient() gradient {
-	if gradient, ok := dc.strokeStyle.(gradient); ok {
+func (dc *Context) GetStrokeStyleGradient() Gradient {
+	if gradient, ok := dc.strokeStyle.(Gradient); ok {
 		return gradient
 	}
 	return nil
 }
 
-type solidColor struct {
+type SolidColor struct {
 	color color.Color
 }
 
 // CreateSolidColor returns a solid color style.
-func (dc *Context) CreateSolidColor(c color.Color) *solidColor {
-	return &solidColor{color: c}
+func (dc *Context) CreateSolidColor(c color.Color) *SolidColor {
+	return &SolidColor{color: c}
 }
 
-func (p *solidColor) style() {}
+func (p *SolidColor) style() {}
 
 type PatternRepeatOp int
 
@@ -168,39 +168,39 @@ func (s stops) Swap(i, j int) {
 	s[i], s[j] = s[j], s[i]
 }
 
-type linearGradient struct {
+type LinearGradient struct {
 	x0, y0, x1, y1 float64
 	stops          stops
 }
 
 // CreateLinearGradient returns a CanvasGradient object that represents
 // a linear gradient that paints along the line given by the coordinates represented by the arguments.
-func (dc *Context) CreateLinearGradient(x0, y0, x1, y1 float64) gradient {
-	g := &linearGradient{
+func (dc *Context) CreateLinearGradient(x0, y0, x1, y1 float64) Gradient {
+	g := &LinearGradient{
 		x0: x0, y0: y0,
 		x1: x1, y1: y1,
 	}
 	return g
 }
 
-func (g *linearGradient) style() {}
+func (g *LinearGradient) style() {}
 
 type circle struct {
 	x, y, r float64
 }
 
-type radialGradient struct {
+type RadialGradient struct {
 	c0, c1, cd circle
 	stops      stops
 }
 
 // CreateRadialGradient returns a CanvasGradient object that represents
 // a radial gradient that paints along the cone given by the circles represented by the arguments.
-func (dc *Context) CreateRadialGradient(x0, y0, r0, x1, y1, r1 float64) gradient {
+func (dc *Context) CreateRadialGradient(x0, y0, r0, x1, y1, r1 float64) Gradient {
 	c0 := circle{x0, y0, r0}
 	c1 := circle{x1, y1, r1}
 	cd := circle{x1 - x0, y1 - y0, r1 - r0}
-	g := &radialGradient{
+	g := &RadialGradient{
 		c0: c0,
 		c1: c1,
 		cd: cd,
@@ -208,9 +208,9 @@ func (dc *Context) CreateRadialGradient(x0, y0, r0, x1, y1, r1 float64) gradient
 	return g
 }
 
-func (g *radialGradient) style() {}
+func (g *RadialGradient) style() {}
 
-type conicGradient struct {
+type ConicGradient struct {
 	x, y       float64
 	startAngle float64
 	stops      stops
@@ -218,12 +218,12 @@ type conicGradient struct {
 
 // CreateConicGradient returns a CanvasGradient object that represents
 // a conic gradient that paints clockwise along the rotation around the center represented by the arguments.
-func (dc *Context) CreateConicGradient(startAngle, x, y float64) gradient {
-	g := &conicGradient{
+func (dc *Context) CreateConicGradient(startAngle, x, y float64) Gradient {
+	g := &ConicGradient{
 		x: x, y: y,
 		startAngle: startAngle,
 	}
 	return g
 }
 
-func (g *conicGradient) style() {}
+func (g *ConicGradient) style() {}

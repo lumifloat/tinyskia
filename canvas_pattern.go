@@ -6,7 +6,7 @@
 // found in the LICENSE file.
 package tinyskia
 
-type pattern interface {
+type Pattern interface {
 	style
 	SetTransform(transform *matrix)
 }

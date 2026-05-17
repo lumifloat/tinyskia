@@ -40,15 +40,6 @@ func LoadPNG(path string) (image.Image, error) {
 	return png.Decode(file)
 }
 
-func SavePNG(path string, im image.Image) error {
-	file, err := os.Create(path)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-	return png.Encode(file, im)
-}
-
 func LoadJPG(path string) (image.Image, error) {
 	file, err := os.Open(path)
 	if err != nil {
@@ -56,17 +47,4 @@ func LoadJPG(path string) (image.Image, error) {
 	}
 	defer file.Close()
 	return jpeg.Decode(file)
-}
-
-func SaveJPG(path string, im image.Image, quality int) error {
-	file, err := os.Create(path)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	var opt jpeg.Options
-	opt.Quality = quality
-
-	return jpeg.Encode(file, im, &opt)
 }

@@ -20,7 +20,7 @@ type style interface {
 
 func toShader(style style, transform path.Transform) shader.Shader {
 	switch s := style.(type) {
-	case *linearGradient:
+	case *LinearGradient:
 		stops := make([]shader.GradientStop, len(s.stops))
 		for i, s := range s.stops {
 			r, gb, b, a := s.color.RGBA()
@@ -33,7 +33,7 @@ func toShader(style style, transform path.Transform) shader.Shader {
 		p0 := path.Point{X: float32(s.x0), Y: float32(s.y0)}
 		p1 := path.Point{X: float32(s.x1), Y: float32(s.y1)}
 		return shader.NewLinearGradient(p0, p1, stops, shader.SpreadModePad, transform)
-	case *radialGradient:
+	case *RadialGradient:
 		stops := make([]shader.GradientStop, len(s.stops))
 		for i, s := range s.stops {
 			r, gb, b, a := s.color.RGBA()
@@ -46,7 +46,7 @@ func toShader(style style, transform path.Transform) shader.Shader {
 		center0 := path.Point{X: float32(s.c0.x), Y: float32(s.c0.y)}
 		center1 := path.Point{X: float32(s.c1.x), Y: float32(s.c1.y)}
 		return shader.NewRadialGradient(center0, float32(s.c0.r), center1, float32(s.c1.r), stops, shader.SpreadModePad, transform)
-	case *conicGradient:
+	case *ConicGradient:
 		stops := make([]shader.GradientStop, len(s.stops))
 		for i, s := range s.stops {
 			r, gb, b, a := s.color.RGBA()
@@ -60,7 +60,7 @@ func toShader(style style, transform path.Transform) shader.Shader {
 		startAngle := float32(s.startAngle * 180.0 / math.Pi)
 		transform = transform.PreRotateAt(startAngle, center.X, center.Y)
 		return shader.NewSweepGradient(center, 0, 360, stops, shader.SpreadModePad, transform)
-	case *solidColor:
+	case *SolidColor:
 		r, g, b, a := s.color.RGBA()
 		return shader.NewSolidColor(color2.ColorFromRGBA8(uint8(r>>8), uint8(g>>8), uint8(b>>8), uint8(a>>8)))
 	case *imagePattern:

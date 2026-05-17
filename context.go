@@ -7,8 +7,6 @@ package tinyskia
 
 import (
 	"image"
-	"image/png"
-	"io"
 
 	color2 "github.com/lumifloat/tinyskia/internal/core/color"
 	"github.com/lumifloat/tinyskia/internal/path"
@@ -24,10 +22,9 @@ const (
 // Context is the main drawing context, similar to gg.Context.
 // It maintains drawing state and provides a canvas-like API.
 type Context struct {
-	width  int
-	height int
-	im     *image.RGBA
-	mask   *image.Alpha
+	canvas *Canvas
+
+	mask *image.Alpha
 
 	// FillStrokeStyles
 	fillStyle   style
@@ -61,71 +58,6 @@ type Context struct {
 	forceHQPipeline bool
 	stack           []*Context
 	contextLost     bool // Tracks if the rendering context was lost
-}
-
-func NewContext(width, height int) *Context {
-	return NewContextForRGBA(image.NewRGBA(image.Rect(0, 0, width, height)))
-}
-
-// NewContextForImage creates a context from an existing image.Image.
-// No copy is made.
-func NewContextForImage(im image.Image) *Context {
-	return NewContextForRGBA(imageToRGBA(im))
-}
-
-func imageToRGBA(im image.Image) *image.RGBA {
-	bounds := im.Bounds()
-	rgba := image.NewRGBA(bounds)
-	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
-		for x := bounds.Min.X; x < bounds.Max.X; x++ {
-			rgba.Set(x, y, im.At(x, y))
-		}
-	}
-	return rgba
-}
-
-func NewContextForRGBA(im *image.RGBA) *Context {
-	bounds := im.Bounds()
-	return &Context{
-		path2d: NewPath2D(),
-
-		width:           bounds.Dx(),
-		height:          bounds.Dy(),
-		im:              im,
-		lineWidth:       1,
-		lineCap:         LineCapRound,
-		lineJoin:        LineJoinMiter,
-		matrix:          NewMatrixIdentity(),
-		composite:       CompositeOperationSourceOver,
-		antiAlias:       true,
-		colorspace:      color2.ColorSpaceLinear,
-		forceHQPipeline: true,
-	}
-}
-
-// Image returns the image that has been drawn by this context.
-func (dc *Context) Image() image.Image {
-	return dc.im
-}
-
-// Width returns the width of the image in pixels.
-func (dc *Context) Width() int {
-	return dc.width
-}
-
-// Height returns the height of the image in pixels.
-func (dc *Context) Height() int {
-	return dc.height
-}
-
-// SavePNG encodes the image as a PNG and writes it to disk.
-func (dc *Context) SavePNG(path string) error {
-	return SavePNG(path, dc.Image())
-}
-
-// EncodePNG encodes the image as a PNG and writes it to the provided io.Writer.
-func (dc *Context) EncodePNG(w io.Writer) error {
-	return png.Encode(w, dc.Image())
 }
 
 // BeginPath resets the current default path.

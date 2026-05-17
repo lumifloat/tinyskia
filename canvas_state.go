@@ -24,7 +24,7 @@ func (dc *Context) Restore() {
 		return
 	}
 
-	currentIm := dc.im
+	currentIm := dc.canvas.im
 	currentMask := dc.mask
 
 	savedState := dc.stack[len(dc.stack)-1]
@@ -32,14 +32,14 @@ func (dc *Context) Restore() {
 
 	*dc = *savedState
 
-	dc.im = currentIm
+	dc.canvas.im = currentIm
 	dc.mask = currentMask
 }
 
 // Reset resets the rendering context, which includes the backing buffer, the drawing state stack, path, and styles.
 func (dc *Context) Reset() {
-	for i := 0; i < len(dc.im.Pix); i++ {
-		dc.im.Pix[i] = 0
+	for i := 0; i < len(dc.canvas.im.Pix); i++ {
+		dc.canvas.im.Pix[i] = 0
 	}
 
 	dc.stack = nil
