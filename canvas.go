@@ -85,13 +85,15 @@ type JpegConfig struct {
 // ToBufferPNG encodes the canvas as a PNG buffer
 func (c *Canvas) ToBufferPNG(config *PngConfig) ([]byte, error) {
 	var buf bytes.Buffer
-	return buf.Bytes(), c.WritePNG(&buf, config)
+	err := c.WritePNG(&buf, config)
+	return buf.Bytes(), err
 }
 
 // ToBufferJPEG encodes the canvas as a JPEG buffer
 func (c *Canvas) ToBufferJPEG(config *JpegConfig) ([]byte, error) {
 	var buf bytes.Buffer
-	return buf.Bytes(), c.WriteJPEG(&buf, config)
+	err := c.WriteJPEG(&buf, config)
+	return buf.Bytes(), err
 }
 
 // ToBufferRaw returns the unencoded pixel data, top-to-bottom in BGRA format on little-endian systems

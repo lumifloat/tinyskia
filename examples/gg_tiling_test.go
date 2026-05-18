@@ -33,5 +33,6 @@ func TestGGTiling(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
+	defer fi.Close()
 	c.WritePNG(fi, nil)
 }
