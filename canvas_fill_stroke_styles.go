@@ -132,7 +132,7 @@ const (
 type imagePattern struct {
 	im        image.Image
 	op        PatternRepeatOp
-	transform *matrix
+	transform *Matrix
 }
 
 // CreatePattern returns a CanvasPattern object that uses the given image and

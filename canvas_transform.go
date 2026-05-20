@@ -30,8 +30,8 @@ func (dc *Context) Transform(a, b, c, d, e, f float64) {
 }
 
 // GetMatrix returns a copy of the current transformation matrix, as a newly created DOMMatrix object.
-func (dc *Context) GetMatrix() *matrix {
-	return &matrix{transform: dc.matrix.transform}
+func (dc *Context) GetMatrix() *Matrix {
+	return &Matrix{transform: dc.matrix.transform}
 }
 
 // SetTranform hanges the current transformation matrix to the matrix given by the arguments as described below.
@@ -40,7 +40,7 @@ func (dc *Context) SetTransform(a, b, c, d, e, f float64) {
 }
 
 // SetTransformWithMatrix sets the current transformation matrix to the given matrix.
-func (dc *Context) SetTransformWithMatrix(matrix *matrix) {
+func (dc *Context) SetTransformWithMatrix(matrix *Matrix) {
 	dc.matrix = matrix
 }
 

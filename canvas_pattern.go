@@ -8,9 +8,9 @@ package tinyskia
 
 type Pattern interface {
 	style
-	SetTransform(transform *matrix)
+	SetTransform(transform *Matrix)
 }
 
-func (p *imagePattern) SetTransform(transform *matrix) {
+func (p *imagePattern) SetTransform(transform *Matrix) {
 	p.transform = transform
 }

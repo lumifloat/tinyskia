@@ -28,7 +28,7 @@ func (p *Path2D) AddPath(p0 *Path2D) {
 }
 
 // AddPathWithTransform adds to the path the path given by the argument, transformed by the given transform.
-func (p *Path2D) AddPathWithTransform(p0 *Path2D, transform *matrix) {
+func (p *Path2D) AddPathWithTransform(p0 *Path2D, transform *Matrix) {
 	pp := p0.builder.Finish()
 	if pp != nil {
 		p.builder.PushPathWithTransform(pp, transform.transform)

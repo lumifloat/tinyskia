@@ -31,7 +31,7 @@ type Context struct {
 	strokeStyle style
 
 	// Transform
-	matrix *matrix
+	matrix *Matrix
 
 	// Composite
 	composite CompositeOperation
