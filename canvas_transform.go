@@ -24,7 +24,7 @@ func (dc *Context) Translate(x, y float64) {
 	dc.matrix = dc.matrix.Translate(x, y)
 }
 
-// Transform hanges the current transformation matrix to apply the matrix given by the arguments as described below.
+// Transform changes the current transformation matrix to apply the matrix given by the arguments as described below.
 func (dc *Context) Transform(a, b, c, d, e, f float64) {
 	dc.matrix = dc.matrix.Multiply(NewMatrix(a, b, c, d, e, f))
 }
@@ -34,12 +34,12 @@ func (dc *Context) GetMatrix() *Matrix {
 	return &Matrix{transform: dc.matrix.transform}
 }
 
-// SetTranform hanges the current transformation matrix to the matrix given by the arguments as described below.
+// SetTransform changes the current transformation matrix to the matrix given by the arguments as described below.
 func (dc *Context) SetTransform(a, b, c, d, e, f float64) {
 	dc.matrix = NewMatrix(a, b, c, d, e, f)
 }
 
-// SetTransformWithMatrix sets the current transformation matrix to the given matrix.
+// SetTransformWithMatrix changes the current transformation matrix to the matrix given by the arguments as described below.
 func (dc *Context) SetTransformWithMatrix(matrix *Matrix) {
 	dc.matrix = matrix
 }
@@ -47,12 +47,4 @@ func (dc *Context) SetTransformWithMatrix(matrix *Matrix) {
 // ResetTransform resets the current transformation matrix to the identity matrix.
 func (dc *Context) ResetTransform() {
 	dc.matrix = NewMatrixIdentity()
-}
-
-// RotateAbout rotates the current transformation matrix around a point (x, y).
-// This is equivalent to: translate(x, y); rotate(angle); translate(-x, -y)
-func (dc *Context) RotateAbout(angle, x, y float64) {
-	dc.Translate(x, y)
-	dc.Rotate(angle)
-	dc.Translate(-x, -y)
 }

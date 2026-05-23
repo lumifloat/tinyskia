@@ -15,6 +15,11 @@ import (
 	"github.com/lumifloat/tinyskia/internal/path"
 )
 
+// BeginPath resets the current default path.
+func (dc *Context) BeginPath() {
+	dc.path2d.builder = path.NewPathBuilder()
+}
+
 // Fills the subpaths of the current default path with the current fill style.
 func (dc *Context) Fill() {
 	dc.FillPathWithFillRule(dc.path2d, FillRuleWinding)

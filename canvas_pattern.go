@@ -11,6 +11,6 @@ type Pattern interface {
 	SetTransform(transform *Matrix)
 }
 
-func (p *imagePattern) SetTransform(transform *Matrix) {
+func (p *ImagePattern) SetTransform(transform *Matrix) {
 	p.transform = transform
 }

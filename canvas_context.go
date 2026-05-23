@@ -9,7 +9,6 @@ import (
 	"image"
 
 	color2 "github.com/lumifloat/tinyskia/internal/core/color"
-	"github.com/lumifloat/tinyskia/internal/path"
 )
 
 type FillRule int
@@ -58,11 +57,6 @@ type Context struct {
 	forceHQPipeline bool
 	stack           []*Context
 	contextLost     bool // Tracks if the rendering context was lost
-}
-
-// BeginPath resets the current default path.
-func (dc *Context) BeginPath() {
-	dc.path2d.builder = path.NewPathBuilder()
 }
 
 // SetAntiAlias enables or disables anti-aliasing.
