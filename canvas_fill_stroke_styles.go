@@ -16,6 +16,13 @@ import (
 	"github.com/lumifloat/tinyskia/internal/path"
 )
 
+type FillRule int
+
+const (
+	FillRuleWinding FillRule = iota
+	FillRuleEvenOdd
+)
+
 // SetFillStyle to change the fill style.
 func (dc *Context) SetFillStyle(style style) {
 	dc.fillStyle = style

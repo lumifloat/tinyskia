@@ -6,16 +6,37 @@
 // found in the LICENSE file.
 package tinyskia
 
-import "image/color"
-
 // ClearRect clears all pixels on the bitmap in the given rectangle to transparent black.
 func (dc *Context) ClearRect(x, y, w, h float64) {
-	pd := NewPath2D()
-	pd.Rect(x, y, w, h)
-	style := dc.GetFillStyle()
-	dc.SetFillStyleSolidColor(color.RGBA{0, 0, 0, 0})
-	dc.FillPath(pd)
-	dc.SetFillStyle(style)
+	x1 := int(x)
+	y1 := int(y)
+	x2 := int(x + w)
+	y2 := int(y + h)
+
+	bounds := dc.canvas.im.Bounds()
+	if x1 < bounds.Min.X {
+		x1 = bounds.Min.X
+	}
+	if y1 < bounds.Min.Y {
+		y1 = bounds.Min.Y
+	}
+	if x2 > bounds.Max.X {
+		x2 = bounds.Max.X
+	}
+	if y2 > bounds.Max.Y {
+		y2 = bounds.Max.Y
+	}
+
+	for row := y1; row < y2; row++ {
+		offset := row * dc.canvas.im.Stride
+		for col := x1; col < x2; col++ {
+			pixelIndex := offset + col*4
+			dc.canvas.im.Pix[pixelIndex+0] = 0
+			dc.canvas.im.Pix[pixelIndex+1] = 0
+			dc.canvas.im.Pix[pixelIndex+2] = 0
+			dc.canvas.im.Pix[pixelIndex+3] = 0
+		}
+	}
 }
 
 // FillRect paints the given rectangle onto the bitmap, using the current fill style.

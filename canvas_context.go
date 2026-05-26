@@ -11,13 +11,6 @@ import (
 	color2 "github.com/lumifloat/tinyskia/internal/core/color"
 )
 
-type FillRule int
-
-const (
-	FillRuleWinding FillRule = iota
-	FillRuleEvenOdd
-)
-
 // Context is the main drawing context, similar to gg.Context.
 // It maintains drawing state and provides a canvas-like API.
 type Context struct {
