@@ -252,6 +252,7 @@ func TestEndCrystal(t *testing.T) {
 
 	c := tinyskia.NewCanvas(width, height)
 	ctx := c.GetContext()
+	ctx.SetAntiAlias(false)
 
 	for frame := 0; frame < numFrames; frame++ {
 		ctx.ResetTransform()

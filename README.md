@@ -1,7 +1,7 @@
 # tinyskia
 
 <div align="center">
-  <img src="https://i.imgur.com/iHSP6wN.gif" alt="end_crystal" width="150" />
+  <img src="https://i.imgur.com/PCWjDeP.gif" alt="end_crystal" width="200" />
   <p>A lightweight 2D render engine for Go, ported from Rust's <a href="https://github.com/linebender/tiny-skia">tiny-skia</a>.</p>
 </div>
 
