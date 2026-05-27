@@ -1,7 +1,11 @@
 # tinyskia
-A lightweight 2D render engine for Go, ported from Rust's [tiny-skia](https://github.com/linebender/tiny-skia).
 
-![end_crystal](https://i.imgur.com/iHSP6wN.gif)
+<div align="center">
+  <img src="https://i.imgur.com/iHSP6wN.gif" alt="end_crystal" width="150" />
+  <p>A lightweight 2D render engine for Go, ported from Rust's <a href="https://github.com/linebender/tiny-skia">tiny-skia</a>.</p>
+</div>
+
+---
 
 > ⚠️ **注意：本项目正在积极开发中** / **Under Construction**
 > 
