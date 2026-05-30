@@ -7,17 +7,20 @@
 package tinyskia
 
 import (
+	"golang.org/x/image/font"
 	"golang.org/x/image/font/sfnt"
 	"golang.org/x/image/math/fixed"
 )
 
 // MeasureText measures the given text and returns a TextMetrics object with detailed metrics.
 func (dc *Context) MeasureText(s string) TextMetrics {
-	if dc.font == nil || dc.font.ttf == nil || s == "" {
+	ft, err := fonts.match(dc.font.Family, dc.font.Weight, dc.font.Style)
+	if err != nil {
 		return TextMetrics{}
 	}
 
-	ppem := fixed.Int26_6(dc.font.size * 64)
+	ppem := fixed.Int26_6(dc.font.Size * 64)
+
 	var advance fixed.Int26_6
 	var prev sfnt.GlyphIndex
 
@@ -26,27 +29,27 @@ func (dc *Context) MeasureText(s string) TextMetrics {
 	minY, maxY := fixed.Int26_6(1<<30), fixed.Int26_6(-(1 << 30))
 
 	for _, r := range s {
-		curr, err := dc.font.ttf.GlyphIndex(&dc.font.buf, r)
+		curr, err := ft.GlyphIndex(&dc.buf, r)
 		if err != nil || curr == 0 {
 			prev = 0
 			continue
 		}
 
 		if dc.fontKerning != FontKerningNone && prev != 0 {
-			kern, err := dc.font.ttf.Kern(&dc.font.buf, prev, curr, ppem, dc.font.hinting)
+			kern, err := ft.Kern(&dc.buf, prev, curr, ppem, font.HintingFull)
 			if err == nil {
 				advance += kern
 			}
 		}
 		prev = curr
 
-		b, a, err := dc.font.ttf.GlyphBounds(&dc.font.buf, curr, ppem, dc.font.hinting)
+		b, a, err := ft.GlyphBounds(&dc.buf, curr, ppem, font.HintingFull)
 		if err != nil {
 			continue
 		}
-		advance += a
 		if b.Empty() {
 			// No visible glyphs
+			advance += a
 			continue
 		}
 		if advance+b.Min.X < minX {
@@ -61,18 +64,19 @@ func (dc *Context) MeasureText(s string) TextMetrics {
 		if b.Max.Y > maxY {
 			maxY = b.Max.Y
 		}
+		advance += a
 	}
 
 	width := float64(advance>>6) + float64(advance&63)/64.0
 
-	metrics, err := dc.font.ttf.Metrics(&dc.font.buf, ppem, dc.font.hinting)
+	metrics, err := ft.Metrics(&dc.buf, ppem, font.HintingFull)
 	var fontAscent, fontDescent float64
 	if err == nil {
 		fontAscent = float64(metrics.Ascent) / 64.0
 		fontDescent = float64(metrics.Descent) / 64.0
 	} else {
-		emSquare := float64(dc.font.ttf.UnitsPerEm())
-		scaleFactor := dc.font.size / emSquare
+		emSquare := float64(ft.UnitsPerEm())
+		scaleFactor := float64(dc.font.Size) / emSquare
 		fontAscent = emSquare * scaleFactor * 0.8  // Typical ascent ratio
 		fontDescent = emSquare * scaleFactor * 0.2 // Typical descent ratio
 	}
@@ -111,9 +115,12 @@ func (dc *Context) StrokeText(s string, x, y float64) {
 }
 
 func (dc *Context) drawText(s string, x, y float64, stroke bool) {
-	if dc.font == nil || s == "" || dc.font.ttf == nil {
+	ft, err := fonts.match(dc.font.Family, dc.font.Weight, dc.font.Style)
+	if err != nil {
 		return
 	}
+
+	ppem := fixed.Int26_6(dc.font.Size * 64)
 
 	metrics := dc.MeasureText(s)
 	textWidth := metrics.Width
@@ -136,30 +143,29 @@ func (dc *Context) drawText(s string, x, y float64, stroke bool) {
 	fy := fixed.I(int(y))
 	dot := fixed.Point26_6{X: fx, Y: fy}
 
-	ppem := fixed.Int26_6(dc.font.size * 64)
 	var prev sfnt.GlyphIndex
 
 	for _, r := range s {
 		path2d := NewPath2D()
-		curr, err := dc.font.ttf.GlyphIndex(&dc.font.buf, r)
+		curr, err := ft.GlyphIndex(&dc.buf, r)
 		if err != nil {
 			continue
 		}
 
 		if dc.fontKerning != FontKerningNone && prev != 0 {
-			kern, err := dc.font.ttf.Kern(&dc.font.buf, prev, curr, ppem, dc.font.hinting)
+			kern, err := ft.Kern(&dc.buf, prev, curr, ppem, font.HintingFull)
 			if err == nil {
 				dot.X += kern
 			}
 		}
 		prev = curr
 
-		advance, err := dc.font.ttf.GlyphAdvance(&dc.font.buf, curr, ppem, dc.font.hinting)
+		advance, err := ft.GlyphAdvance(&dc.buf, curr, ppem, font.HintingFull)
 		if err != nil {
 			continue
 		}
 
-		segments, err := dc.font.ttf.LoadGlyph(&dc.font.buf, curr, ppem, nil)
+		segments, err := ft.LoadGlyph(&dc.buf, curr, ppem, nil)
 		if err != nil {
 			continue
 		}

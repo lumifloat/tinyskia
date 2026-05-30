@@ -9,6 +9,7 @@ import (
 	"image"
 
 	color2 "github.com/lumifloat/tinyskia/internal/core/color"
+	"golang.org/x/image/font/sfnt"
 )
 
 // Context is the main drawing context, similar to gg.Context.
@@ -41,7 +42,8 @@ type Context struct {
 
 	// TextDrawingStyles
 	lang        string
-	font        *Font
+	font        FontAttr
+	buf         sfnt.Buffer
 	textAlign   TextAlign
 	fontKerning FontKerning
 

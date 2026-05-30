@@ -41,6 +41,12 @@ func NewCanvas(width, height int) *Canvas {
 
 		path2d: NewPath2D(),
 
+		font: FontAttr{
+			Family: "sans-serif",
+			Weight: "normal",
+			Style:  "normal",
+			Size:   10,
+		},
 		textAlign:   TextAlignStart,
 		fontKerning: FontKerningAuto,
 
