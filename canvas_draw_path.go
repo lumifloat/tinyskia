@@ -61,6 +61,9 @@ func (dc *Context) FillPathWithFillRule(p *Path2D, fillRule FillRule) {
 		maskData = dc.mask.Pix
 	}
 	blitter := paint.blitter(dc.canvas.im.Pix, maskData, dc.canvas.GetWidth(), dc.canvas.GetHeight())
+	if blitter == nil {
+		return
+	}
 	screen, _ := path.NewScreenIntRectFromXYWH(0, 0, uint32(dc.canvas.GetWidth()), uint32(dc.canvas.GetHeight()))
 	if dc.antiAlias {
 		scan.FillPathAA(tp, int(fillRule), screen, blitter)
@@ -125,6 +128,9 @@ func (dc *Context) StrokePath(p *Path2D) {
 		maskData = dc.mask.Pix
 	}
 	blitter := paint.blitter(dc.canvas.im.Pix, maskData, dc.canvas.GetWidth(), dc.canvas.GetHeight())
+	if blitter == nil {
+		return
+	}
 	screen, _ := path.NewScreenIntRectFromXYWH(0, 0, uint32(dc.canvas.GetWidth()), uint32(dc.canvas.GetHeight()))
 
 	resScale := path.ComputeResolutionScale(dc.matrix.transform)
@@ -176,6 +182,9 @@ func (dc *Context) ClipPath(p *Path2D) {
 		ForceHQPipeline: dc.forceHQPipeline,
 	}
 	blitter := paint.blitter(tempRGBA.Pix, nil, width, height)
+	if blitter == nil {
+		return
+	}
 	screen, _ := path.NewScreenIntRectFromXYWH(0, 0, uint32(width), uint32(height))
 	scan.FillPathAA(tp, int(FillRuleWinding), screen, blitter)
 
