@@ -83,7 +83,7 @@ func TestSheetCompositing(t *testing.T) {
 		ctx.DrawImage(scanvas.Image(), float64(col*w), float64(row*h))
 	}
 
-	outputPath := "sheet_compositing.png"
+	outputPath := "sheet_out.png"
 	fi, err := os.Create(outputPath)
 	if err != nil {
 		t.Fatalf("Failed to create file: %v", err)

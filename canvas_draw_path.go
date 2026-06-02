@@ -113,7 +113,7 @@ func (dc *Context) StrokePath(p *Path2D) {
 		Width:      lineWidth,
 		LineCap:    path.LineCap(dc.lineCap),
 		LineJoin:   path.LineJoin(dc.lineJoin),
-		MiterLimit: 4.0, // Default miter limit
+		MiterLimit: float32(dc.miterLimit),
 	}
 
 	paint := &Paint{
@@ -148,13 +148,23 @@ func (dc *Context) StrokePath(p *Path2D) {
 	}
 }
 
-// Further constrains the clipping region to the current default path, using the given fill rule to determine what points are in the path.
+// Clip further constrains the clipping region to the current default path, using the given fill rule to determine what points are in the path.
 func (dc *Context) Clip() {
-	dc.ClipPath(dc.path2d)
+	dc.ClipPathWithFillRule(dc.path2d, FillRuleWinding)
 }
 
-// Further constrains the clipping region to the given path, using the given fill rule to determine what points are in the path.
+// ClipWithFillRule further constrains the clipping region to the current default path, using the given fill rule to determine what points are in the path.
+func (dc *Context) ClipWithFillRule(fillRule FillRule) {
+	dc.ClipPathWithFillRule(dc.path2d, fillRule)
+}
+
+// ClipPath further constrains the clipping region to the given path, using the given fill rule to determine what points are in the path.
 func (dc *Context) ClipPath(p *Path2D) {
+	dc.ClipPathWithFillRule(p, FillRuleWinding)
+}
+
+// ClipPathWithFillRule further constrains the clipping region to the given path, using the given fill rule to determine what points are in the path.
+func (dc *Context) ClipPathWithFillRule(p *Path2D, fillRule FillRule) {
 	pp := p.builder.Finish()
 	if pp == nil {
 		return
@@ -186,7 +196,7 @@ func (dc *Context) ClipPath(p *Path2D) {
 		return
 	}
 	screen, _ := path.NewScreenIntRectFromXYWH(0, 0, uint32(width), uint32(height))
-	scan.FillPathAA(tp, int(FillRuleWinding), screen, blitter)
+	scan.FillPathAA(tp, int(fillRule), screen, blitter)
 
 	// Extract alpha channel from RGBA to Alpha mask
 	for i := 0; i < width*height; i++ {

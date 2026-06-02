@@ -256,8 +256,18 @@ func (p *Path2D) Arc(x, y, radius, startAngle, endAngle float64, counterclockwis
 // the previous point by a straight line.
 func (p *Path2D) Ellipse(x, y, radiusX, radiusY, rotation, startAngle, endAngle float64, counterclockwise bool) {
 	sweepAngle := endAngle - startAngle
-	if counterclockwise {
-		sweepAngle = -sweepAngle
+
+	for sweepAngle > 2*math.Pi {
+		sweepAngle -= 2 * math.Pi
+	}
+	for sweepAngle <= -2*math.Pi {
+		sweepAngle += 2 * math.Pi
+	}
+
+	if counterclockwise && sweepAngle > 0 && sweepAngle < 2*math.Pi {
+		sweepAngle = sweepAngle - 2*math.Pi
+	} else if !counterclockwise && sweepAngle < 0 && sweepAngle > -2*math.Pi {
+		sweepAngle = sweepAngle + 2*math.Pi
 	}
 
 	oval, ok := path.NewRectFromXYWH(float32(x-radiusX), float32(y-radiusY), float32(radiusX*2), float32(radiusY*2))

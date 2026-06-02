@@ -18,44 +18,22 @@ import (
 	"github.com/lumifloat/tinyskia"
 )
 
-func TestSheetLineCap(t *testing.T) {
-	width := 150
+func TestSheetClip(t *testing.T) {
+	width := 180
 	height := 150
-
-	lineCaps := []struct {
-		name string
-		cap  tinyskia.LineCap
-	}{
-		{"butt", tinyskia.LineCapButt},
-		{"round", tinyskia.LineCapRound},
-		{"square", tinyskia.LineCapSquare},
-	}
 
 	canvas := tinyskia.NewCanvas(width, height)
 	ctx := canvas.GetContext()
 
-	// Draw guides
-	ctx.SetStrokeStyleSolidColor(color.RGBA{0, 153, 255, 255}) // #0099ff
-	ctx.SetLineWidth(1)
-	ctx.BeginPath()
-	ctx.MoveTo(10, 10)
-	ctx.LineTo(140, 10)
-	ctx.MoveTo(10, 140)
-	ctx.LineTo(140, 140)
-	ctx.Stroke()
+	// Create clipping path
+	region := tinyskia.NewPath2D()
+	region.Rect(80, 10, 20, 130)
+	region.Rect(40, 50, 100, 50)
+	ctx.ClipPathWithFillRule(region, tinyskia.FillRuleEvenOdd)
 
-	for i, lc := range lineCaps {
-		// Draw line with specific line cap
-		ctx.SetStrokeStyleSolidColor(color.RGBA{0, 0, 0, 255}) // black
-		ctx.SetLineWidth(15)
-		ctx.SetLineCap(lc.cap)
-		ctx.BeginPath()
-		ctx.MoveTo(float64(25+i*50), 10)
-		ctx.LineTo(float64(25+i*50), 140)
-		ctx.Stroke()
-
-		ctx.Restore()
-	}
+	// Draw clipped content
+	ctx.SetFillStyleSolidColor(color.RGBA{0, 0, 255, 255}) // blue
+	ctx.FillRect(0, 0, float64(width), float64(height))
 
 	outputPath := "sheet_out.png"
 	fi, err := os.Create(outputPath)

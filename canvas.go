@@ -33,7 +33,7 @@ func NewCanvas(width, height int) *Canvas {
 		composite: CompositeOperationSourceOver,
 
 		lineWidth:      1,
-		lineCap:        LineCapRound,
+		lineCap:        LineCapButt,
 		lineJoin:       LineJoinMiter,
 		miterLimit:     10,
 		lineDash:       []float64{},

@@ -18,44 +18,28 @@ import (
 	"github.com/lumifloat/tinyskia"
 )
 
-func TestSheetLineCap(t *testing.T) {
-	width := 150
-	height := 150
-
-	lineCaps := []struct {
-		name string
-		cap  tinyskia.LineCap
-	}{
-		{"butt", tinyskia.LineCapButt},
-		{"round", tinyskia.LineCapRound},
-		{"square", tinyskia.LineCapSquare},
-	}
+func TestSheetCreateConicGradient(t *testing.T) {
+	width := 240
+	height := 240
 
 	canvas := tinyskia.NewCanvas(width, height)
 	ctx := canvas.GetContext()
 
-	// Draw guides
-	ctx.SetStrokeStyleSolidColor(color.RGBA{0, 153, 255, 255}) // #0099ff
-	ctx.SetLineWidth(1)
-	ctx.BeginPath()
-	ctx.MoveTo(10, 10)
-	ctx.LineTo(140, 10)
-	ctx.MoveTo(10, 140)
-	ctx.LineTo(140, 140)
-	ctx.Stroke()
+	// Create a conic gradient
+	// Start angle is 0
+	// Center position is 100, 100
+	gradient := ctx.CreateConicGradient(0, 100, 100)
 
-	for i, lc := range lineCaps {
-		// Draw line with specific line cap
-		ctx.SetStrokeStyleSolidColor(color.RGBA{0, 0, 0, 255}) // black
-		ctx.SetLineWidth(15)
-		ctx.SetLineCap(lc.cap)
-		ctx.BeginPath()
-		ctx.MoveTo(float64(25+i*50), 10)
-		ctx.LineTo(float64(25+i*50), 140)
-		ctx.Stroke()
+	// Add five color stops
+	gradient.AddColorStop(0, color.RGBA{255, 0, 0, 255})      // red
+	gradient.AddColorStop(0.25, color.RGBA{255, 165, 0, 255}) // orange
+	gradient.AddColorStop(0.5, color.RGBA{255, 255, 0, 255})  // yellow
+	gradient.AddColorStop(0.75, color.RGBA{0, 128, 0, 255})   // green
+	gradient.AddColorStop(1, color.RGBA{0, 0, 255, 255})      // blue
 
-		ctx.Restore()
-	}
+	// Set fill style and draw rectangle
+	ctx.SetFillStyleGradient(gradient)
+	ctx.FillRect(20, 20, 200, 200)
 
 	outputPath := "sheet_out.png"
 	fi, err := os.Create(outputPath)

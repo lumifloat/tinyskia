@@ -18,44 +18,32 @@ import (
 	"github.com/lumifloat/tinyskia"
 )
 
-func TestSheetLineCap(t *testing.T) {
-	width := 150
+func TestSheetLineDashOffset(t *testing.T) {
+	width := 300
 	height := 150
-
-	lineCaps := []struct {
-		name string
-		cap  tinyskia.LineCap
-	}{
-		{"butt", tinyskia.LineCapButt},
-		{"round", tinyskia.LineCapRound},
-		{"square", tinyskia.LineCapSquare},
-	}
 
 	canvas := tinyskia.NewCanvas(width, height)
 	ctx := canvas.GetContext()
 
-	// Draw guides
-	ctx.SetStrokeStyleSolidColor(color.RGBA{0, 153, 255, 255}) // #0099ff
-	ctx.SetLineWidth(1)
+	// Set dash pattern: 4 units on, 16 units off
+	ctx.SetLineDash([]float64{4, 16})
+
+	// Draw line without offset (black)
+	ctx.SetStrokeStyleSolidColor(color.RGBA{0, 0, 0, 255}) // black
+	ctx.SetLineWidth(2)
+	ctx.SetLineDashOffset(0)
 	ctx.BeginPath()
-	ctx.MoveTo(10, 10)
-	ctx.LineTo(140, 10)
-	ctx.MoveTo(10, 140)
-	ctx.LineTo(140, 140)
+	ctx.MoveTo(0, 50)
+	ctx.LineTo(300, 50)
 	ctx.Stroke()
 
-	for i, lc := range lineCaps {
-		// Draw line with specific line cap
-		ctx.SetStrokeStyleSolidColor(color.RGBA{0, 0, 0, 255}) // black
-		ctx.SetLineWidth(15)
-		ctx.SetLineCap(lc.cap)
-		ctx.BeginPath()
-		ctx.MoveTo(float64(25+i*50), 10)
-		ctx.LineTo(float64(25+i*50), 140)
-		ctx.Stroke()
-
-		ctx.Restore()
-	}
+	// Draw line with offset = 4 (red)
+	ctx.SetStrokeStyleSolidColor(color.RGBA{255, 0, 0, 255}) // red
+	ctx.SetLineDashOffset(4)
+	ctx.BeginPath()
+	ctx.MoveTo(0, 100)
+	ctx.LineTo(300, 100)
+	ctx.Stroke()
 
 	outputPath := "sheet_out.png"
 	fi, err := os.Create(outputPath)

@@ -18,43 +18,34 @@ import (
 	"github.com/lumifloat/tinyskia"
 )
 
-func TestSheetLineCap(t *testing.T) {
+func TestSheetLineJoin(t *testing.T) {
 	width := 150
 	height := 150
 
-	lineCaps := []struct {
+	lineJoins := []struct {
 		name string
-		cap  tinyskia.LineCap
+		join tinyskia.LineJoin
 	}{
-		{"butt", tinyskia.LineCapButt},
-		{"round", tinyskia.LineCapRound},
-		{"square", tinyskia.LineCapSquare},
+		{"round", tinyskia.LineJoinRound},
+		{"bevel", tinyskia.LineJoinBevel},
+		{"miter", tinyskia.LineJoinMiter},
 	}
 
 	canvas := tinyskia.NewCanvas(width, height)
 	ctx := canvas.GetContext()
 
-	// Draw guides
-	ctx.SetStrokeStyleSolidColor(color.RGBA{0, 153, 255, 255}) // #0099ff
-	ctx.SetLineWidth(1)
-	ctx.BeginPath()
-	ctx.MoveTo(10, 10)
-	ctx.LineTo(140, 10)
-	ctx.MoveTo(10, 140)
-	ctx.LineTo(140, 140)
-	ctx.Stroke()
+	ctx.SetLineWidth(10)
+	ctx.SetStrokeStyleSolidColor(color.RGBA{0, 0, 0, 255}) // black
 
-	for i, lc := range lineCaps {
-		// Draw line with specific line cap
-		ctx.SetStrokeStyleSolidColor(color.RGBA{0, 0, 0, 255}) // black
-		ctx.SetLineWidth(15)
-		ctx.SetLineCap(lc.cap)
+	for i, lj := range lineJoins {
+		ctx.SetLineJoin(lj.join)
 		ctx.BeginPath()
-		ctx.MoveTo(float64(25+i*50), 10)
-		ctx.LineTo(float64(25+i*50), 140)
+		ctx.MoveTo(-5, float64(5+i*40))
+		ctx.LineTo(35, float64(45+i*40))
+		ctx.LineTo(75, float64(5+i*40))
+		ctx.LineTo(115, float64(45+i*40))
+		ctx.LineTo(155, float64(5+i*40))
 		ctx.Stroke()
-
-		ctx.Restore()
 	}
 
 	outputPath := "sheet_out.png"

@@ -12,49 +12,43 @@ package examples
 
 import (
 	"image/color"
+	"math"
 	"os"
 	"testing"
 
 	"github.com/lumifloat/tinyskia"
 )
 
-func TestSheetLineCap(t *testing.T) {
-	width := 150
-	height := 150
-
-	lineCaps := []struct {
-		name string
-		cap  tinyskia.LineCap
-	}{
-		{"butt", tinyskia.LineCapButt},
-		{"round", tinyskia.LineCapRound},
-		{"square", tinyskia.LineCapSquare},
-	}
+func TestSheetArc(t *testing.T) {
+	width := 175
+	height := 225
 
 	canvas := tinyskia.NewCanvas(width, height)
 	ctx := canvas.GetContext()
 
-	// Draw guides
-	ctx.SetStrokeStyleSolidColor(color.RGBA{0, 153, 255, 255}) // #0099ff
+	ctx.SetStrokeStyleSolidColor(color.RGBA{0, 0, 0, 255}) // black
+	ctx.SetFillStyleSolidColor(color.RGBA{0, 0, 0, 255})   // black
 	ctx.SetLineWidth(1)
-	ctx.BeginPath()
-	ctx.MoveTo(10, 10)
-	ctx.LineTo(140, 10)
-	ctx.MoveTo(10, 140)
-	ctx.LineTo(140, 140)
-	ctx.Stroke()
 
-	for i, lc := range lineCaps {
-		// Draw line with specific line cap
-		ctx.SetStrokeStyleSolidColor(color.RGBA{0, 0, 0, 255}) // black
-		ctx.SetLineWidth(15)
-		ctx.SetLineCap(lc.cap)
-		ctx.BeginPath()
-		ctx.MoveTo(float64(25+i*50), 10)
-		ctx.LineTo(float64(25+i*50), 140)
-		ctx.Stroke()
+	// Draw shapes
+	for i := 0; i <= 3; i++ {
+		for j := 0; j <= 2; j++ {
+			ctx.BeginPath()
+			x := float64(25 + j*50)                        // x coordinate
+			y := float64(25 + i*50)                        // y coordinate
+			radius := 20.0                                 // arc radius
+			startAngle := 0.0                              // starting angle
+			endAngle := math.Pi + (math.Pi*float64(j))/2.0 // ending angle
+			counterclockwise := i%2 == 1                   // counterclockwise?
 
-		ctx.Restore()
+			ctx.Arc(x, y, radius, startAngle, endAngle, counterclockwise)
+
+			if i > 1 {
+				ctx.Fill() // fill shape
+			} else {
+				ctx.Stroke() // stroke shape outline
+			}
+		}
 	}
 
 	outputPath := "sheet_out.png"

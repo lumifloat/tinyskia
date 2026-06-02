@@ -12,50 +12,46 @@ package examples
 
 import (
 	"image/color"
+	"math"
 	"os"
 	"testing"
 
 	"github.com/lumifloat/tinyskia"
 )
 
-func TestSheetLineCap(t *testing.T) {
-	width := 150
+func TestSheetBezierCurveTo(t *testing.T) {
+	width := 300
 	height := 150
-
-	lineCaps := []struct {
-		name string
-		cap  tinyskia.LineCap
-	}{
-		{"butt", tinyskia.LineCapButt},
-		{"round", tinyskia.LineCapRound},
-		{"square", tinyskia.LineCapSquare},
-	}
 
 	canvas := tinyskia.NewCanvas(width, height)
 	ctx := canvas.GetContext()
 
-	// Draw guides
-	ctx.SetStrokeStyleSolidColor(color.RGBA{0, 153, 255, 255}) // #0099ff
-	ctx.SetLineWidth(1)
+	// Define point coordinates
+	start := struct{ x, y float64 }{50, 20}
+	cp1 := struct{ x, y float64 }{230, 30}
+	cp2 := struct{ x, y float64 }{150, 80}
+	end := struct{ x, y float64 }{250, 100}
+
+	// Cubic Bezier curve
 	ctx.BeginPath()
-	ctx.MoveTo(10, 10)
-	ctx.LineTo(140, 10)
-	ctx.MoveTo(10, 140)
-	ctx.LineTo(140, 140)
+	ctx.SetStrokeStyleSolidColor(color.RGBA{0, 0, 0, 255}) // black
+	ctx.MoveTo(start.x, start.y)
+	ctx.BezierCurveTo(cp1.x, cp1.y, cp2.x, cp2.y, end.x, end.y)
 	ctx.Stroke()
 
-	for i, lc := range lineCaps {
-		// Draw line with specific line cap
-		ctx.SetStrokeStyleSolidColor(color.RGBA{0, 0, 0, 255}) // black
-		ctx.SetLineWidth(15)
-		ctx.SetLineCap(lc.cap)
-		ctx.BeginPath()
-		ctx.MoveTo(float64(25+i*50), 10)
-		ctx.LineTo(float64(25+i*50), 140)
-		ctx.Stroke()
+	// Start and end points (blue)
+	ctx.SetFillStyleSolidColor(color.RGBA{0, 0, 255, 255}) // blue
+	ctx.BeginPath()
+	ctx.Arc(start.x, start.y, 5, 0, 2*math.Pi, false) // start point
+	ctx.Arc(end.x, end.y, 5, 0, 2*math.Pi, false)     // end point
+	ctx.Fill()
 
-		ctx.Restore()
-	}
+	// Control points (red)
+	ctx.SetFillStyleSolidColor(color.RGBA{255, 0, 0, 255}) // red
+	ctx.BeginPath()
+	ctx.Arc(cp1.x, cp1.y, 5, 0, 2*math.Pi, false) // control point 1
+	ctx.Arc(cp2.x, cp2.y, 5, 0, 2*math.Pi, false) // control point 2
+	ctx.Fill()
 
 	outputPath := "sheet_out.png"
 	fi, err := os.Create(outputPath)

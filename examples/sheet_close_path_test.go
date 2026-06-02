@@ -12,50 +12,30 @@ package examples
 
 import (
 	"image/color"
+	"math"
 	"os"
 	"testing"
 
 	"github.com/lumifloat/tinyskia"
 )
 
-func TestSheetLineCap(t *testing.T) {
-	width := 150
+func TestSheetClosePath(t *testing.T) {
+	width := 300
 	height := 150
-
-	lineCaps := []struct {
-		name string
-		cap  tinyskia.LineCap
-	}{
-		{"butt", tinyskia.LineCapButt},
-		{"round", tinyskia.LineCapRound},
-		{"square", tinyskia.LineCapSquare},
-	}
 
 	canvas := tinyskia.NewCanvas(width, height)
 	ctx := canvas.GetContext()
 
-	// Draw guides
-	ctx.SetStrokeStyleSolidColor(color.RGBA{0, 153, 255, 255}) // #0099ff
-	ctx.SetLineWidth(1)
 	ctx.BeginPath()
-	ctx.MoveTo(10, 10)
-	ctx.LineTo(140, 10)
-	ctx.MoveTo(10, 140)
-	ctx.LineTo(140, 140)
+	ctx.Arc(240, 20, 40, 0, math.Pi, false)
+	ctx.MoveTo(100, 20)
+	ctx.Arc(60, 20, 40, 0, math.Pi, false)
+	ctx.MoveTo(215, 80)
+	ctx.Arc(150, 80, 65, 0, math.Pi, false)
+	ctx.ClosePath()
+	ctx.SetLineWidth(6)
+	ctx.SetStrokeStyleSolidColor(color.RGBA{0, 0, 0, 255}) // black
 	ctx.Stroke()
-
-	for i, lc := range lineCaps {
-		// Draw line with specific line cap
-		ctx.SetStrokeStyleSolidColor(color.RGBA{0, 0, 0, 255}) // black
-		ctx.SetLineWidth(15)
-		ctx.SetLineCap(lc.cap)
-		ctx.BeginPath()
-		ctx.MoveTo(float64(25+i*50), 10)
-		ctx.LineTo(float64(25+i*50), 140)
-		ctx.Stroke()
-
-		ctx.Restore()
-	}
 
 	outputPath := "sheet_out.png"
 	fi, err := os.Create(outputPath)
