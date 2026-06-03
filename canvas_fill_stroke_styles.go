@@ -290,7 +290,13 @@ func toShader(style style, transform path.Transform) shader.Shader {
 		r, g, b, a := s.color.RGBA()
 		return shader.NewSolidColor(color2.ColorFromRGBA8(uint8(r>>8), uint8(g>>8), uint8(b>>8), uint8(a>>8)))
 	case *ImagePattern:
-		return imageToPatternShader(s.im, s.op, s.transform.transform)
+		var transform path.Transform
+		if s.transform != nil {
+			transform = s.transform.transform
+		} else {
+			transform = path.NewTransformDefault()
+		}
+		return imageToPatternShader(s.im, s.op, transform)
 	default:
 		return shader.NewSolidColor(color2.ColorFromRGBA8(0, 0, 0, 255))
 	}

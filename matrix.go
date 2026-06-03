@@ -74,3 +74,33 @@ func (m *Matrix) RotateAt(angle, x, y float64) *Matrix {
 func (m *Matrix) Multiply(transform *Matrix) *Matrix {
 	return &Matrix{transform: m.transform.PostConcat(transform.transform)}
 }
+
+// A returns the scale-x value of the matrix.
+func (m *Matrix) A() float64 {
+	return float64(m.transform.SX)
+}
+
+// B returns the skew-y value of the matrix.
+func (m *Matrix) B() float64 {
+	return float64(m.transform.KY)
+}
+
+// C returns the skew-x value of the matrix.
+func (m *Matrix) C() float64 {
+	return float64(m.transform.KX)
+}
+
+// D returns the scale-y value of the matrix.
+func (m *Matrix) D() float64 {
+	return float64(m.transform.SY)
+}
+
+// E returns the translate-x value of the matrix.
+func (m *Matrix) E() float64 {
+	return float64(m.transform.TX)
+}
+
+// F returns the translate-y value of the matrix.
+func (m *Matrix) F() float64 {
+	return float64(m.transform.TY)
+}
