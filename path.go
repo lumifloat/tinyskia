@@ -146,20 +146,17 @@ func (p *Path2D) RoundRect(x, y, w, h float64, radii []float64) {
 		// unreachable
 	}
 
-	clockwise := true
 	if w < 0 {
-		clockwise = !clockwise
+		x += w
 		w = -w
-		x -= w
 		rx[0], rx[1] = rx[1], rx[0]
 		rx[2], rx[3] = rx[3], rx[2]
 		ry[0], ry[1] = ry[1], ry[0]
 		ry[2], ry[3] = ry[3], ry[2]
 	}
 	if h < 0 {
-		clockwise = !clockwise
+		y += h
 		h = -h
-		y -= h
 		rx[0], rx[3] = rx[3], rx[0]
 		rx[1], rx[2] = rx[2], rx[1]
 		ry[0], ry[3] = ry[3], ry[0]
@@ -194,49 +191,25 @@ func (p *Path2D) RoundRect(x, y, w, h float64, radii []float64) {
 
 	p.MoveTo(x+rx[0], y)
 
-	if clockwise {
-		p.LineTo(x+w-rx[1], y)
-		if rx[1] > 0 || ry[1] > 0 {
-			radius := math.Max(rx[1], ry[1])
-			p.Arc(x+w-rx[1], y+ry[1], radius, -math.Pi/2, 0, false)
-		}
-		p.LineTo(x+w, y+h-ry[2])
-		if rx[2] > 0 || ry[2] > 0 {
-			radius := math.Max(rx[2], ry[2])
-			p.Arc(x+w-rx[2], y+h-ry[2], radius, 0, math.Pi/2, false)
-		}
-		p.LineTo(x+rx[3], y+h)
-		if rx[3] > 0 || ry[3] > 0 {
-			radius := math.Max(rx[3], ry[3])
-			p.Arc(x+rx[3], y+h-ry[3], radius, math.Pi/2, math.Pi, false)
-		}
-		p.LineTo(x, y+ry[0])
-		if rx[0] > 0 || ry[0] > 0 {
-			radius := math.Max(rx[0], ry[0])
-			p.Arc(x+rx[0], y+ry[0], radius, math.Pi, 3*math.Pi/2, false)
-		}
-	} else {
-		p.LineTo(x, y+ry[0])
-		if rx[0] > 0 || ry[0] > 0 {
-			radius := math.Max(rx[0], ry[0])
-			p.Arc(x+rx[0], y+ry[0], radius, 3*math.Pi/2, math.Pi, false)
-		}
-		p.LineTo(x+w-rx[1], y)
-		if rx[1] > 0 || ry[1] > 0 {
-			radius := math.Max(rx[1], ry[1])
-			p.Arc(x+w-rx[1], y+ry[1], radius, math.Pi, -math.Pi/2, false)
-		}
-		p.LineTo(x+w, y+h-ry[2])
-		if rx[2] > 0 || ry[2] > 0 {
-			radius := math.Max(rx[2], ry[2])
-			p.Arc(x+w-rx[2], y+h-ry[2], radius, -math.Pi/2, 0, false)
-		}
-		p.LineTo(x+rx[3], y+h)
-		if rx[3] > 0 || ry[3] > 0 {
-			radius := math.Max(rx[3], ry[3])
-			p.Arc(x+rx[3], y+h-ry[3], radius, 0, math.Pi/2, false)
-		}
-		p.LineTo(x, y+ry[0])
+	p.LineTo(x+w-rx[1], y)
+	if rx[1] > 0 || ry[1] > 0 {
+		radius := math.Max(rx[1], ry[1])
+		p.Arc(x+w-rx[1], y+ry[1], radius, -math.Pi/2, 0, false)
+	}
+	p.LineTo(x+w, y+h-ry[2])
+	if rx[2] > 0 || ry[2] > 0 {
+		radius := math.Max(rx[2], ry[2])
+		p.Arc(x+w-rx[2], y+h-ry[2], radius, 0, math.Pi/2, false)
+	}
+	p.LineTo(x+rx[3], y+h)
+	if rx[3] > 0 || ry[3] > 0 {
+		radius := math.Max(rx[3], ry[3])
+		p.Arc(x+rx[3], y+h-ry[3], radius, math.Pi/2, math.Pi, false)
+	}
+	p.LineTo(x, y+ry[0])
+	if rx[0] > 0 || ry[0] > 0 {
+		radius := math.Max(rx[0], ry[0])
+		p.Arc(x+rx[0], y+ry[0], radius, math.Pi, 3*math.Pi/2, false)
 	}
 
 	p.ClosePath()

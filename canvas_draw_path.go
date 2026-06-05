@@ -100,6 +100,14 @@ func (dc *Context) StrokePath(p *Path2D) {
 		for i, d := range dc.lineDash {
 			dashArray[i] = float32(d)
 		}
+
+		if len(dashArray)%2 != 0 {
+			doubled := make([]float32, len(dashArray)*2)
+			copy(doubled, dashArray)
+			copy(doubled[len(dashArray):], dashArray)
+			dashArray = doubled
+		}
+
 		strokeDash := path.NewStrokeDash(dashArray, float32(dc.lineDashOffset))
 		if strokeDash != nil {
 			dashedPath := tp.Dash(strokeDash, path.ComputeResolutionScale(dc.matrix.transform))
