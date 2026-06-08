@@ -34,7 +34,7 @@ func TestGGGradientText(t *testing.T) {
 	dc.SetFillStyleSolidColor(color.RGBA{255, 255, 255, 255})
 	dc.FillRect(0, 0, W, H)
 
-	dc.SetFont(gg.FontAttr{Family: "impact", Size: 128})
+	dc.SetFont(gg.FontAttr{Family: []string{"impact"}, Size: 128})
 	text := "Gradient Text"
 
 	// Calculate center position

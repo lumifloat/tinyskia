@@ -34,7 +34,7 @@ func TestSheetFontKerning(t *testing.T) {
 		// pass
 	}
 
-	ctx.SetFont(tinyskia.FontAttr{Family: "arial", Size: 30})
+	ctx.SetFont(tinyskia.FontAttr{Family: []string{"arial"}, Size: 30})
 
 	// Default (auto)
 	ctx.FillText("AVA Ta We (default)", 5, 30)

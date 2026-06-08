@@ -27,7 +27,7 @@ func TestSheetFillText(t *testing.T) {
 
 	// Set font and draw text
 	ctx.SetFont(tinyskia.FontAttr{
-		Family: "serif",
+		Family: []string{"serif"},
 		Size:   50,
 	})
 	ctx.SetFillStyleSolidColor(color.RGBA{0, 0, 0, 255}) // black

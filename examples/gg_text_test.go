@@ -31,7 +31,7 @@ func TestGGText(t *testing.T) {
 	dc.SetFillStyleSolidColor(color.RGBA{255, 255, 255, 255})
 	dc.FillRect(0, 0, float64(S), float64(S))
 
-	dc.SetFont(gg.FontAttr{Family: "arial", Size: 96})
+	dc.SetFont(gg.FontAttr{Family: []string{"arial"}, Size: 96})
 	text := "Hello, world!"
 	metrics := dc.MeasureText(text)
 	textWidth := metrics.Width

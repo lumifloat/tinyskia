@@ -41,7 +41,7 @@ func TestSheetTextAlign(t *testing.T) {
 	ctx.LineTo(x, float64(height))
 	ctx.Stroke()
 
-	ctx.SetFont(tinyskia.FontAttr{Family: "arial", Size: 30})
+	ctx.SetFont(tinyskia.FontAttr{Family: []string{"arial"}, Size: 30})
 
 	ctx.SetTextAlign(tinyskia.TextAlignLeft)
 	ctx.FillText("left-aligned", x, 40)

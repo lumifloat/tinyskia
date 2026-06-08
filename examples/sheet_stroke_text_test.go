@@ -24,7 +24,7 @@ func TestSheetStrokeText(t *testing.T) {
 	canvas := tinyskia.NewCanvas(width, height)
 	ctx := canvas.GetContext()
 
-	ctx.SetFont(tinyskia.FontAttr{Family: "serif", Size: 50})
+	ctx.SetFont(tinyskia.FontAttr{Family: []string{"serif"}, Size: 50})
 	ctx.StrokeText("Hello world", 50, 90)
 
 	outputPath := "sheet_out.png"

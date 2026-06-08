@@ -34,7 +34,7 @@ func TestSheetFont(t *testing.T) {
 		// pass
 	}
 
-	ctx.SetFont(tinyskia.FontAttr{Family: "arial", Weight: "bold", Size: 48})
+	ctx.SetFont(tinyskia.FontAttr{Family: []string{"arial"}, Weight: tinyskia.FontWeightBold, Size: 48})
 	ctx.StrokeText("Hello world", 50, 100)
 
 	outputPath := "sheet_out.png"

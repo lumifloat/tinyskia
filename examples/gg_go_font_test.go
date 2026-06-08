@@ -25,7 +25,7 @@ func TestGoFont(t *testing.T) {
 		t.Errorf("Font not available: %v", err)
 		return
 	}
-	dc.SetFont(gg.FontAttr{Family: "go", Size: 48})
+	dc.SetFont(gg.FontAttr{Family: []string{"go"}, Size: 48})
 	text := "Hello, world!"
 	metrics := dc.MeasureText(text)
 	textWidth := metrics.Width

@@ -7,6 +7,8 @@
 package tinyskia
 
 import (
+	"math"
+
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/sfnt"
 	"golang.org/x/image/math/fixed"
@@ -14,9 +16,10 @@ import (
 
 // MeasureText measures the given text and returns a TextMetrics object with detailed metrics.
 func (dc *Context) MeasureText(s string) TextMetrics {
-	ft, err := fonts.match(dc.font.Family, dc.font.Weight, dc.font.Style)
-	if err != nil {
-		return TextMetrics{}
+	var metrics TextMetrics
+
+	if s == "" {
+		return metrics
 	}
 
 	ppem := fixed.Int26_6(dc.font.Size * 64)
@@ -24,15 +27,25 @@ func (dc *Context) MeasureText(s string) TextMetrics {
 	var advance fixed.Int26_6
 	var prev sfnt.GlyphIndex
 
-	// Track actual bounding box across all glyphs
 	minX, maxX := fixed.Int26_6(1<<30), fixed.Int26_6(-(1 << 30))
 	minY, maxY := fixed.Int26_6(1<<30), fixed.Int26_6(-(1 << 30))
 
+	var maxFontAscent, maxFontDescent float64
+
 	for _, r := range s {
-		curr, err := ft.GlyphIndex(&dc.buf, r)
-		if err != nil || curr == 0 {
+		ft, curr := dc.glyph(r)
+		if curr == 0 {
 			prev = 0
 			continue
+		}
+
+		hMetrics, err := ft.Metrics(&dc.buf, ppem, font.HintingFull)
+		if err == nil {
+			fontAscent := math.Abs(float64(hMetrics.Ascent) / 64.0)
+			fontDescent := math.Abs(float64(hMetrics.Descent) / 64.0)
+
+			maxFontAscent = math.Max(maxFontAscent, fontAscent)
+			maxFontDescent = math.Max(maxFontDescent, fontDescent)
 		}
 
 		if dc.fontKerning != FontKerningNone && prev != 0 {
@@ -48,10 +61,10 @@ func (dc *Context) MeasureText(s string) TextMetrics {
 			continue
 		}
 		if b.Empty() {
-			// No visible glyphs
 			advance += a
 			continue
 		}
+
 		if advance+b.Min.X < minX {
 			minX = advance + b.Min.X
 		}
@@ -64,46 +77,23 @@ func (dc *Context) MeasureText(s string) TextMetrics {
 		if b.Max.Y > maxY {
 			maxY = b.Max.Y
 		}
+
 		advance += a
 	}
 
-	width := float64(advance>>6) + float64(advance&63)/64.0
+	metrics.Width = float64(advance) / 64.0
 
-	metrics, err := ft.Metrics(&dc.buf, ppem, font.HintingFull)
-	var fontAscent, fontDescent float64
-	if err == nil {
-		fontAscent = float64(metrics.Ascent) / 64.0
-		fontDescent = float64(metrics.Descent) / 64.0
-	} else {
-		emSquare := float64(ft.UnitsPerEm())
-		scaleFactor := float64(dc.font.Size) / emSquare
-		fontAscent = emSquare * scaleFactor * 0.8  // Typical ascent ratio
-		fontDescent = emSquare * scaleFactor * 0.2 // Typical descent ratio
+	metrics.FontBoundingBoxAscent = maxFontAscent
+	metrics.FontBoundingBoxDescent = maxFontDescent
+
+	if minX < fixed.Int26_6(1<<30) {
+		metrics.ActualBoundingBoxLeft = -float64(minX) / 64.0
+		metrics.ActualBoundingBoxRight = float64(maxX) / 64.0
+		metrics.ActualBoundingBoxAscent = -float64(minY) / 64.0
+		metrics.ActualBoundingBoxDescent = float64(maxY) / 64.0
 	}
 
-	var actualBBoxLeft, actualBBoxRight, actualBBoxAscent, actualBBoxDescent float64
-	if minX <= maxX {
-		actualBBoxLeft = -float64(minX) / 64.0
-		actualBBoxRight = float64(maxX) / 64.0
-		actualBBoxAscent = -float64(minY) / 64.0
-		actualBBoxDescent = float64(maxY) / 64.0
-	} else {
-		// No visible glyphs, use font metrics
-		actualBBoxLeft = 0
-		actualBBoxRight = width
-		actualBBoxAscent = fontAscent
-		actualBBoxDescent = fontDescent
-	}
-
-	return TextMetrics{
-		Width:                    width,
-		ActualBoundingBoxLeft:    actualBBoxLeft,
-		ActualBoundingBoxRight:   actualBBoxRight,
-		FontBoundingBoxAscent:    fontAscent,
-		FontBoundingBoxDescent:   fontDescent,
-		ActualBoundingBoxAscent:  actualBBoxAscent,
-		ActualBoundingBoxDescent: actualBBoxDescent,
-	}
+	return metrics
 }
 
 func (dc *Context) FillText(s string, x, y float64) {
@@ -115,11 +105,6 @@ func (dc *Context) StrokeText(s string, x, y float64) {
 }
 
 func (dc *Context) drawText(s string, x, y float64, stroke bool) {
-	ft, err := fonts.match(dc.font.Family, dc.font.Weight, dc.font.Style)
-	if err != nil {
-		return
-	}
-
 	ppem := fixed.Int26_6(dc.font.Size * 64)
 
 	metrics := dc.MeasureText(s)
@@ -147,8 +132,8 @@ func (dc *Context) drawText(s string, x, y float64, stroke bool) {
 
 	for _, r := range s {
 		path2d := NewPath2D()
-		curr, err := ft.GlyphIndex(&dc.buf, r)
-		if err != nil {
+		ft, curr := dc.glyph(r)
+		if curr == 0 {
 			continue
 		}
 
@@ -208,4 +193,32 @@ func (dc *Context) drawText(s string, x, y float64, stroke bool) {
 		}
 		dot.X += advance
 	}
+}
+
+func (dc *Context) glyph(r rune) (*sfnt.Font, sfnt.GlyphIndex) {
+	for i := range dc.font.Family {
+		chain := dc.fmatch0(dc.font.Family[i])
+		for i := range chain {
+			ft, err := loadFont(chain[i])
+			if err != nil {
+				continue
+			}
+			curr, err := ft.GlyphIndex(&dc.buf, r)
+			if err == nil && curr != 0 {
+				return ft, curr
+			}
+		}
+	}
+	chain := dc.fmatch1(r)
+	for i := range chain {
+		ft, err := loadFont(chain[i])
+		if err != nil {
+			continue
+		}
+		curr, err := ft.GlyphIndex(&dc.buf, r)
+		if err == nil && curr != 0 {
+			return ft, curr
+		}
+	}
+	return nil, 0
 }

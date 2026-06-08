@@ -64,7 +64,7 @@ func TestSheetMiterLimit(t *testing.T) {
 
 		// Draw label
 		ctx.SetFillStyleSolidColor(color.RGBA{0, 0, 0, 255})
-		ctx.SetFont(tinyskia.FontAttr{Family: "arial", Size: 12})
+		ctx.SetFont(tinyskia.FontAttr{Family: []string{"arial"}, Size: 12})
 		ctx.FillText(fmt.Sprintf("MiterLimit=%0.1f", miterLimit), 250, yPositions[i]+5)
 	}
 

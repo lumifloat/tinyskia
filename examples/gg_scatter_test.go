@@ -47,10 +47,10 @@ func TestGGScatter(t *testing.T) {
 	switch runtime.GOOS {
 	case "windows":
 		gg.RegisterFont("C:/Windows/Fonts/arial.ttf", gg.FontFace{Family: "arial"})
-		gg.RegisterFont("C:/Windows/Fonts/arialbd.ttf", gg.FontFace{Family: "arial", Style: "bold"})
+		gg.RegisterFont("C:/Windows/Fonts/arialbd.ttf", gg.FontFace{Family: "arial", Weight: gg.FontWeightBold})
 	case "darwin":
 		gg.RegisterFont("/Library/Fonts/Arial.ttf", gg.FontFace{Family: "arial"})
-		gg.RegisterFont("/Library/Fonts/Arial Bold.ttf", gg.FontFace{Family: "arial", Style: "bold"})
+		gg.RegisterFont("/Library/Fonts/Arial Bold.ttf", gg.FontFace{Family: "arial", Weight: gg.FontWeightBold})
 	default:
 		// pass
 	}
@@ -101,7 +101,7 @@ func TestGGScatter(t *testing.T) {
 
 	dc.SetFillStyleSolidColor(color.RGBA{0, 0, 0, 255})
 
-	dc.SetFont(gg.FontAttr{Family: "arial", Style: "bold", Size: 24})
+	dc.SetFont(gg.FontAttr{Family: []string{"arial"}, Weight: gg.FontWeightBold, Size: 24})
 	text := "Chart Title"
 	metrics := dc.MeasureText(text)
 	textWidth := metrics.Width
@@ -112,7 +112,7 @@ func TestGGScatter(t *testing.T) {
 	dc.FillText(text, x, y)
 
 	// Draw X axis title
-	dc.SetFont(gg.FontAttr{Family: "arial", Style: "normal", Size: 18})
+	dc.SetFont(gg.FontAttr{Family: []string{"arial"}, Weight: gg.FontWeightNormal, Size: 18})
 	text = "X Axis Title"
 	metrics = dc.MeasureText(text)
 	textWidth = metrics.Width

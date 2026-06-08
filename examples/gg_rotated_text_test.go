@@ -32,7 +32,7 @@ func TestGGRotatedText(t *testing.T) {
 	dc.FillRect(0, 0, float64(S), float64(S))
 	dc.SetFillStyleSolidColor(color.Black)
 
-	dc.SetFont(gg.FontAttr{Family: "arial", Size: 40})
+	dc.SetFont(gg.FontAttr{Family: []string{"arial"}, Size: 40})
 	text := "Hello, world!"
 	metrics := dc.MeasureText(text)
 	textWidth := metrics.Width

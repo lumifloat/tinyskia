@@ -168,10 +168,10 @@ func TestGGWrap(t *testing.T) {
 	switch runtime.GOOS {
 	case "windows":
 		gg.RegisterFont("C:/Windows/Fonts/arial.ttf", gg.FontFace{Family: "arial"})
-		gg.RegisterFont("C:/Windows/Fonts/arialbd.ttf", gg.FontFace{Family: "arial", Style: "bold"})
+		gg.RegisterFont("C:/Windows/Fonts/arialbd.ttf", gg.FontFace{Family: "arial", Weight: gg.FontWeightBold})
 	case "darwin":
 		gg.RegisterFont("/Library/Fonts/Arial.ttf", gg.FontFace{Family: "arial"})
-		gg.RegisterFont("/Library/Fonts/Arial Bold.ttf", gg.FontFace{Family: "arial", Style: "bold"})
+		gg.RegisterFont("/Library/Fonts/Arial Bold.ttf", gg.FontFace{Family: "arial", Weight: gg.FontWeightBold})
 	default:
 		// pass
 	}
@@ -192,7 +192,7 @@ func TestGGWrap(t *testing.T) {
 	dc.SetFillStyleSolidColor(color.RGBA{0, 0, 0, 255})
 
 	// Draw corner labels
-	dc.SetFont(gg.FontAttr{Family: "arial", Style: "bold", Size: 18})
+	dc.SetFont(gg.FontAttr{Family: []string{"arial"}, Weight: gg.FontWeightBold, Size: 18})
 	drawWrappedText(dc, "UPPER LEFT", P, P, 0, 0, 0, 1, gg.TextAlignLeft)
 	drawWrappedText(dc, "UPPER RIGHT", W-P, P, 1, 0, 0, 1, gg.TextAlignRight)
 	drawWrappedText(dc, "BOTTOM LEFT", P, H-P, 0, 1, 0, 1, gg.TextAlignLeft)
@@ -203,7 +203,7 @@ func TestGGWrap(t *testing.T) {
 	drawWrappedText(dc, "RIGHT MIDDLE", W-P, H/2, 1, 0.5, 0, 1, gg.TextAlignRight)
 
 	// Load regular font for body text
-	dc.SetFont(gg.FontAttr{Family: "arial", Size: 12})
+	dc.SetFont(gg.FontAttr{Family: []string{"arial"}, Size: 12})
 	drawWrappedText(dc, WRAP_TEXT, W/2-P, H/2-P, 1, 1, W/3, 1, gg.TextAlignLeft)
 	drawWrappedText(dc, WRAP_TEXT, W/2+P, H/2-P, 0, 1, W/3, 1.2, gg.TextAlignLeft)
 	drawWrappedText(dc, WRAP_TEXT, W/2-P, H/2+P, 1, 0, W/3, 1.4, gg.TextAlignLeft)

@@ -31,7 +31,7 @@ func TestGGMeme(t *testing.T) {
 	}
 
 	s := "ONE DOES NOT SIMPLY"
-	dc.SetFont(gg.FontAttr{Family: "impact", Size: 96})
+	dc.SetFont(gg.FontAttr{Family: []string{"impact"}, Size: 96})
 	metrics := dc.MeasureText(s)
 	textWidth := metrics.Width
 	textHeight := metrics.FontBoundingBoxAscent - metrics.FontBoundingBoxDescent

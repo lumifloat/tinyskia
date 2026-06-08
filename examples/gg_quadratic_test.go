@@ -91,7 +91,7 @@ func TestGGQuadratic(t *testing.T) {
 	dc.Stroke()
 
 	dc.SetFillStyleSolidColor(color.Black)
-	dc.SetFont(gg.FontAttr{Family: "arial", Size: 200})
+	dc.SetFont(gg.FontAttr{Family: []string{"arial"}, Size: 200})
 
 	var text string
 	var metrics gg.TextMetrics

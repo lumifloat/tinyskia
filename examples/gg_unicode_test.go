@@ -33,7 +33,7 @@ func TestGGUnicode(t *testing.T) {
 	dc.SetFillStyleSolidColor(color.RGBA{255, 255, 255, 255})
 	dc.FillRect(0, 0, float64(S), float64(S))
 	dc.SetFillStyleSolidColor(color.Black)
-	dc.SetFont(gg.FontAttr{Family: "arial", Size: F})
+	dc.SetFont(gg.FontAttr{Family: []string{"arial"}, Size: F})
 
 	for r := 0; r < 256; r++ {
 		for c := 0; c < 256; c++ {
