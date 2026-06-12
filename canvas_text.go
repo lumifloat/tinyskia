@@ -155,13 +155,18 @@ func (dc *Context) drawText(s string, x, y float64, stroke bool) {
 			continue
 		}
 
+		var hasPath bool = false
 		for _, seg := range segments {
 			switch seg.Op {
 			case sfnt.SegmentOpMoveTo:
+				if hasPath {
+					path2d.builder.Close()
+				}
 				path2d.builder.MoveTo(
 					float32(seg.Args[0].X+dot.X)/64.0,
 					float32(seg.Args[0].Y+dot.Y)/64.0,
 				)
+				hasPath = true
 			case sfnt.SegmentOpLineTo:
 				path2d.builder.LineTo(
 					float32(seg.Args[0].X+dot.X)/64.0,
@@ -184,6 +189,9 @@ func (dc *Context) drawText(s string, x, y float64, stroke bool) {
 					float32(seg.Args[2].Y+dot.Y)/64.0,
 				)
 			}
+		}
+		if hasPath {
+			path2d.builder.Close()
 		}
 
 		if stroke {
