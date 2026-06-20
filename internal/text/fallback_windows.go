@@ -6,7 +6,8 @@
 // found in the LICENSE file.
 package text
 
-func GetCommonFallbackFonts(list []string, ch rune, script Script) {
+func GetFallbackFonts(script Script) []string {
+	var list = make([]string, 0, 4)
 	switch script {
 	case ScriptZzzz:
 		// Ensure the switch covers all the Script enum values.
@@ -228,17 +229,19 @@ func GetCommonFallbackFonts(list []string, ch rune, script Script) {
 	// Symbols/dingbats are generally Script=COMMON but may be resolved to any
 	// surrounding script run. So we'll always append a couple of likely fonts
 	// for such characters.
-	b := uint32(ch) >> 8
-	if script == ScriptZyyy || // Stray COMMON chars not resolved
-		(b >= 0x20 && b <= 0x2b) || b == 0x2e { // BMP symbols/punctuation/etc
-		// Segoe UI handles some punctuation/symbols that are missing from many text
-		// fonts.
-		list = append(list, "Segoe UI", "Segoe UI Symbol", "Cambria Math")
-	}
+	// b := uint32(ch) >> 8
+	// if script == ScriptZyyy || // Stray COMMON chars not resolved
+	// 	(b >= 0x20 && b <= 0x2b) || b == 0x2e { // BMP symbols/punctuation/etc
+	// 	// Segoe UI handles some punctuation/symbols that are missing from many text
+	// 	// fonts.
+	// 	list = append(list, "Segoe UI", "Segoe UI Symbol", "Cambria Math")
+	// }
 
 	// Arial Unicode MS also has lots of glyphs for obscure characters; try it as
 	// a last resort, if available.
 	list = append(list, "Arial Unicode MS")
 
 	list = append(list, "Segoe UI Emoji", "Twemoji Mozilla")
+
+	return list
 }

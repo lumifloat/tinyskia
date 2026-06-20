@@ -6,7 +6,8 @@
 // found in the LICENSE file.
 package text
 
-func GetCommonFallbackFonts(list []string, ch rune, script Script) {
+func GetFallbackFonts(script Script) []string {
+	var list = make([]string, 0, 4)
 	switch script {
 	case ScriptZzzz:
 		// Ensure the switch covers all the Script enum values.
@@ -285,19 +286,21 @@ func GetCommonFallbackFonts(list []string, ch rune, script Script) {
 		break
 	}
 
-	b := uint32(ch) >> 8
-	if script == ScriptZyyy ||
-		(b >= 0x20 && b <= 0x2b) || b == 0x2e {
-		if b == 0x27 {
-			list = append(list, "Zapf Dingbats")
-		}
-		list = append(list, "Geneva", "STIXGeneral", "Apple Symbols")
-		list = append(list, "Hiragino Sans", "Hiragino Kaku Gothic ProN")
-	}
+	// b := uint32(ch) >> 8
+	// if script == ScriptZyyy ||
+	// 	(b >= 0x20 && b <= 0x2b) || b == 0x2e {
+	// 	if b == 0x27 {
+	// 		list = append(list, "Zapf Dingbats")
+	// 	}
+	// 	list = append(list, "Geneva", "STIXGeneral", "Apple Symbols")
+	// 	list = append(list, "Hiragino Sans", "Hiragino Kaku Gothic ProN")
+	// }
 
 	// Arial Unicode MS has lots of glyphs for obscure characters; try it as a
 	// last resort.
 	list = append(list, "Arial Unicode MS")
 
 	list = append(list, "Apple Color Emoji")
+
+	return list
 }

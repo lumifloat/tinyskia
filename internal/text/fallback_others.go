@@ -9,5 +9,6 @@
 // found in the LICENSE file.
 package text
 
-func GetCommonFallbackFonts(list []string, ch rune, script Script) {
+func GetFallbackFonts(script Script) []string {
+	return nil
 }

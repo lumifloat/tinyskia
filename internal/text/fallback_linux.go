@@ -6,7 +6,19 @@
 // found in the LICENSE file.
 package text
 
-func GetCommonFallbackFonts(list []string, ch rune, script Script) {
+func GetFallbackFonts(script Script) []string {
+	var list = make([]string, 0, 4)
+	switch script {
+	case ScriptBopo, ScriptHanb, ScriptHans, ScriptHani:
+		list = append(list, "WenQuanYi Micro Hei", "Droid Sans Fallback")
+	case ScriptHant, ScriptHntl:
+		list = append(list, "WenQuanYi Micro Hei", "Droid Sans Fallback")
+	case ScriptHira, ScriptKana, ScriptHrkt, ScriptJpan:
+		list = append(list, "TakaoPGothic", "WenQuanYi Micro Hei", "Droid Sans Fallback")
+	case ScriptHang, ScriptJamo, ScriptKore:
+		list = append(list, "NanumGothic", "WenQuanYi Micro Hei", "Droid Sans Fallback")
+	}
+
 	list = append(list,
 		"DejaVu Serif",
 		"FreeSerif",
@@ -17,16 +29,7 @@ func GetCommonFallbackFonts(list []string, ch rune, script Script) {
 		"Noto Sans Symbols2",
 	)
 
-	if ch >= 0x3000 && ((ch < 0xe000) ||
-		(ch >= 0xf900 && ch < 0xfff0) ||
-		((uint32(ch) >> 16) == 2)) {
-		list = append(list,
-			"TakaoPGothic",
-			"Droid Sans Fallback",
-			"WenQuanYi Micro Hei",
-			"NanumGothic",
-		)
-	}
-
 	list = append(list, "Twemoji Mozilla")
+
+	return list
 }
