@@ -46,11 +46,11 @@ func TestGGScatter(t *testing.T) {
 
 	switch runtime.GOOS {
 	case "windows":
-		gg.RegisterFont("C:/Windows/Fonts/arial.ttf", gg.FontFace{Family: "arial"})
-		gg.RegisterFont("C:/Windows/Fonts/arialbd.ttf", gg.FontFace{Family: "arial", Weight: gg.FontWeightBold})
+		gg.RegisterFontWithFile("C:/Windows/Fonts/arial.ttf", gg.FontFace{Family: "arial"})
+		gg.RegisterFontWithFile("C:/Windows/Fonts/arialbd.ttf", gg.FontFace{Family: "arial", Weight: gg.FontWeightBold})
 	case "darwin":
-		gg.RegisterFont("/Library/Fonts/Arial.ttf", gg.FontFace{Family: "arial"})
-		gg.RegisterFont("/Library/Fonts/Arial Bold.ttf", gg.FontFace{Family: "arial", Weight: gg.FontWeightBold})
+		gg.RegisterFontWithFile("/Library/Fonts/Arial.ttf", gg.FontFace{Family: "arial"})
+		gg.RegisterFontWithFile("/Library/Fonts/Arial Bold.ttf", gg.FontFace{Family: "arial", Weight: gg.FontWeightBold})
 	default:
 		// pass
 	}

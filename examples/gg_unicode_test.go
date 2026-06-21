@@ -8,7 +8,6 @@ package examples
 import (
 	"image/color"
 	"os"
-	"runtime"
 	"testing"
 
 	gg "github.com/lumifloat/tinyskia"
@@ -21,19 +20,10 @@ func TestGGUnicode(t *testing.T) {
 	c := gg.NewCanvas(S, S)
 	dc := c.GetContext()
 
-	switch runtime.GOOS {
-	case "windows":
-		gg.RegisterFont("C:/Windows/Fonts/arial.ttf", gg.FontFace{Family: "arial"})
-	case "darwin":
-		gg.RegisterFont("/Library/Fonts/Arial.ttf", gg.FontFace{Family: "arial"})
-	default:
-		// pass
-	}
-
 	dc.SetFillStyleSolidColor(color.RGBA{255, 255, 255, 255})
 	dc.FillRect(0, 0, float64(S), float64(S))
 	dc.SetFillStyleSolidColor(color.Black)
-	dc.SetFont(gg.FontAttr{Family: []string{"arial"}, Size: F})
+	dc.SetFont(gg.FontAttr{Family: []string{gg.FontGenericSansSerif}, Size: F})
 
 	for r := 0; r < 256; r++ {
 		for c := 0; c < 256; c++ {

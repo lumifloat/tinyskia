@@ -13,7 +13,6 @@ import (
 	"io"
 
 	color2 "github.com/lumifloat/tinyskia/internal/core/color"
-	"golang.org/x/text/language"
 )
 
 type Canvas struct {
@@ -50,9 +49,6 @@ func NewCanvas(width, height int) *Canvas {
 		},
 		textAlign:   TextAlignStart,
 		fontKerning: FontKerningAuto,
-		fontVersion: 0,
-		fontChain0:  make(map[string][]typeface),
-		fontChain1:  make(map[language.Script][]typeface),
 
 		antiAlias:       true,
 		colorspace:      color2.ColorSpaceLinear,

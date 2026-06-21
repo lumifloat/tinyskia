@@ -48,6 +48,8 @@ func GetPreferenceFonts(family string, script Script) []string {
 			return FONT_SANS_SERIF_FONT_FAMILY_KNDA
 		case ScriptHang, ScriptJamo, ScriptKore:
 			return FONT_SANS_SERIF_FONT_FAMILY_KORE
+		case ScriptLatn:
+			return FONT_SANS_SERIF_FONT_FAMILY_LATN
 		case ScriptMlym:
 			return FONT_SANS_SERIF_FONT_FAMILY_MLYM
 		case ScriptOrya:
@@ -63,7 +65,6 @@ func GetPreferenceFonts(family string, script Script) []string {
 		case ScriptTibt:
 			return FONT_SANS_SERIF_FONT_FAMILY_TIBT
 		}
-		return FONT_SANS_SERIF_FONT_FAMILY_LATN
 	case "serif":
 		switch script {
 		case ScriptArab:
@@ -102,6 +103,8 @@ func GetPreferenceFonts(family string, script Script) []string {
 			return FONT_SERIF_FONT_FAMILY_KNDA
 		case ScriptHang, ScriptJamo, ScriptKore:
 			return FONT_SERIF_FONT_FAMILY_KORE
+		case ScriptLatn:
+			return FONT_SERIF_FONT_FAMILY_LATN
 		case ScriptMlym:
 			return FONT_SERIF_FONT_FAMILY_MLYM
 		case ScriptOrya:
@@ -117,7 +120,6 @@ func GetPreferenceFonts(family string, script Script) []string {
 		case ScriptTibt:
 			return FONT_SERIF_FONT_FAMILY_TIBT
 		}
-		return FONT_SERIF_FONT_FAMILY_LATN
 	case "monospace":
 		switch script {
 		case ScriptArab:
@@ -156,6 +158,8 @@ func GetPreferenceFonts(family string, script Script) []string {
 			return FONT_MONOSPACE_FONT_FAMILY_KNDA
 		case ScriptHang, ScriptJamo, ScriptKore:
 			return FONT_MONOSPACE_FONT_FAMILY_KORE
+		case ScriptLatn:
+			return FONT_MONOSPACE_FONT_FAMILY_LATN
 		case ScriptMlym:
 			return FONT_MONOSPACE_FONT_FAMILY_MLYM
 		case ScriptOrya:
@@ -171,7 +175,6 @@ func GetPreferenceFonts(family string, script Script) []string {
 		case ScriptTibt:
 			return FONT_MONOSPACE_FONT_FAMILY_TIBT
 		}
-		return FONT_MONOSPACE_FONT_FAMILY_LATN
 	case "cursive":
 		switch script {
 		case ScriptArab:
@@ -210,6 +213,8 @@ func GetPreferenceFonts(family string, script Script) []string {
 			return FONT_CURSIVE_FONT_FAMILY_KNDA
 		case ScriptHang, ScriptJamo, ScriptKore:
 			return FONT_CURSIVE_FONT_FAMILY_KORE
+		case ScriptLatn:
+			return FONT_CURSIVE_FONT_FAMILY_LATN
 		case ScriptMlym:
 			return FONT_CURSIVE_FONT_FAMILY_MLYM
 		case ScriptOrya:
@@ -225,14 +230,12 @@ func GetPreferenceFonts(family string, script Script) []string {
 		case ScriptTibt:
 			return FONT_CURSIVE_FONT_FAMILY_TIBT
 		}
-		return FONT_CURSIVE_FONT_FAMILY_LATN
 	case "fantasy":
 		return FONT_FANTASY_FONT_FAMILY
 	case "math":
 		return FONT_MATH_FONT_FAMILY
 	case "emoji":
 		return FONT_EMOJI_FONT_FAMILY
-	default:
-		return nil
 	}
+	return nil
 }

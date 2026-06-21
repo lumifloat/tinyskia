@@ -23,9 +23,9 @@ func TestGGMeme(t *testing.T) {
 
 	switch runtime.GOOS {
 	case "windows":
-		gg.RegisterFont("C:/Windows/Fonts/impact.ttf", gg.FontFace{Family: "impact"})
+		gg.RegisterFontWithFile("C:/Windows/Fonts/impact.ttf", gg.FontFace{Family: "impact"})
 	case "darwin":
-		gg.RegisterFont("/Library/Fonts/Impact.ttf", gg.FontFace{Family: "impact"})
+		gg.RegisterFontWithFile("/Library/Fonts/Impact.ttf", gg.FontFace{Family: "impact"})
 	default:
 		// pass
 	}

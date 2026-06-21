@@ -32,53 +32,57 @@ func (dc *Context) MeasureText(s string) TextMetrics {
 
 	var maxFontAscent, maxFontDescent float64
 
-	for _, r := range s {
-		ft, curr := dc.glyph(r)
-		if curr == 0 {
-			prev = 0
-			continue
-		}
-
-		hMetrics, err := ft.Metrics(&dc.buf, ppem, font.HintingFull)
-		if err == nil {
-			fontAscent := math.Abs(float64(hMetrics.Ascent) / 64.0)
-			fontDescent := math.Abs(float64(hMetrics.Descent) / 64.0)
-
-			maxFontAscent = math.Max(maxFontAscent, fontAscent)
-			maxFontDescent = math.Max(maxFontDescent, fontDescent)
-		}
-
-		if dc.fontKerning != FontKerningNone && prev != 0 {
-			kern, err := ft.Kern(&dc.buf, prev, curr, ppem, font.HintingFull)
-			if err == nil {
-				advance += kern
+	locale, _ := dc.lang.Script()
+	fragments, scripts := script.Segement([]rune(s))
+	for i := range fragments {
+		for _, r := range fragments[i] {
+			ft, curr, err := fonts.GlyphIndex(&dc.buf, r, scripts[i], locale, dc.font.Family, dc.font.Weight, dc.font.Style)
+			if ft == nil || ft.Font == nil || curr == 0 || err != nil {
+				prev = 0
+				continue
 			}
-		}
-		prev = curr
 
-		b, a, err := ft.GlyphBounds(&dc.buf, curr, ppem, font.HintingFull)
-		if err != nil {
-			continue
-		}
-		if b.Empty() {
+			hMetrics, err := ft.Metrics(&dc.buf, ppem, font.HintingFull)
+			if err == nil {
+				fontAscent := math.Abs(float64(hMetrics.Ascent) / 64.0)
+				fontDescent := math.Abs(float64(hMetrics.Descent) / 64.0)
+
+				maxFontAscent = math.Max(maxFontAscent, fontAscent)
+				maxFontDescent = math.Max(maxFontDescent, fontDescent)
+			}
+
+			if dc.fontKerning != FontKerningNone && prev != 0 {
+				kern, err := ft.Kern(&dc.buf, prev, curr, ppem, font.HintingFull)
+				if err == nil {
+					advance += kern
+				}
+			}
+			prev = curr
+
+			b, a, err := ft.GlyphBounds(&dc.buf, curr, ppem, font.HintingFull)
+			if err != nil {
+				continue
+			}
+			if b.Empty() {
+				advance += a
+				continue
+			}
+
+			if advance+b.Min.X < minX {
+				minX = advance + b.Min.X
+			}
+			if advance+b.Max.X > maxX {
+				maxX = advance + b.Max.X
+			}
+			if b.Min.Y < minY {
+				minY = b.Min.Y
+			}
+			if b.Max.Y > maxY {
+				maxY = b.Max.Y
+			}
+
 			advance += a
-			continue
 		}
-
-		if advance+b.Min.X < minX {
-			minX = advance + b.Min.X
-		}
-		if advance+b.Max.X > maxX {
-			maxX = advance + b.Max.X
-		}
-		if b.Min.Y < minY {
-			minY = b.Min.Y
-		}
-		if b.Max.Y > maxY {
-			maxY = b.Max.Y
-		}
-
-		advance += a
 	}
 
 	metrics.Width = float64(advance) / 64.0
@@ -130,103 +134,80 @@ func (dc *Context) drawText(s string, x, y float64, stroke bool) {
 
 	var prev sfnt.GlyphIndex
 
-	for _, r := range s {
-		path2d := NewPath2D()
-		ft, curr := dc.glyph(r)
-		if curr == 0 {
-			continue
-		}
-
-		if dc.fontKerning != FontKerningNone && prev != 0 {
-			kern, err := ft.Kern(&dc.buf, prev, curr, ppem, font.HintingFull)
-			if err == nil {
-				dot.X += kern
+	locale, _ := dc.lang.Script()
+	fragments, scripts := script.Segement([]rune(s))
+	for i := range fragments {
+		for _, r := range fragments[i] {
+			path2d := NewPath2D()
+			ft, curr, err := fonts.GlyphIndex(&dc.buf, r, scripts[i], locale, dc.font.Family, dc.font.Weight, dc.font.Style)
+			if ft == nil || ft.Font == nil || curr == 0 || err != nil {
+				continue
 			}
-		}
-		prev = curr
 
-		advance, err := ft.GlyphAdvance(&dc.buf, curr, ppem, font.HintingFull)
-		if err != nil {
-			continue
-		}
-
-		segments, err := ft.LoadGlyph(&dc.buf, curr, ppem, nil)
-		if err != nil {
-			continue
-		}
-
-		var hasPath bool = false
-		for _, seg := range segments {
-			switch seg.Op {
-			case sfnt.SegmentOpMoveTo:
-				if hasPath {
-					path2d.builder.Close()
+			if dc.fontKerning != FontKerningNone && prev != 0 {
+				kern, err := ft.Kern(&dc.buf, prev, curr, ppem, font.HintingFull)
+				if err == nil {
+					dot.X += kern
 				}
-				path2d.builder.MoveTo(
-					float32(seg.Args[0].X+dot.X)/64.0,
-					float32(seg.Args[0].Y+dot.Y)/64.0,
-				)
-				hasPath = true
-			case sfnt.SegmentOpLineTo:
-				path2d.builder.LineTo(
-					float32(seg.Args[0].X+dot.X)/64.0,
-					float32(seg.Args[0].Y+dot.Y)/64.0,
-				)
-			case sfnt.SegmentOpQuadTo:
-				path2d.builder.QuadTo(
-					float32(seg.Args[0].X+dot.X)/64.0,
-					float32(seg.Args[0].Y+dot.Y)/64.0,
-					float32(seg.Args[1].X+dot.X)/64.0,
-					float32(seg.Args[1].Y+dot.Y)/64.0,
-				)
-			case sfnt.SegmentOpCubeTo:
-				path2d.builder.CubicTo(
-					float32(seg.Args[0].X+dot.X)/64.0,
-					float32(seg.Args[0].Y+dot.Y)/64.0,
-					float32(seg.Args[1].X+dot.X)/64.0,
-					float32(seg.Args[1].Y+dot.Y)/64.0,
-					float32(seg.Args[2].X+dot.X)/64.0,
-					float32(seg.Args[2].Y+dot.Y)/64.0,
-				)
 			}
-		}
-		if hasPath {
-			path2d.builder.Close()
-		}
+			prev = curr
 
-		if stroke {
-			dc.StrokePath(path2d)
-		} else {
-			dc.FillPath(path2d)
-		}
-		dot.X += advance
-	}
-}
-
-func (dc *Context) glyph(r rune) (*sfnt.Font, sfnt.GlyphIndex) {
-	for i := range dc.font.Family {
-		chain := dc.fmatch0(dc.font.Family[i])
-		for i := range chain {
-			ft, err := loadFont(chain[i])
+			advance, err := ft.GlyphAdvance(&dc.buf, curr, ppem, font.HintingFull)
 			if err != nil {
 				continue
 			}
-			curr, err := ft.GlyphIndex(&dc.buf, r)
-			if err == nil && curr != 0 {
-				return ft, curr
+
+			segments, err := ft.LoadGlyph(&dc.buf, curr, ppem, nil)
+			if err != nil {
+				continue
 			}
+
+			var hasPath bool = false
+			for _, seg := range segments {
+				switch seg.Op {
+				case sfnt.SegmentOpMoveTo:
+					if hasPath {
+						path2d.builder.Close()
+					}
+					path2d.builder.MoveTo(
+						float32(seg.Args[0].X+dot.X)/64.0,
+						float32(seg.Args[0].Y+dot.Y)/64.0,
+					)
+					hasPath = true
+				case sfnt.SegmentOpLineTo:
+					path2d.builder.LineTo(
+						float32(seg.Args[0].X+dot.X)/64.0,
+						float32(seg.Args[0].Y+dot.Y)/64.0,
+					)
+				case sfnt.SegmentOpQuadTo:
+					path2d.builder.QuadTo(
+						float32(seg.Args[0].X+dot.X)/64.0,
+						float32(seg.Args[0].Y+dot.Y)/64.0,
+						float32(seg.Args[1].X+dot.X)/64.0,
+						float32(seg.Args[1].Y+dot.Y)/64.0,
+					)
+				case sfnt.SegmentOpCubeTo:
+					path2d.builder.CubicTo(
+						float32(seg.Args[0].X+dot.X)/64.0,
+						float32(seg.Args[0].Y+dot.Y)/64.0,
+						float32(seg.Args[1].X+dot.X)/64.0,
+						float32(seg.Args[1].Y+dot.Y)/64.0,
+						float32(seg.Args[2].X+dot.X)/64.0,
+						float32(seg.Args[2].Y+dot.Y)/64.0,
+					)
+				}
+			}
+			if hasPath {
+				path2d.builder.Close()
+			}
+
+			if stroke {
+				dc.StrokePath(path2d)
+			} else {
+				dc.FillPath(path2d)
+			}
+			dot.X += advance
 		}
 	}
-	chain := dc.fmatch1(r)
-	for i := range chain {
-		ft, err := loadFont(chain[i])
-		if err != nil {
-			continue
-		}
-		curr, err := ft.GlyphIndex(&dc.buf, r)
-		if err == nil && curr != 0 {
-			return ft, curr
-		}
-	}
-	return nil, 0
+
 }

@@ -27,9 +27,9 @@ func TestSheetFont(t *testing.T) {
 
 	switch runtime.GOOS {
 	case "windows":
-		tinyskia.RegisterFont("C:/Windows/Fonts/arialbd.ttf", tinyskia.FontFace{Family: "arial"})
+		tinyskia.RegisterFontWithFile("C:/Windows/Fonts/arialbd.ttf", tinyskia.FontFace{Family: "arial"})
 	case "darwin":
-		tinyskia.RegisterFont("/Library/Fonts/Arial Bold.ttf", tinyskia.FontFace{Family: "arial"})
+		tinyskia.RegisterFontWithFile("/Library/Fonts/Arial Bold.ttf", tinyskia.FontFace{Family: "arial"})
 	default:
 		// pass
 	}

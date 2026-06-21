@@ -22,9 +22,9 @@ func TestGGQuadratic(t *testing.T) {
 
 	switch runtime.GOOS {
 	case "windows":
-		gg.RegisterFont("C:/Windows/Fonts/arial.ttf", gg.FontFace{Family: "arial"})
+		gg.RegisterFontWithFile("C:/Windows/Fonts/arial.ttf", gg.FontFace{Family: "arial"})
 	case "darwin":
-		gg.RegisterFont("/Library/Fonts/Arial.ttf", gg.FontFace{Family: "arial"})
+		gg.RegisterFontWithFile("/Library/Fonts/Arial.ttf", gg.FontFace{Family: "arial"})
 	default:
 		// pass
 	}

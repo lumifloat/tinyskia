@@ -27,9 +27,9 @@ func TestSheetFontKerning(t *testing.T) {
 
 	switch runtime.GOOS {
 	case "windows":
-		tinyskia.RegisterFont("C:/Windows/Fonts/arial.ttf", tinyskia.FontFace{Family: "arial"})
+		tinyskia.RegisterFontWithFile("C:/Windows/Fonts/arial.ttf", tinyskia.FontFace{Family: "arial"})
 	case "darwin":
-		tinyskia.RegisterFont("/Library/Fonts/Arial.ttf", tinyskia.FontFace{Family: "arial"})
+		tinyskia.RegisterFontWithFile("/Library/Fonts/Arial.ttf", tinyskia.FontFace{Family: "arial"})
 	default:
 		// pass
 	}

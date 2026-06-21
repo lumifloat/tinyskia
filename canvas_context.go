@@ -47,9 +47,7 @@ type Context struct {
 	buf         sfnt.Buffer
 	textAlign   TextAlign
 	fontKerning FontKerning
-	fontVersion uint64
-	fontChain0  map[string][]typeface
-	fontChain1  map[language.Script][]typeface
+	fontBuffer  sfnt.Buffer
 
 	antiAlias       bool
 	colorspace      color2.ColorSpace
