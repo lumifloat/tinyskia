@@ -8,7 +8,6 @@ package examples
 import (
 	"image/color"
 	"os"
-	"runtime"
 	"testing"
 
 	gg "github.com/lumifloat/tinyskia"
@@ -20,15 +19,6 @@ func TestGGGradientText(t *testing.T) {
 
 	c := gg.NewCanvas(W, H)
 	dc := c.GetContext()
-
-	switch runtime.GOOS {
-	case "windows":
-		gg.RegisterFontWithFile("C:/Windows/Fonts/impact.ttf", gg.FontFace{Family: "impact"})
-	case "darwin":
-		gg.RegisterFontWithFile("/Library/Fonts/Impact.ttf", gg.FontFace{Family: "impact"})
-	default:
-		// pass
-	}
 
 	// Set white background
 	dc.SetFillStyleSolidColor(color.RGBA{255, 255, 255, 255})

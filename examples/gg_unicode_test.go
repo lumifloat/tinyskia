@@ -32,12 +32,8 @@ func TestGGUnicode(t *testing.T) {
 			y := float64(r*T) + T/2
 
 			char := string(rune(i))
-			metrics := dc.MeasureText(char)
-			charWidth := metrics.Width
-
-			// Center the character in the cell
-			drawX := x - charWidth/2
-			dc.FillText(char, drawX, y)
+			dc.SetTextAlign(gg.TextAlignCenter)
+			dc.FillText(char, x, y)
 		}
 	}
 

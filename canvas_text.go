@@ -7,95 +7,92 @@
 package tinyskia
 
 import (
-	"math"
-
-	"golang.org/x/image/font"
-	"golang.org/x/image/font/sfnt"
+	"github.com/go-text/typesetting/font"
+	"github.com/go-text/typesetting/font/opentype"
+	"github.com/go-text/typesetting/fontscan"
+	"github.com/go-text/typesetting/shaping"
 	"golang.org/x/image/math/fixed"
 )
 
 // MeasureText measures the given text and returns a TextMetrics object with detailed metrics.
-func (dc *Context) MeasureText(s string) TextMetrics {
-	var metrics TextMetrics
-
-	if s == "" {
+func (ctx *Context) MeasureText(s string) (metrics TextMetrics) {
+	runes := []rune(s)
+	if len(runes) == 0 {
 		return metrics
 	}
 
-	ppem := fixed.Int26_6(dc.font.Size * 64)
+	ppem := fixed.Int26_6(ctx.font.Size * 64)
+	input := shaping.Input{
+		Text:     runes,
+		RunStart: 0,
+		RunEnd:   len(runes),
+		Size:     ppem,
+		FontFeatures: []shaping.FontFeature{
+			{
+				Tag:   opentype.NewTag('k', 'e', 'r', 'n'),
+				Value: uint32(ctx.fontKerning),
+			},
+		},
+	}
 
-	var advance fixed.Int26_6
-	var prev sfnt.GlyphIndex
+	var segmenter shaping.Segmenter
+	flock.Lock()
+	fonts.SetQuery(fontscan.Query{
+		Families: ctx.font.Family,
+		Aspect: font.Aspect{
+			Weight: font.Weight(ctx.font.Weight),
+			Style:  font.StyleNormal,
+		},
+	})
+	outputs := segmenter.Split(input, fonts)
+	flock.Unlock()
 
-	minX, maxX := fixed.Int26_6(1<<30), fixed.Int26_6(-(1 << 30))
-	minY, maxY := fixed.Int26_6(1<<30), fixed.Int26_6(-(1 << 30))
+	shaper := shaping.HarfbuzzShaper{}
 
-	var maxFontAscent, maxFontDescent float64
+	var width fixed.Int26_6
+	var fascent, fdescent fixed.Int26_6
+	var ascent, descent, left, right fixed.Int26_6
 
-	locale, _ := dc.lang.Script()
-	fragments, scripts := script.Segement([]rune(s))
-	for i := range fragments {
-		for _, r := range fragments[i] {
-			ft, curr, err := fonts.GlyphIndex(&dc.buf, r, scripts[i], locale, dc.font.Family, dc.font.Weight, dc.font.Style)
-			if ft == nil || ft.Font == nil || curr == 0 || err != nil {
-				prev = 0
-				continue
+	for _, output := range outputs {
+		shape := shaper.Shape(output)
+
+		for _, glyph := range shape.Glyphs {
+			l := width + glyph.XOffset + glyph.XBearing
+			r := l + glyph.Width
+
+			if l < left {
+				left = l
 			}
+			if r > right {
+				right = r
+			}
+			width += glyph.Advance
+		}
 
-			hMetrics, err := ft.Metrics(&dc.buf, ppem, font.HintingFull)
-			if err == nil {
-				fontAscent := math.Abs(float64(hMetrics.Ascent) / 64.0)
-				fontDescent := math.Abs(float64(hMetrics.Descent) / 64.0)
-
-				maxFontAscent = math.Max(maxFontAscent, fontAscent)
-				maxFontDescent = math.Max(maxFontDescent, fontDescent)
-			}
-
-			if dc.fontKerning != FontKerningNone && prev != 0 {
-				kern, err := ft.Kern(&dc.buf, prev, curr, ppem, font.HintingFull)
-				if err == nil {
-					advance += kern
-				}
-			}
-			prev = curr
-
-			b, a, err := ft.GlyphBounds(&dc.buf, curr, ppem, font.HintingFull)
-			if err != nil {
-				continue
-			}
-			if b.Empty() {
-				advance += a
-				continue
-			}
-
-			if advance+b.Min.X < minX {
-				minX = advance + b.Min.X
-			}
-			if advance+b.Max.X > maxX {
-				maxX = advance + b.Max.X
-			}
-			if b.Min.Y < minY {
-				minY = b.Min.Y
-			}
-			if b.Max.Y > maxY {
-				maxY = b.Max.Y
-			}
-
-			advance += a
+		if ascent < shape.GlyphBounds.Ascent {
+			ascent = shape.GlyphBounds.Ascent
+		}
+		if descent < shape.GlyphBounds.Descent {
+			descent = shape.GlyphBounds.Descent
+		}
+		if fascent < shape.LineBounds.Ascent {
+			fascent = shape.LineBounds.Ascent
+		}
+		if fdescent > shape.LineBounds.Descent {
+			fdescent = shape.LineBounds.Descent
 		}
 	}
 
-	metrics.Width = float64(advance) / 64.0
+	metrics.Width = float64(width) / 64
 
-	metrics.FontBoundingBoxAscent = maxFontAscent
-	metrics.FontBoundingBoxDescent = maxFontDescent
+	metrics.ActualBoundingBoxLeft = float64(left) / 64
+	metrics.ActualBoundingBoxRight = float64(right) / 64
 
-	if minX < fixed.Int26_6(1<<30) {
-		metrics.ActualBoundingBoxLeft = -float64(minX) / 64.0
-		metrics.ActualBoundingBoxRight = float64(maxX) / 64.0
-		metrics.ActualBoundingBoxAscent = -float64(minY) / 64.0
-		metrics.ActualBoundingBoxDescent = float64(maxY) / 64.0
-	}
+	metrics.ActualBoundingBoxAscent = float64(ascent) / 64
+	metrics.ActualBoundingBoxDescent = float64(descent) / 64
+
+	metrics.FontBoundingBoxAscent = float64(fascent) / 64
+	metrics.FontBoundingBoxDescent = float64(fdescent) / 64
 
 	return metrics
 }
@@ -109,105 +106,117 @@ func (dc *Context) StrokeText(s string, x, y float64) {
 }
 
 func (dc *Context) drawText(s string, x, y float64, stroke bool) {
-	ppem := fixed.Int26_6(dc.font.Size * 64)
-
-	metrics := dc.MeasureText(s)
-	textWidth := metrics.Width
-
-	var offsetX float64
-	switch dc.textAlign {
-	case TextAlignLeft, TextAlignStart:
-		offsetX = 0
-	case TextAlignRight, TextAlignEnd:
-		offsetX = -textWidth
-	case TextAlignCenter:
-		offsetX = -textWidth / 2.0
-	default:
-		offsetX = 0
+	runes := []rune(s)
+	if len(runes) == 0 {
+		return
 	}
 
-	x = x + offsetX
+	ppem := fixed.Int26_6(dc.font.Size * 64)
+	input := shaping.Input{
+		Text:     runes,
+		RunStart: 0,
+		RunEnd:   len(runes),
+		Size:     ppem,
+		FontFeatures: []shaping.FontFeature{
+			{
+				Tag:   opentype.NewTag('k', 'e', 'r', 'n'),
+				Value: uint32(dc.fontKerning),
+			},
+		},
+	}
 
-	fx := fixed.I(int(x))
-	fy := fixed.I(int(y))
-	dot := fixed.Point26_6{X: fx, Y: fy}
+	var segmenter shaping.Segmenter
+	flock.Lock()
+	fonts.SetQuery(fontscan.Query{
+		Families: dc.font.Family,
+		Aspect: font.Aspect{
+			Weight: font.Weight(dc.font.Weight),
+			Style:  font.Style(dc.font.Style),
+		},
+	})
+	outputs := segmenter.Split(input, fonts)
+	flock.Unlock()
 
-	var prev sfnt.GlyphIndex
+	fx := float32(x)
+	fy := float32(y)
 
-	locale, _ := dc.lang.Script()
-	fragments, scripts := script.Segement([]rune(s))
-	for i := range fragments {
-		for _, r := range fragments[i] {
-			path2d := NewPath2D()
-			ft, curr, err := fonts.GlyphIndex(&dc.buf, r, scripts[i], locale, dc.font.Family, dc.font.Weight, dc.font.Style)
-			if ft == nil || ft.Font == nil || curr == 0 || err != nil {
-				continue
-			}
+	shaper := shaping.HarfbuzzShaper{}
+	shapes := []shaping.Output{}
+	width := float32(0)
+	for _, output := range outputs {
+		shape := shaper.Shape(output)
+		shapes = append(shapes, shape)
+		width += float32(shape.Advance) / 64
+	}
+	switch dc.textAlign {
+	case TextAlignLeft, TextAlignStart:
+		break
+	case TextAlignRight, TextAlignEnd:
+		fx -= width
+	case TextAlignCenter:
+		fx -= width / 2.0
+	}
 
-			if dc.fontKerning != FontKerningNone && prev != 0 {
-				kern, err := ft.Kern(&dc.buf, prev, curr, ppem, font.HintingFull)
-				if err == nil {
-					dot.X += kern
+	for _, shape := range shapes {
+		upem := shape.Face.Upem()
+		scale := float32(ppem) / float32(upem) / 64.0
+		for _, glyph := range shape.Glyphs {
+			data := shape.Face.GlyphData(glyph.GlyphID)
+			switch d := data.(type) {
+			case font.GlyphOutline:
+				path2d := outline(d, scale, fx, fy)
+				if stroke {
+					dc.StrokePath(path2d)
+				} else {
+					dc.FillPath(path2d)
 				}
 			}
-			prev = curr
 
-			advance, err := ft.GlyphAdvance(&dc.buf, curr, ppem, font.HintingFull)
-			if err != nil {
-				continue
-			}
-
-			segments, err := ft.LoadGlyph(&dc.buf, curr, ppem, nil)
-			if err != nil {
-				continue
-			}
-
-			var hasPath bool = false
-			for _, seg := range segments {
-				switch seg.Op {
-				case sfnt.SegmentOpMoveTo:
-					if hasPath {
-						path2d.builder.Close()
-					}
-					path2d.builder.MoveTo(
-						float32(seg.Args[0].X+dot.X)/64.0,
-						float32(seg.Args[0].Y+dot.Y)/64.0,
-					)
-					hasPath = true
-				case sfnt.SegmentOpLineTo:
-					path2d.builder.LineTo(
-						float32(seg.Args[0].X+dot.X)/64.0,
-						float32(seg.Args[0].Y+dot.Y)/64.0,
-					)
-				case sfnt.SegmentOpQuadTo:
-					path2d.builder.QuadTo(
-						float32(seg.Args[0].X+dot.X)/64.0,
-						float32(seg.Args[0].Y+dot.Y)/64.0,
-						float32(seg.Args[1].X+dot.X)/64.0,
-						float32(seg.Args[1].Y+dot.Y)/64.0,
-					)
-				case sfnt.SegmentOpCubeTo:
-					path2d.builder.CubicTo(
-						float32(seg.Args[0].X+dot.X)/64.0,
-						float32(seg.Args[0].Y+dot.Y)/64.0,
-						float32(seg.Args[1].X+dot.X)/64.0,
-						float32(seg.Args[1].Y+dot.Y)/64.0,
-						float32(seg.Args[2].X+dot.X)/64.0,
-						float32(seg.Args[2].Y+dot.Y)/64.0,
-					)
-				}
-			}
-			if hasPath {
-				path2d.builder.Close()
-			}
-
-			if stroke {
-				dc.StrokePath(path2d)
-			} else {
-				dc.FillPath(path2d)
-			}
-			dot.X += advance
+			fx += float32(glyph.Advance) / 64
 		}
 	}
 
+}
+
+func outline(outline font.GlyphOutline, scale float32, x, y float32) *Path2D {
+	var path2d = NewPath2D()
+	var hasPath = false
+	for _, s := range outline.Segments {
+		switch s.Op {
+		case opentype.SegmentOpMoveTo:
+			if hasPath {
+				path2d.builder.Close()
+			}
+			path2d.builder.MoveTo(
+				s.Args[0].X*scale+x,
+				-s.Args[0].Y*scale+y,
+			)
+			hasPath = true
+		case opentype.SegmentOpLineTo:
+			path2d.builder.LineTo(
+				s.Args[0].X*scale+x,
+				-s.Args[0].Y*scale+y,
+			)
+		case opentype.SegmentOpQuadTo:
+			path2d.builder.QuadTo(
+				s.Args[0].X*scale+x,
+				-s.Args[0].Y*scale+y,
+				s.Args[1].X*scale+x,
+				-s.Args[1].Y*scale+y,
+			)
+		case opentype.SegmentOpCubeTo:
+			path2d.builder.CubicTo(
+				s.Args[0].X*scale+x,
+				-s.Args[0].Y*scale+y,
+				s.Args[1].X*scale+x,
+				-s.Args[1].Y*scale+y,
+				s.Args[2].X*scale+x,
+				-s.Args[2].Y*scale+y,
+			)
+		}
+	}
+	if hasPath {
+		path2d.builder.Close()
+	}
+	return path2d
 }

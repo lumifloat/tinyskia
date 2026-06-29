@@ -12,7 +12,6 @@ package examples
 
 import (
 	"os"
-	"runtime"
 	"testing"
 
 	"github.com/lumifloat/tinyskia"
@@ -24,15 +23,6 @@ func TestSheetTextAlign(t *testing.T) {
 
 	canvas := tinyskia.NewCanvas(width, height)
 	ctx := canvas.GetContext()
-
-	switch runtime.GOOS {
-	case "windows":
-		tinyskia.RegisterFontWithFile("C:/Windows/Fonts/arial.ttf", tinyskia.FontFace{Family: "arial"})
-	case "darwin":
-		tinyskia.RegisterFontWithFile("/Library/Fonts/Arial.ttf", tinyskia.FontFace{Family: "arial"})
-	default:
-		// pass
-	}
 
 	x := float64(width / 2)
 

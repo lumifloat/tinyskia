@@ -6,6 +6,7 @@
 package examples
 
 import (
+	"bytes"
 	"image/color"
 	"os"
 	"testing"
@@ -21,21 +22,21 @@ func TestGoFont(t *testing.T) {
 	dc.SetFillStyleSolidColor(color.RGBA{255, 255, 255, 255})
 	dc.FillRect(0, 0, float64(S), float64(S))
 
-	if err := gg.RegisterFontWithData(goregular.TTF, gg.FontFace{Family: "go"}); err != nil {
+	ttf := bytes.NewReader(goregular.TTF)
+
+	if err := gg.RegisterFontWithResource(ttf, "goregular.ttf", gg.FontFace{Family: "go"}); err != nil {
 		t.Errorf("Font not available: %v", err)
 		return
 	}
 	dc.SetFont(gg.FontAttr{Family: []string{"go"}, Size: 48})
+	dc.SetTextAlign(gg.TextAlignCenter)
 	text := "Hello, world!"
-	metrics := dc.MeasureText(text)
-	textWidth := metrics.Width
-	textHeight := metrics.FontBoundingBoxAscent - metrics.FontBoundingBoxDescent
 
-	x := S/2 - textWidth/2
-	y := S/2 + textHeight/2
+	x := S / 2
+	y := S / 2
 
 	dc.SetFillStyleSolidColor(color.Black)
-	dc.FillText(text, x, y)
+	dc.FillText(text, float64(x), float64(y))
 
 	fi, err := os.Create("gg_out.png")
 	if err != nil {

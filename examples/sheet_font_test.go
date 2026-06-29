@@ -12,7 +12,6 @@ package examples
 
 import (
 	"os"
-	"runtime"
 	"testing"
 
 	"github.com/lumifloat/tinyskia"
@@ -24,15 +23,6 @@ func TestSheetFont(t *testing.T) {
 
 	canvas := tinyskia.NewCanvas(width, height)
 	ctx := canvas.GetContext()
-
-	switch runtime.GOOS {
-	case "windows":
-		tinyskia.RegisterFontWithFile("C:/Windows/Fonts/arialbd.ttf", tinyskia.FontFace{Family: "arial"})
-	case "darwin":
-		tinyskia.RegisterFontWithFile("/Library/Fonts/Arial Bold.ttf", tinyskia.FontFace{Family: "arial"})
-	default:
-		// pass
-	}
 
 	ctx.SetFont(tinyskia.FontAttr{Family: []string{"arial"}, Weight: tinyskia.FontWeightBold, Size: 48})
 	ctx.StrokeText("Hello world", 50, 100)

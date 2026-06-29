@@ -10,7 +10,6 @@ import (
 
 	color2 "github.com/lumifloat/tinyskia/internal/core/color"
 	"golang.org/x/image/font/sfnt"
-	"golang.org/x/text/language"
 )
 
 // Context is the main drawing context, similar to gg.Context.
@@ -42,7 +41,7 @@ type Context struct {
 	path2d *Path2D
 
 	// TextDrawingStyles
-	lang        language.Tag
+	lang        string
 	font        FontAttr
 	buf         sfnt.Buffer
 	textAlign   TextAlign

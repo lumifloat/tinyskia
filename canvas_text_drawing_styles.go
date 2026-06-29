@@ -8,18 +8,33 @@
 package tinyskia
 
 import (
+	"fmt"
+	"io"
+	"log"
 	"os"
+	"path/filepath"
+	"runtime"
+	"sync"
 
-	"github.com/lumifloat/tinyskia/internal/text"
-	"golang.org/x/image/font/sfnt"
-	"golang.org/x/text/language"
+	"github.com/go-text/typesetting/font"
+	"github.com/go-text/typesetting/fontscan"
 )
 
-var script = text.ScriptCache{}
-var fonts = text.NewRegistry()
+var (
+	fonts *fontscan.FontMap
+	flock sync.Mutex
+)
 
 func init() {
-	fonts.ScanSystemFonts()
+	// TODO
+	fonts = fontscan.NewFontMap(log.New(io.Discard, "", 0))
+	cacheDir := ""
+	if runtime.GOOS == "android" {
+		parent := os.Getenv("FILESDIR")
+		cacheDir = filepath.Join(parent, "fontcache")
+	}
+
+	fonts.UseSystemFonts(cacheDir)
 }
 
 type FontAttr struct {
@@ -35,12 +50,12 @@ type FontFace struct {
 	Style  FontStyle
 }
 
-type FontStyle = string
+type FontStyle = uint8
 
 var (
-	FontStyleNormal  FontStyle = FontStyle("normal")
-	FontStyleItalic  FontStyle = FontStyle("italic")
-	FontStyleOblique FontStyle = FontStyle("oblique")
+	FontStyleNormal  FontStyle = FontStyle(font.StyleNormal)
+	FontStyleItalic  FontStyle = FontStyle(font.StyleItalic)
+	FontStyleOblique FontStyle = FontStyle(font.StyleItalic)
 )
 
 type FontWeight = float64
@@ -91,29 +106,25 @@ const (
 	TextAlignRight
 )
 
-type FontKerning int
+type FontKerning uint32
 
 const (
 	// FontKerningAuto
-	FontKerningAuto FontKerning = iota
+	FontKerningAuto FontKerning = 1
 	// FontKerningNormal
-	FontKerningNormal
+	FontKerningNormal FontKerning = 1
 	// FontKerningNone
-	FontKerningNone
+	FontKerningNone FontKerning = 0
 )
 
 // SetLang
 func (dc *Context) SetLang(lang string) {
-	tag, err := language.Parse(lang)
-	if err != nil {
-		return
-	}
-	dc.lang = tag
+	dc.lang = lang
 }
 
 // GetLang
 func (dc *Context) GetLang() string {
-	return dc.lang.String()
+	return dc.lang
 }
 
 // SetFont
@@ -154,40 +165,78 @@ func (dc *Context) GetFontKerning() FontKerning {
 	return dc.fontKerning
 }
 
-func RegisterFont(font *sfnt.Font, face FontFace) error {
-	return fonts.RegisterFont(font, face.Family, face.Weight, face.Style)
-}
-
-func RegisterFontWithFile(file string, face FontFace) error {
+func RegisterFont(file string, face FontFace) error {
+	flock.Lock()
+	defer flock.Unlock()
 	fi, err := os.Open(file)
 	if err != nil {
 		return err
 	}
-	collection, err := sfnt.ParseCollectionReaderAt(fi)
+	faces, err := font.ParseTTC(fi)
 	if err != nil {
-		return err
+		return fmt.Errorf("unsupported font resource: %s", err)
 	}
-	if collection.NumFonts() == 0 {
-		return sfnt.ErrNotFound
+	loc := fontscan.Location{File: file}
+	desc := font.Description{
+		Family: face.Family,
+		Aspect: font.Aspect{
+			Weight: font.Weight(face.Weight),
+			Style:  font.Style(face.Style),
+		},
 	}
-	ttf, err := collection.Font(0)
-	if err != nil {
-		return err
-	}
-	return fonts.RegisterFont(ttf, face.Family, face.Weight, face.Style)
+	fonts.AddFace(faces[0], loc, desc)
+	return nil
 }
 
-func RegisterFontWithData(data []byte, face FontFace) error {
-	collection, err := sfnt.ParseCollection(data)
+func RegisterFontWithResource(file font.Resource, location string, face FontFace) error {
+	flock.Lock()
+	defer flock.Unlock()
+	faces, err := font.ParseTTC(file)
 	if err != nil {
-		return err
+		return fmt.Errorf("unsupported font resource: %s", err)
 	}
-	if collection.NumFonts() == 0 {
-		return sfnt.ErrNotFound
+	loc := fontscan.Location{File: location}
+	desc := font.Description{
+		Family: face.Family,
+		Aspect: font.Aspect{
+			Weight: font.Weight(face.Weight),
+			Style:  font.Style(face.Style),
+		},
 	}
-	ttf, err := collection.Font(0)
-	if err != nil {
-		return err
-	}
-	return fonts.RegisterFont(ttf, face.Family, face.Weight, face.Style)
+	fonts.AddFace(faces[0], loc, desc)
+	return nil
 }
+
+// func RegisterFontWithFile(file string, face FontFace) error {
+// 	fi, err := os.Open(file)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	collection, err := sfnt.ParseCollectionReaderAt(fi)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	if collection.NumFonts() == 0 {
+// 		return sfnt.ErrNotFound
+// 	}
+// 	ttf, err := collection.Font(0)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	return fonts.RegisterFont(ttf, face.Family, face.Weight, face.Style)
+// }
+
+// func RegisterFontWithData(data []byte, face FontFace) error {
+// 	collection, err := sfnt.ParseCollection(data)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	if collection.NumFonts() == 0 {
+// 		return sfnt.ErrNotFound
+// 	}
+// 	ttf, err := collection.Font(0)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	return fonts.RegisterFont(ttf, face.Family, face.Weight, face.Style)
+// }

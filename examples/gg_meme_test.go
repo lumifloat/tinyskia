@@ -8,7 +8,6 @@ package examples
 import (
 	"image/color"
 	"os"
-	"runtime"
 	"testing"
 
 	gg "github.com/lumifloat/tinyskia"
@@ -20,15 +19,6 @@ func TestGGMeme(t *testing.T) {
 	dc := c.GetContext()
 	dc.SetFillStyleSolidColor(color.White)
 	dc.FillRect(0, 0, float64(S), float64(S))
-
-	switch runtime.GOOS {
-	case "windows":
-		gg.RegisterFontWithFile("C:/Windows/Fonts/impact.ttf", gg.FontFace{Family: "impact"})
-	case "darwin":
-		gg.RegisterFontWithFile("/Library/Fonts/Impact.ttf", gg.FontFace{Family: "impact"})
-	default:
-		// pass
-	}
 
 	s := "ONE DOES NOT SIMPLY"
 	dc.SetFont(gg.FontAttr{Family: []string{"impact"}, Size: 96})
