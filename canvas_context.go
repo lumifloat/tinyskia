@@ -45,6 +45,9 @@ type Context struct {
 	font        FontAttr
 	buf         sfnt.Buffer
 	textAlign   TextAlign
+	direction   Direction
+	fontStretch FontStretch
+	fontVariant FontVariant
 	fontKerning FontKerning
 	fontBuffer  sfnt.Buffer
 

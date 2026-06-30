@@ -7,6 +7,7 @@
 package tinyskia
 
 import (
+	"github.com/go-text/typesetting/di"
 	"github.com/go-text/typesetting/font"
 	"github.com/go-text/typesetting/font/opentype"
 	"github.com/go-text/typesetting/fontscan"
@@ -22,26 +23,73 @@ func (ctx *Context) MeasureText(s string) (metrics TextMetrics) {
 	}
 
 	ppem := fixed.Int26_6(ctx.font.Size * 64)
-	input := shaping.Input{
-		Text:     runes,
-		RunStart: 0,
-		RunEnd:   len(runes),
-		Size:     ppem,
-		FontFeatures: []shaping.FontFeature{
-			{
-				Tag:   opentype.NewTag('k', 'e', 'r', 'n'),
-				Value: uint32(ctx.fontKerning),
-			},
+
+	features := []shaping.FontFeature{
+		{
+			Tag:   opentype.NewTag('k', 'e', 'r', 'n'),
+			Value: uint32(ctx.fontKerning),
 		},
+	}
+
+	switch ctx.fontVariant {
+	case FontVariantNormal:
+		break
+	case FontVariantSmallCaps:
+		features = append(features, shaping.FontFeature{
+			Tag:   opentype.NewTag('s', 'm', 'c', 'p'),
+			Value: 1,
+		})
+	case FontVariantAllSmallCaps:
+		features = append(features, shaping.FontFeature{
+			Tag:   opentype.NewTag('c', '2', 's', 'c'),
+			Value: 1,
+		}, shaping.FontFeature{
+			Tag:   opentype.NewTag('s', 'm', 'c', 'p'),
+			Value: 1,
+		})
+	case FontVariantPetiteCaps:
+		features = append(features, shaping.FontFeature{
+			Tag:   opentype.NewTag('p', 'c', 'a', 'p'),
+			Value: 1,
+		})
+	case FontVariantAllPetiteCaps:
+		features = append(features, shaping.FontFeature{
+			Tag:   opentype.NewTag('c', '2', 'p', 'c'),
+			Value: 1,
+		}, shaping.FontFeature{
+			Tag:   opentype.NewTag('p', 'c', 'a', 'p'),
+			Value: 1,
+		})
+	case FontVariantUnicase:
+		features = append(features, shaping.FontFeature{
+			Tag:   opentype.NewTag('u', 'n', 'i', 'c'),
+			Value: 1,
+		})
+	case FontVariantTitlingCaps:
+		features = append(features, shaping.FontFeature{
+			Tag:   opentype.NewTag('t', 'i', 't', 'l'),
+			Value: 1,
+		})
+	}
+
+	input := shaping.Input{
+		Text:         runes,
+		RunStart:     0,
+		RunEnd:       len(runes),
+		Size:         ppem,
+		Direction:    di.Direction(ctx.direction),
+		FontFeatures: features,
 	}
 
 	var segmenter shaping.Segmenter
 	flock.Lock()
+	// TODO ADD PREFERENCE
 	fonts.SetQuery(fontscan.Query{
 		Families: ctx.font.Family,
 		Aspect: font.Aspect{
-			Weight: font.Weight(ctx.font.Weight),
-			Style:  font.StyleNormal,
+			Weight:  font.Weight(ctx.font.Weight),
+			Style:   font.Style(ctx.font.Style),
+			Stretch: font.Stretch(ctx.fontStretch),
 		},
 	})
 	outputs := segmenter.Split(input, fonts)
@@ -105,33 +153,79 @@ func (dc *Context) StrokeText(s string, x, y float64) {
 	dc.drawText(s, x, y, true)
 }
 
-func (dc *Context) drawText(s string, x, y float64, stroke bool) {
+func (ctx *Context) drawText(s string, x, y float64, stroke bool) {
 	runes := []rune(s)
 	if len(runes) == 0 {
 		return
 	}
 
-	ppem := fixed.Int26_6(dc.font.Size * 64)
-	input := shaping.Input{
-		Text:     runes,
-		RunStart: 0,
-		RunEnd:   len(runes),
-		Size:     ppem,
-		FontFeatures: []shaping.FontFeature{
-			{
-				Tag:   opentype.NewTag('k', 'e', 'r', 'n'),
-				Value: uint32(dc.fontKerning),
-			},
+	ppem := fixed.Int26_6(ctx.font.Size * 64)
+
+	features := []shaping.FontFeature{
+		{
+			Tag:   opentype.NewTag('k', 'e', 'r', 'n'),
+			Value: uint32(ctx.fontKerning),
 		},
+	}
+
+	switch ctx.fontVariant {
+	case FontVariantNormal:
+		break
+	case FontVariantSmallCaps:
+		features = append(features, shaping.FontFeature{
+			Tag:   opentype.NewTag('s', 'm', 'c', 'p'),
+			Value: 1,
+		})
+	case FontVariantAllSmallCaps:
+		features = append(features, shaping.FontFeature{
+			Tag:   opentype.NewTag('c', '2', 's', 'c'),
+			Value: 1,
+		}, shaping.FontFeature{
+			Tag:   opentype.NewTag('s', 'm', 'c', 'p'),
+			Value: 1,
+		})
+	case FontVariantPetiteCaps:
+		features = append(features, shaping.FontFeature{
+			Tag:   opentype.NewTag('p', 'c', 'a', 'p'),
+			Value: 1,
+		})
+	case FontVariantAllPetiteCaps:
+		features = append(features, shaping.FontFeature{
+			Tag:   opentype.NewTag('c', '2', 'p', 'c'),
+			Value: 1,
+		}, shaping.FontFeature{
+			Tag:   opentype.NewTag('p', 'c', 'a', 'p'),
+			Value: 1,
+		})
+	case FontVariantUnicase:
+		features = append(features, shaping.FontFeature{
+			Tag:   opentype.NewTag('u', 'n', 'i', 'c'),
+			Value: 1,
+		})
+	case FontVariantTitlingCaps:
+		features = append(features, shaping.FontFeature{
+			Tag:   opentype.NewTag('t', 'i', 't', 'l'),
+			Value: 1,
+		})
+	}
+
+	input := shaping.Input{
+		Text:         runes,
+		RunStart:     0,
+		RunEnd:       len(runes),
+		Size:         ppem,
+		Direction:    di.Direction(ctx.direction),
+		FontFeatures: features,
 	}
 
 	var segmenter shaping.Segmenter
 	flock.Lock()
 	fonts.SetQuery(fontscan.Query{
-		Families: dc.font.Family,
+		Families: ctx.font.Family,
 		Aspect: font.Aspect{
-			Weight: font.Weight(dc.font.Weight),
-			Style:  font.Style(dc.font.Style),
+			Weight:  font.Weight(ctx.font.Weight),
+			Style:   font.Style(ctx.font.Style),
+			Stretch: font.Stretch(ctx.fontStretch),
 		},
 	})
 	outputs := segmenter.Split(input, fonts)
@@ -148,7 +242,7 @@ func (dc *Context) drawText(s string, x, y float64, stroke bool) {
 		shapes = append(shapes, shape)
 		width += float32(shape.Advance) / 64
 	}
-	switch dc.textAlign {
+	switch ctx.textAlign {
 	case TextAlignLeft, TextAlignStart:
 		break
 	case TextAlignRight, TextAlignEnd:
@@ -165,19 +259,21 @@ func (dc *Context) drawText(s string, x, y float64, stroke bool) {
 			switch d := data.(type) {
 			case font.GlyphOutline:
 				path2d := outline(d, scale, fx, fy)
+				// TODO USE PAINT RAW
 				if stroke {
-					dc.StrokePath(path2d)
+					ctx.StrokePath(path2d)
 				} else {
-					dc.FillPath(path2d)
+					ctx.FillPath(path2d)
 				}
 			}
-
+			// TODO ADD CLIP AND MORE
 			fx += float32(glyph.Advance) / 64
 		}
 	}
 
 }
 
+// TODO ADD ITALIC AND BOLD
 func outline(outline font.GlyphOutline, scale float32, x, y float32) *Path2D {
 	var path2d = NewPath2D()
 	var hasPath = false

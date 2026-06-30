@@ -16,6 +16,7 @@ import (
 	"runtime"
 	"sync"
 
+	"github.com/go-text/typesetting/di"
 	"github.com/go-text/typesetting/font"
 	"github.com/go-text/typesetting/fontscan"
 )
@@ -106,6 +107,39 @@ const (
 	TextAlignRight
 )
 
+type Direction uint8
+
+const (
+	DirectionLTR = Direction(di.DirectionLTR)
+	DirectionRTL = Direction(di.DirectionRTL)
+)
+
+type FontStretch float32
+
+const (
+	FontStretchUltraCondensed = FontStretch(font.StretchUltraCondensed)
+	FontStretchExtraCondensed = FontStretch(font.StretchExtraCondensed)
+	FontStretchCondensed      = FontStretch(font.StretchCondensed)
+	FontStretchSemiCondensed  = FontStretch(font.StretchSemiCondensed)
+	FontStretchNormal         = FontStretch(font.StretchNormal)
+	FontStretchSemiExpanded   = FontStretch(font.StretchSemiExpanded)
+	FontStretchExpanded       = FontStretch(font.StretchExpanded)
+	FontStretchExtraExpanded  = FontStretch(font.StretchExtraExpanded)
+	FontStretchUltraExpanded  = FontStretch(font.StretchUltraExpanded)
+)
+
+type FontVariant string
+
+const (
+	FontVariantNormal        FontVariant = "normal"
+	FontVariantSmallCaps     FontVariant = "small-caps"
+	FontVariantAllSmallCaps  FontVariant = "all-small-caps"
+	FontVariantPetiteCaps    FontVariant = "petite-caps"
+	FontVariantAllPetiteCaps FontVariant = "all-petite-caps"
+	FontVariantUnicase       FontVariant = "unicase"
+	FontVariantTitlingCaps   FontVariant = "titling-caps"
+)
+
 type FontKerning uint32
 
 const (
@@ -153,6 +187,36 @@ func (dc *Context) SetTextAlign(align TextAlign) {
 // GetTextAlign
 func (dc *Context) GetTextAlign() TextAlign {
 	return dc.textAlign
+}
+
+// SetDirection
+func (dc *Context) SetDirection(direction Direction) {
+	dc.direction = direction
+}
+
+// GetDirection
+func (dc *Context) GetDirection() Direction {
+	return dc.direction
+}
+
+// SetFontStretch
+func (dc *Context) SetFontStretch(stretch FontStretch) {
+	dc.fontStretch = stretch
+}
+
+// GetFontStretch
+func (dc *Context) GetFontStretch() FontStretch {
+	return dc.fontStretch
+}
+
+// SetFontVariant
+func (dc *Context) SetFontVariant(variant FontVariant) {
+	dc.fontVariant = variant
+}
+
+// GetFontVariant
+func (dc *Context) GetFontVariant() FontVariant {
+	return dc.fontVariant
 }
 
 // SetFontKerning
@@ -206,37 +270,3 @@ func RegisterFontWithResource(file font.Resource, location string, face FontFace
 	fonts.AddFace(faces[0], loc, desc)
 	return nil
 }
-
-// func RegisterFontWithFile(file string, face FontFace) error {
-// 	fi, err := os.Open(file)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	collection, err := sfnt.ParseCollectionReaderAt(fi)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	if collection.NumFonts() == 0 {
-// 		return sfnt.ErrNotFound
-// 	}
-// 	ttf, err := collection.Font(0)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	return fonts.RegisterFont(ttf, face.Family, face.Weight, face.Style)
-// }
-
-// func RegisterFontWithData(data []byte, face FontFace) error {
-// 	collection, err := sfnt.ParseCollection(data)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	if collection.NumFonts() == 0 {
-// 		return sfnt.ErrNotFound
-// 	}
-// 	ttf, err := collection.Font(0)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	return fonts.RegisterFont(ttf, face.Family, face.Weight, face.Style)
-// }

@@ -48,6 +48,9 @@ func NewCanvas(width, height int) *Canvas {
 			Size:   10,
 		},
 		textAlign:   TextAlignStart,
+		direction:   DirectionLTR,
+		fontStretch: FontStretchNormal,
+		fontVariant: FontVariantNormal,
 		fontKerning: FontKerningAuto,
 
 		antiAlias:       true,
