@@ -7,7 +7,9 @@
 package shader
 
 import (
-	"github.com/lumifloat/tinyskia/internal/core/color"
+	"image/color"
+
+	"github.com/lumifloat/tinyskia/internal/core/colorf"
 	"github.com/lumifloat/tinyskia/internal/core/pipeline"
 	"github.com/lumifloat/tinyskia/internal/numeric/normalized"
 	"github.com/lumifloat/tinyskia/internal/numeric/scalar"
@@ -67,7 +69,7 @@ func NewGradient(stops []GradientStop, tileMode SpreadMode, transform path.Trans
 
 	colorsAreOpaque := true
 	for _, p := range newStops {
-		if !p.color.IsOpaque() {
+		if !colorf.IsOpaque(p.color) {
 			colorsAreOpaque = false
 			break
 		}
@@ -109,7 +111,7 @@ func NewGradient(stops []GradientStop, tileMode SpreadMode, transform path.Trans
 
 func (g *Gradient) PushStages(
 	p *pipeline.RasterPipelineBuilder,
-	cs color.ColorSpace,
+	cs colorf.ColorSpace,
 	pushStagesPre func(*pipeline.RasterPipelineBuilder),
 	pushStagesPost func(*pipeline.RasterPipelineBuilder),
 ) bool {
@@ -141,17 +143,19 @@ func (g *Gradient) PushStages(
 
 	// The two-stop case with stops at 0 and 1.
 	if len(g.stops) == 2 {
-		c0 := cs.ExpandColor(g.stops[0].color)
-		c1 := cs.ExpandColor(g.stops[1].color)
+		e0 := cs.ExpandColor(g.stops[0].color)
+		e1 := cs.ExpandColor(g.stops[1].color)
+		c0 := colorf.NRGBAFModel.Convert(e0).(colorf.NRGBAF)
+		c1 := colorf.NRGBAFModel.Convert(e1).(colorf.NRGBAF)
 
 		p.Ctx.EvenlySpaced2StopGradient = pipeline.EvenlySpaced2StopGradientCtx{
 			Factor: pipeline.NewGradientColor(
-				c1.Red()-c0.Red(),
-				c1.Green()-c0.Green(),
-				c1.Blue()-c0.Blue(),
-				c1.Alpha()-c0.Alpha(),
+				float32(c1.R-c0.R),
+				float32(c1.G-c0.G),
+				float32(c1.B-c0.B),
+				float32(c1.A-c0.A),
 			),
-			Bias: pipeline.GradientColor{R: c0.Red(), G: c0.Green(), B: c0.Blue(), A: c0.Alpha()},
+			Bias: pipeline.GradientColor{R: float32(c0.R), G: float32(c0.G), B: float32(c0.B), A: float32(c0.A)},
 		}
 
 		p.Push(pipeline.StageEvenlySpaced2StopGradient)
@@ -184,7 +188,8 @@ func (g *Gradient) PushStages(
 
 		tL := g.stops[firstStop].position.Get()
 		cLExpanded := cs.ExpandColor(g.stops[firstStop].color)
-		cL := pipeline.GradientColor{R: cLExpanded.Red(), G: cLExpanded.Green(), B: cLExpanded.Blue(), A: cLExpanded.Alpha()}
+		c0 := colorf.NRGBAFModel.Convert(cLExpanded).(colorf.NRGBAF)
+		cL := pipeline.GradientColor{R: float32(c0.R), G: float32(c0.G), B: float32(c0.B), A: float32(c0.A)}
 		ctx.PushConstColor(cL)
 		ctx.TValues = append(ctx.TValues, 0.0)
 
@@ -192,7 +197,8 @@ func (g *Gradient) PushStages(
 		for i := firstStop; i < lastStop; i++ {
 			tR := g.stops[i+1].position.Get()
 			cRExpanded := cs.ExpandColor(g.stops[i+1].color)
-			cR := pipeline.GradientColor{R: cRExpanded.Red(), G: cRExpanded.Green(), B: cRExpanded.Blue(), A: cRExpanded.Alpha()}
+			c0 := colorf.NRGBAFModel.Convert(cRExpanded).(colorf.NRGBAF)
+			cR := pipeline.GradientColor{R: float32(c0.R), G: float32(c0.G), B: float32(c0.B), A: float32(c0.A)}
 
 			if tL < tR {
 				// For each stop we calculate a bias B and a scale factor F, such that
@@ -250,12 +256,12 @@ func (g *Gradient) PushStages(
 
 func (g *Gradient) ApplyOpacity(opacity float32) {
 	for i := range g.stops {
-		g.stops[i].color.ApplyOpacity(opacity)
+		g.stops[i].color = colorf.ApplyOpacity(g.stops[i].color, opacity)
 	}
 
 	g.colorsAreOpaque = true
 	for _, p := range g.stops {
-		if !p.color.IsOpaque() {
+		if !colorf.IsOpaque(p.color) {
 			g.colorsAreOpaque = false
 			break
 		}

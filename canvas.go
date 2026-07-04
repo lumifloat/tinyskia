@@ -12,7 +12,7 @@ import (
 	"image/png"
 	"io"
 
-	color2 "github.com/lumifloat/tinyskia/internal/core/color"
+	"github.com/lumifloat/tinyskia/internal/core/colorf"
 )
 
 type Canvas struct {
@@ -54,7 +54,7 @@ func NewCanvas(width, height int) *Canvas {
 		fontKerning: FontKerningAuto,
 
 		antiAlias:       true,
-		colorspace:      color2.ColorSpaceLinear,
+		colorspace:      colorf.ColorSpaceLinear,
 		forceHQPipeline: true,
 	}
 

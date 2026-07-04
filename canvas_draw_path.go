@@ -9,7 +9,8 @@ package tinyskia
 import (
 	"image"
 
-	color2 "github.com/lumifloat/tinyskia/internal/core/color"
+	"image/color"
+
 	"github.com/lumifloat/tinyskia/internal/core/scan"
 	"github.com/lumifloat/tinyskia/internal/core/shader"
 	"github.com/lumifloat/tinyskia/internal/path"
@@ -193,7 +194,7 @@ func (dc *Context) ClipPathWithFillRule(p *Path2D, fillRule FillRule) {
 	// Render path to a temporary RGBA image first (blitter expects RGBA)
 	tempRGBA := image.NewRGBA(image.Rect(0, 0, width, height))
 	paint := &Paint{
-		Shader:          shader.NewSolidColor(color2.ColorFromRGBA8(255, 255, 255, 255)),
+		Shader:          shader.NewSolidColor(color.NRGBA{255, 255, 255, 255}),
 		AntiAlias:       dc.antiAlias,
 		BlendMode:       CompositeOperationSource,
 		Colorspace:      dc.colorspace,

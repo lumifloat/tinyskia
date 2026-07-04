@@ -11,7 +11,6 @@ import (
 	"image/color"
 	"math"
 
-	color2 "github.com/lumifloat/tinyskia/internal/core/color"
 	"github.com/lumifloat/tinyskia/internal/core/shader"
 	"github.com/lumifloat/tinyskia/internal/path"
 )
@@ -252,7 +251,7 @@ func toShader(style style, transform path.Transform) shader.Shader {
 			r, gb, b, a := s.color.RGBA()
 			stops[i] = shader.NewGradientStop(
 				float32(s.pos),
-				color2.ColorFromRGBA8(uint8(r>>8), uint8(gb>>8), uint8(b>>8), uint8(a>>8)),
+				color.NRGBA{uint8(r >> 8), uint8(gb >> 8), uint8(b >> 8), uint8(a >> 8)},
 			)
 		}
 
@@ -265,7 +264,7 @@ func toShader(style style, transform path.Transform) shader.Shader {
 			r, gb, b, a := s.color.RGBA()
 			stops[i] = shader.NewGradientStop(
 				float32(s.pos),
-				color2.ColorFromRGBA8(uint8(r>>8), uint8(gb>>8), uint8(b>>8), uint8(a>>8)),
+				color.NRGBA{uint8(r >> 8), uint8(gb >> 8), uint8(b >> 8), uint8(a >> 8)},
 			)
 		}
 
@@ -278,7 +277,7 @@ func toShader(style style, transform path.Transform) shader.Shader {
 			r, gb, b, a := s.color.RGBA()
 			stops[i] = shader.NewGradientStop(
 				float32(s.pos),
-				color2.ColorFromRGBA8(uint8(r>>8), uint8(gb>>8), uint8(b>>8), uint8(a>>8)),
+				color.NRGBA{uint8(r >> 8), uint8(gb >> 8), uint8(b >> 8), uint8(a >> 8)},
 			)
 		}
 
@@ -288,7 +287,7 @@ func toShader(style style, transform path.Transform) shader.Shader {
 		return shader.NewSweepGradient(center, 0, 360, stops, shader.SpreadModePad, transform)
 	case *SolidColor:
 		r, g, b, a := s.color.RGBA()
-		return shader.NewSolidColor(color2.ColorFromRGBA8(uint8(r>>8), uint8(g>>8), uint8(b>>8), uint8(a>>8)))
+		return shader.NewSolidColor(color.NRGBA{uint8(r >> 8), uint8(g >> 8), uint8(b >> 8), uint8(a >> 8)})
 	case *ImagePattern:
 		var transform path.Transform
 		if s.transform != nil {
@@ -298,7 +297,7 @@ func toShader(style style, transform path.Transform) shader.Shader {
 		}
 		return imageToPatternShader(s.im, s.op, transform)
 	default:
-		return shader.NewSolidColor(color2.ColorFromRGBA8(0, 0, 0, 255))
+		return shader.NewSolidColor(color.NRGBA{0, 0, 0, 255})
 	}
 }
 
@@ -308,7 +307,7 @@ func imageToPatternShader(im image.Image, op PatternRepeatOp, transform path.Tra
 	height := bounds.Dy()
 
 	if width <= 0 || height <= 0 {
-		return shader.NewSolidColor(color2.ColorFromRGBA8(0, 0, 0, 0))
+		return shader.NewSolidColor(color.NRGBA{0, 0, 0, 0})
 	}
 
 	data := make([]uint8, width*height*4)

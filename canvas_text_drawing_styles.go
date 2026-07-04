@@ -230,6 +230,12 @@ func (dc *Context) GetFontKerning() FontKerning {
 }
 
 func RegisterFont(file string, face FontFace) error {
+	if face.Weight <= 0 {
+		face.Weight = FontWeightNormal
+	}
+	if face.Style == 0 {
+		face.Style = FontStyleNormal
+	}
 	flock.Lock()
 	defer flock.Unlock()
 	fi, err := os.Open(file)
@@ -253,6 +259,12 @@ func RegisterFont(file string, face FontFace) error {
 }
 
 func RegisterFontWithResource(file font.Resource, location string, face FontFace) error {
+	if face.Weight <= 0 {
+		face.Weight = FontWeightNormal
+	}
+	if face.Style == 0 {
+		face.Style = FontStyleNormal
+	}
 	flock.Lock()
 	defer flock.Unlock()
 	faces, err := font.ParseTTC(file)

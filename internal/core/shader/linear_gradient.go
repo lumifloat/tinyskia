@@ -7,9 +7,12 @@
 package shader
 
 import (
+	"image/color"
+
 	"github.com/chewxy/math32"
-	"github.com/lumifloat/tinyskia/internal/core/color"
+	"github.com/lumifloat/tinyskia/internal/core/colorf"
 	"github.com/lumifloat/tinyskia/internal/core/pipeline"
+	"github.com/lumifloat/tinyskia/internal/numeric/normalized"
 	"github.com/lumifloat/tinyskia/internal/numeric/scalar"
 	"github.com/lumifloat/tinyskia/internal/path"
 )
@@ -69,7 +72,7 @@ func (lg *LinearGradient) IsOpaque() bool {
 	return lg.base.colorsAreOpaque
 }
 
-func (lg *LinearGradient) PushStages(cs color.ColorSpace, p *pipeline.RasterPipelineBuilder) bool {
+func (lg *LinearGradient) PushStages(cs colorf.ColorSpace, p *pipeline.RasterPipelineBuilder) bool {
 	return lg.base.PushStages(p, cs, func(p *pipeline.RasterPipelineBuilder) {}, func(p *pipeline.RasterPipelineBuilder) {})
 }
 
@@ -108,35 +111,44 @@ func averageGradientColor(points []GradientStop) color.Color {
 	for i := 0; i < len(points)-1; i++ {
 		p0 := points[i]
 		p1 := points[i+1]
+		c0 := colorf.NRGBAFModel.Convert(p0.color).(colorf.NRGBAF)
+		c1 := colorf.NRGBAFModel.Convert(p1.color).(colorf.NRGBAF)
 
 		w := p1.position.Get() - p0.position.Get()
+
 		// 0.5 * w * (c1 + c0)
-		r += 0.5 * w * (p1.color.Red() + p0.color.Red())
-		g += 0.5 * w * (p1.color.Green() + p0.color.Green())
-		b += 0.5 * w * (p1.color.Blue() + p0.color.Blue())
-		a += 0.5 * w * (p1.color.Alpha() + p0.color.Alpha())
+		r += 0.5 * w * (float32(c1.R) + float32(c0.R))
+		g += 0.5 * w * (float32(c1.G) + float32(c0.G))
+		b += 0.5 * w * (float32(c1.B) + float32(c0.B))
+		a += 0.5 * w * (float32(c1.A) + float32(c0.A))
 	}
 
 	// Now account for any implicit intervals at the start or end of the stop definitions
 	if points[0].position.Get() > 0.0 {
 		w := points[0].position.Get()
-		r += w * points[0].color.Red()
-		g += w * points[0].color.Green()
-		b += w * points[0].color.Blue()
-		a += w * points[0].color.Alpha()
+		c0 := colorf.NRGBAFModel.Convert(points[0].color).(colorf.NRGBAF)
+		r += w * float32(c0.R)
+		g += w * float32(c0.G)
+		b += w * float32(c0.B)
+		a += w * float32(c0.A)
 	}
 
 	lastIdx := len(points) - 1
 	if points[lastIdx].position.Get() < 1.0 {
 		w := 1.0 - points[lastIdx].position.Get()
-		r += w * points[lastIdx].color.Red()
-		g += w * points[lastIdx].color.Green()
-		b += w * points[lastIdx].color.Blue()
-		a += w * points[lastIdx].color.Alpha()
+		c0 := colorf.NRGBAFModel.Convert(points[lastIdx].color).(colorf.NRGBAF)
+		r += w * float32(c0.R)
+		g += w * float32(c0.G)
+		b += w * float32(c0.B)
+		a += w * float32(c0.A)
 	}
 
-	color, _ := color.ColorFromRGBA(r, g, b, a)
-	return color
+	return colorf.RGBAF{
+		R: normalized.NewNormalizedF32WithClamped(r),
+		G: normalized.NewNormalizedF32WithClamped(g),
+		B: normalized.NewNormalizedF32WithClamped(b),
+		A: normalized.NewNormalizedF32WithClamped(a),
+	}
 }
 
 func tsFromSinCosAt(sin, cos, px, py float32) path.Transform {

@@ -58,28 +58,24 @@ func (p *LowPipeline) Premultiply() {
 
 //go:fix inline
 func (p *LowPipeline) UniformColor() {
-	uniformColor := p.ctx.UniformColor
-	r := uniformColor.RGBA[0]
-	g := uniformColor.RGBA[1]
-	b := uniformColor.RGBA[2]
-	a := uniformColor.RGBA[3]
+	uc := p.ctx.UniformColor
 
-	p.r[0], p.r[1], p.r[2], p.r[3] = r, r, r, r
-	p.r[4], p.r[5], p.r[6], p.r[7] = r, r, r, r
-	p.r[8], p.r[9], p.r[10], p.r[11] = r, r, r, r
-	p.r[12], p.r[13], p.r[14], p.r[15] = r, r, r, r
-	p.g[0], p.g[1], p.g[2], p.g[3] = g, g, g, g
-	p.g[4], p.g[5], p.g[6], p.g[7] = g, g, g, g
-	p.g[8], p.g[9], p.g[10], p.g[11] = g, g, g, g
-	p.g[12], p.g[13], p.g[14], p.g[15] = g, g, g, g
-	p.b[0], p.b[1], p.b[2], p.b[3] = b, b, b, b
-	p.b[4], p.b[5], p.b[6], p.b[7] = b, b, b, b
-	p.b[8], p.b[9], p.b[10], p.b[11] = b, b, b, b
-	p.b[12], p.b[13], p.b[14], p.b[15] = b, b, b, b
-	p.a[0], p.a[1], p.a[2], p.a[3] = a, a, a, a
-	p.a[4], p.a[5], p.a[6], p.a[7] = a, a, a, a
-	p.a[8], p.a[9], p.a[10], p.a[11] = a, a, a, a
-	p.a[12], p.a[13], p.a[14], p.a[15] = a, a, a, a
+	p.r[0], p.r[1], p.r[2], p.r[3] = uc.R0, uc.R0, uc.R0, uc.R0
+	p.r[4], p.r[5], p.r[6], p.r[7] = uc.R0, uc.R0, uc.R0, uc.R0
+	p.r[8], p.r[9], p.r[10], p.r[11] = uc.R0, uc.R0, uc.R0, uc.R0
+	p.r[12], p.r[13], p.r[14], p.r[15] = uc.R0, uc.R0, uc.R0, uc.R0
+	p.g[0], p.g[1], p.g[2], p.g[3] = uc.G0, uc.G0, uc.G0, uc.G0
+	p.g[4], p.g[5], p.g[6], p.g[7] = uc.G0, uc.G0, uc.G0, uc.G0
+	p.g[8], p.g[9], p.g[10], p.g[11] = uc.G0, uc.G0, uc.G0, uc.G0
+	p.g[12], p.g[13], p.g[14], p.g[15] = uc.G0, uc.G0, uc.G0, uc.G0
+	p.b[0], p.b[1], p.b[2], p.b[3] = uc.B0, uc.B0, uc.B0, uc.B0
+	p.b[4], p.b[5], p.b[6], p.b[7] = uc.B0, uc.B0, uc.B0, uc.B0
+	p.b[8], p.b[9], p.b[10], p.b[11] = uc.B0, uc.B0, uc.B0, uc.B0
+	p.b[12], p.b[13], p.b[14], p.b[15] = uc.B0, uc.B0, uc.B0, uc.B0
+	p.a[0], p.a[1], p.a[2], p.a[3] = uc.A0, uc.A0, uc.A0, uc.A0
+	p.a[4], p.a[5], p.a[6], p.a[7] = uc.A0, uc.A0, uc.A0, uc.A0
+	p.a[8], p.a[9], p.a[10], p.a[11] = uc.A0, uc.A0, uc.A0, uc.A0
+	p.a[12], p.a[13], p.a[14], p.a[15] = uc.A0, uc.A0, uc.A0, uc.A0
 }
 
 //go:fix inline

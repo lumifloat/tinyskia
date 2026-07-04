@@ -8,7 +8,7 @@ package tinyskia
 import (
 	"image"
 
-	color2 "github.com/lumifloat/tinyskia/internal/core/color"
+	"github.com/lumifloat/tinyskia/internal/core/colorf"
 	"golang.org/x/image/font/sfnt"
 )
 
@@ -52,7 +52,7 @@ type Context struct {
 	fontBuffer  sfnt.Buffer
 
 	antiAlias       bool
-	colorspace      color2.ColorSpace
+	colorspace      colorf.ColorSpace
 	forceHQPipeline bool
 	stack           []*Context
 	contextLost     bool // Tracks if the rendering context was lost

@@ -7,7 +7,6 @@
 package pipeline
 
 import (
-	"github.com/lumifloat/tinyskia/internal/core/color"
 	"github.com/lumifloat/tinyskia/internal/numeric/normalized"
 	"github.com/lumifloat/tinyskia/internal/path"
 )
@@ -173,8 +172,8 @@ type SamplerCtx struct {
 }
 
 type UniformColorCtx struct {
-	R, G, B, A float32
-	RGBA       [4]uint16
+	R0, G0, B0, A0 uint16
+	R1, G1, B1, A1 float32
 }
 
 type GradientColor struct {
@@ -243,19 +242,8 @@ func (b *RasterPipelineBuilder) PushTransform(ts path.Transform) {
 	}
 }
 
-func (b *RasterPipelineBuilder) PushUniformColor(c color.PremultipliedColor) {
-	r := c.Red()
-	g := c.Green()
-	bl := c.Blue()
-	a := c.Alpha()
-	rgba := [4]uint16{
-		uint16(r*255.0 + 0.5),
-		uint16(g*255.0 + 0.5),
-		uint16(bl*255.0 + 0.5),
-		uint16(a*255.0 + 0.5),
-	}
-
-	b.Ctx.UniformColor = UniformColorCtx{R: r, G: g, B: bl, A: a, RGBA: rgba}
+func (b *RasterPipelineBuilder) PushUniformColor(c UniformColorCtx) {
+	b.Ctx.UniformColor = c
 	b.Stages = append(b.Stages, StageUniformColor)
 }
 

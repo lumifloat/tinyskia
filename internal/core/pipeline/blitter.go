@@ -7,8 +7,9 @@
 package pipeline
 
 import (
+	"image/color"
+
 	"github.com/lumifloat/tinyskia/internal/core/blitter"
-	"github.com/lumifloat/tinyskia/internal/core/color"
 	"github.com/lumifloat/tinyskia/internal/path"
 )
 
@@ -18,7 +19,7 @@ type RasterPipelineBlitter struct {
 	Mask             *MaskCtx
 	PixmapSrc        *PixmapCtx
 	Pixmap           *SubPixmapCtx
-	Memset2dColor    color.PremultipliedColorU8
+	Memset2dColor    color.RGBA
 	UseMemset2dColor bool
 	BlitAntiHRp      RasterPipeline
 	BlitRectRp       RasterPipeline
@@ -51,9 +52,9 @@ func (b *RasterPipelineBlitter) BlitAntiH(x, y uint32, aa []uint8, runs []uint16
 
 		alpha := aa[aaOffset]
 		switch alpha {
-		case color.AlphaU8Transparent:
+		case 0x00: // Transparent
 			// Do nothing
-		case color.AlphaU8Opaque:
+		case 0xFF: // Opaque
 			b.BlitH(x, y, width)
 		default:
 			b.BlitAntiHRp.Ctx.CurrentCoverage = float32(alpha) * (1.0 / 255.0)
@@ -99,15 +100,13 @@ func (b *RasterPipelineBlitter) BlitAntiV2(x, y uint32, alpha0, alpha1 uint8) {
 
 func (b *RasterPipelineBlitter) BlitRect(rect path.ScreenIntRect) {
 	if b.UseMemset2dColor {
-		c := b.Memset2dColor
 		if b.IsMask {
-			alpha := c.Alpha()
 			for y := uint32(0); y < rect.Height(); y++ {
 				start := (int(rect.Y()+y)*b.Pixmap.RealWidth + int(rect.X())) * BYTES_PER_PIXEL
 				end := start + int(rect.Width())*BYTES_PER_PIXEL
 				data := b.Pixmap.Data[start:end]
 				for i := range data {
-					data[i] = alpha
+					data[i] = b.Memset2dColor.A
 				}
 			}
 		} else {
@@ -116,10 +115,10 @@ func (b *RasterPipelineBlitter) BlitRect(rect path.ScreenIntRect) {
 				end := start + int(rect.Width())*BYTES_PER_PIXEL
 				data := b.Pixmap.Data[start:end]
 				for i := 0; i < len(data); i += BYTES_PER_PIXEL {
-					data[i+0] = c.Red()
-					data[i+1] = c.Green()
-					data[i+2] = c.Blue()
-					data[i+3] = c.Alpha()
+					data[i+0] = b.Memset2dColor.R
+					data[i+1] = b.Memset2dColor.G
+					data[i+2] = b.Memset2dColor.B
+					data[i+3] = b.Memset2dColor.A
 				}
 			}
 		}

@@ -64,14 +64,14 @@ func (p *HighPipeline) Premultiply() {
 func (p *HighPipeline) UniformColor() {
 	uc := p.ctx.UniformColor
 
-	p.r[0], p.r[1], p.r[2], p.r[3] = uc.R, uc.R, uc.R, uc.R
-	p.r[4], p.r[5], p.r[6], p.r[7] = uc.R, uc.R, uc.R, uc.R
-	p.g[0], p.g[1], p.g[2], p.g[3] = uc.G, uc.G, uc.G, uc.G
-	p.g[4], p.g[5], p.g[6], p.g[7] = uc.G, uc.G, uc.G, uc.G
-	p.b[0], p.b[1], p.b[2], p.b[3] = uc.B, uc.B, uc.B, uc.B
-	p.b[4], p.b[5], p.b[6], p.b[7] = uc.B, uc.B, uc.B, uc.B
-	p.a[0], p.a[1], p.a[2], p.a[3] = uc.A, uc.A, uc.A, uc.A
-	p.a[4], p.a[5], p.a[6], p.a[7] = uc.A, uc.A, uc.A, uc.A
+	p.r[0], p.r[1], p.r[2], p.r[3] = uc.R1, uc.R1, uc.R1, uc.R1
+	p.r[4], p.r[5], p.r[6], p.r[7] = uc.R1, uc.R1, uc.R1, uc.R1
+	p.g[0], p.g[1], p.g[2], p.g[3] = uc.G1, uc.G1, uc.G1, uc.G1
+	p.g[4], p.g[5], p.g[6], p.g[7] = uc.G1, uc.G1, uc.G1, uc.G1
+	p.b[0], p.b[1], p.b[2], p.b[3] = uc.B1, uc.B1, uc.B1, uc.B1
+	p.b[4], p.b[5], p.b[6], p.b[7] = uc.B1, uc.B1, uc.B1, uc.B1
+	p.a[0], p.a[1], p.a[2], p.a[3] = uc.A1, uc.A1, uc.A1, uc.A1
+	p.a[4], p.a[5], p.a[6], p.a[7] = uc.A1, uc.A1, uc.A1, uc.A1
 }
 
 //go:fix inline

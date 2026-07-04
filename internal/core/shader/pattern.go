@@ -8,7 +8,7 @@ package shader
 
 import (
 	"github.com/chewxy/math32"
-	"github.com/lumifloat/tinyskia/internal/core/color"
+	"github.com/lumifloat/tinyskia/internal/core/colorf"
 	"github.com/lumifloat/tinyskia/internal/core/pipeline"
 	"github.com/lumifloat/tinyskia/internal/numeric/normalized"
 	"github.com/lumifloat/tinyskia/internal/path"
@@ -53,7 +53,7 @@ func (p *Pattern) IsOpaque() bool {
 	return false
 }
 
-func (p *Pattern) PushStages(cs color.ColorSpace, builder *pipeline.RasterPipelineBuilder) bool {
+func (p *Pattern) PushStages(cs colorf.ColorSpace, builder *pipeline.RasterPipelineBuilder) bool {
 	ts, ok := p.transform.Invert()
 	if !ok {
 		// failed to invert a pattern transform. Nothing will be rendered
@@ -128,13 +128,13 @@ func (p *Pattern) PushStages(cs color.ColorSpace, builder *pipeline.RasterPipeli
 		builder.Push(pipeline.StageScale1Float)
 	}
 
-	if cs != color.ColorSpaceLinear {
+	if cs != colorf.ColorSpaceLinear {
 		switch cs {
-		case color.ColorSpaceGamma2:
+		case colorf.ColorSpaceGamma2:
 			builder.Push(pipeline.StageGammaExpand2)
-		case color.ColorSpaceSimpleSRGB:
+		case colorf.ColorSpaceSimpleSRGB:
 			builder.Push(pipeline.StageGammaExpand22)
-		case color.ColorSpaceFullSRGBGamma:
+		case colorf.ColorSpaceFullSRGBGamma:
 			builder.Push(pipeline.StageGammaExpandSrgb)
 		}
 	}

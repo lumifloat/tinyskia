@@ -9,7 +9,7 @@ package tinyskia
 import (
 	"image/color"
 
-	color2 "github.com/lumifloat/tinyskia/internal/core/color"
+	"github.com/lumifloat/tinyskia/internal/core/colorf"
 )
 
 // Save pushes the current state onto the stack.
@@ -52,7 +52,7 @@ func (dc *Context) Reset() {
 	dc.matrix = NewMatrixIdentity()
 	dc.composite = CompositeOperationSourceOver
 	dc.antiAlias = true
-	dc.colorspace = color2.ColorSpaceLinear
+	dc.colorspace = colorf.ColorSpaceLinear
 	dc.forceHQPipeline = true
 	dc.fillStyle = dc.CreateSolidColor(color.Transparent)
 	dc.strokeStyle = dc.CreateSolidColor(color.Transparent)

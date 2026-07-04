@@ -7,7 +7,9 @@
 package tinyskia
 
 import (
-	"github.com/lumifloat/tinyskia/internal/core/color"
+	"image/color"
+
+	"github.com/lumifloat/tinyskia/internal/core/colorf"
 	"github.com/lumifloat/tinyskia/internal/core/pipeline"
 	"github.com/lumifloat/tinyskia/internal/core/shader"
 	"github.com/lumifloat/tinyskia/internal/path"
@@ -22,7 +24,7 @@ type Paint struct {
 	// Enables anti-aliased painting.
 	AntiAlias bool
 	// Colorspace for blending.
-	Colorspace color.ColorSpace
+	Colorspace colorf.ColorSpace
 	// Forces the high quality/precision rendering pipeline.
 	ForceHQPipeline bool
 }
@@ -30,10 +32,10 @@ type Paint struct {
 // DefaultPaint returns a Paint with default values.
 func DefaultPaint() Paint {
 	return Paint{
-		Shader:          shader.NewSolidColor(color.ColorBlack),
+		Shader:          shader.NewSolidColor(color.NRGBA{0, 0, 0, 255}),
 		BlendMode:       CompositeOperationSourceOver,
 		AntiAlias:       true,
-		Colorspace:      color.ColorSpaceLinear,
+		Colorspace:      colorf.ColorSpaceLinear,
 		ForceHQPipeline: false,
 	}
 }
@@ -74,11 +76,11 @@ func (p *Paint) blitter(data, mask []uint8, width, height int) *pipeline.RasterP
 	}
 
 	// When we're drawing a constant color in Source mode, we can sometimes just memset.
-	var memset2dColor color.PremultipliedColorU8
+	var memset2dColor color.RGBA
 	var useMemset2dColor bool
 	if blendMode == CompositeOperationSource && maskCtx == nil {
 		if solid, ok := p.Shader.(*shader.SolidColor); ok {
-			memset2dColor = solid.Color().Premultiply().ToColorU8()
+			memset2dColor = color.RGBAModel.Convert(solid.Color()).(color.RGBA)
 			useMemset2dColor = true
 		}
 	}
@@ -86,7 +88,7 @@ func (p *Paint) blitter(data, mask []uint8, width, height int) *pipeline.RasterP
 	// Clear is just a transparent color memset.
 	if blendMode == CompositeOperationClear && !p.AntiAlias && maskCtx == nil {
 		blendMode = CompositeOperationSource
-		memset2dColor = color.PremultipliedColorU8Transparent
+		memset2dColor = color.RGBA{0, 0, 0, 0}
 		useMemset2dColor = true
 	}
 
@@ -249,7 +251,7 @@ func (p *Paint) SetColor(color color.Color) {
 
 // SetColorRGBA8 sets a paint source to a solid color using RGBA8 values.
 func (p *Paint) SetColorRGBA8(r, g, b, a uint8) {
-	p.SetColor(color.ColorFromRGBA8(r, g, b, a))
+	p.SetColor(color.NRGBA{r, g, b, a})
 }
 
 // IsSolidColor checks that the paint source is a solid color.
@@ -269,29 +271,29 @@ func (p *Paint) Copy() Paint {
 	}
 }
 
-func expand(self color.ColorSpace) (pipeline.Stage, bool) {
+func expand(self colorf.ColorSpace) (pipeline.Stage, bool) {
 	switch self {
-	case color.ColorSpaceLinear:
+	case colorf.ColorSpaceLinear:
 		return 0, false
-	case color.ColorSpaceGamma2:
+	case colorf.ColorSpaceGamma2:
 		return pipeline.StageGammaExpand2, true
-	case color.ColorSpaceSimpleSRGB:
+	case colorf.ColorSpaceSimpleSRGB:
 		return pipeline.StageGammaExpand22, true
-	case color.ColorSpaceFullSRGBGamma:
+	case colorf.ColorSpaceFullSRGBGamma:
 		return pipeline.StageGammaExpandSrgb, true
 	}
 	return 0, false
 }
 
-func compress(self color.ColorSpace) (pipeline.Stage, bool) {
+func compress(self colorf.ColorSpace) (pipeline.Stage, bool) {
 	switch self {
-	case color.ColorSpaceLinear:
+	case colorf.ColorSpaceLinear:
 		return 0, false
-	case color.ColorSpaceGamma2:
+	case colorf.ColorSpaceGamma2:
 		return pipeline.StageGammaCompress2, true
-	case color.ColorSpaceSimpleSRGB:
+	case colorf.ColorSpaceSimpleSRGB:
 		return pipeline.StageGammaCompress22, true
-	case color.ColorSpaceFullSRGBGamma:
+	case colorf.ColorSpaceFullSRGBGamma:
 		return pipeline.StageGammaCompressSrgb, true
 	}
 	return 0, false

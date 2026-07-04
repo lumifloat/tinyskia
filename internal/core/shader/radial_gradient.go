@@ -11,7 +11,7 @@ import (
 
 	"github.com/chewxy/math32"
 
-	"github.com/lumifloat/tinyskia/internal/core/color"
+	"github.com/lumifloat/tinyskia/internal/core/colorf"
 	"github.com/lumifloat/tinyskia/internal/core/pipeline"
 	"github.com/lumifloat/tinyskia/internal/numeric/scalar"
 	"github.com/lumifloat/tinyskia/internal/path"
@@ -169,7 +169,7 @@ func (rg *RadialGradient) IsOpaque() bool {
 	return rg.base.colorsAreOpaque
 }
 
-func (rg *RadialGradient) PushStages(cs color.ColorSpace, p *pipeline.RasterPipelineBuilder) bool {
+func (rg *RadialGradient) PushStages(cs colorf.ColorSpace, p *pipeline.RasterPipelineBuilder) bool {
 	var p0, p1 float32
 	switch rg.gradientType.kind {
 	case radialTypeRadial:

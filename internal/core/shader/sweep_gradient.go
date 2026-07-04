@@ -8,7 +8,7 @@ package shader
 
 import (
 	"github.com/chewxy/math32"
-	"github.com/lumifloat/tinyskia/internal/core/color"
+	"github.com/lumifloat/tinyskia/internal/core/colorf"
 	"github.com/lumifloat/tinyskia/internal/core/pipeline"
 	"github.com/lumifloat/tinyskia/internal/numeric/scalar"
 	"github.com/lumifloat/tinyskia/internal/path"
@@ -81,7 +81,7 @@ func (sg *SweepGradient) IsOpaque() bool {
 	return sg.base.colorsAreOpaque
 }
 
-func (sg *SweepGradient) PushStages(cs color.ColorSpace, p *pipeline.RasterPipelineBuilder) bool {
+func (sg *SweepGradient) PushStages(cs colorf.ColorSpace, p *pipeline.RasterPipelineBuilder) bool {
 	scale := float32(1.0) / (sg.t1 - sg.t0)
 	bias := -scale * sg.t0
 

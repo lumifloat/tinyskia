@@ -8,7 +8,6 @@ package examples
 import (
 	"image/color"
 	"os"
-	"runtime"
 	"strings"
 	"testing"
 
@@ -164,17 +163,6 @@ func TestGGWrap(t *testing.T) {
 
 	c := gg.NewCanvas(W, H)
 	dc := c.GetContext()
-
-	switch runtime.GOOS {
-	case "windows":
-		gg.RegisterFontWithFile("C:/Windows/Fonts/arial.ttf", gg.FontFace{Family: "arial"})
-		gg.RegisterFontWithFile("C:/Windows/Fonts/arialbd.ttf", gg.FontFace{Family: "arial", Weight: gg.FontWeightBold})
-	case "darwin":
-		gg.RegisterFontWithFile("/Library/Fonts/Arial.ttf", gg.FontFace{Family: "arial"})
-		gg.RegisterFontWithFile("/Library/Fonts/Arial Bold.ttf", gg.FontFace{Family: "arial", Weight: gg.FontWeightBold})
-	default:
-		// pass
-	}
 
 	// Set white background
 	dc.SetFillStyleSolidColor(color.RGBA{255, 255, 255, 255})
