@@ -7,15 +7,8 @@
 package blitter
 
 import (
-	"github.com/lumifloat/tinyskia/internal/path"
+	"image"
 )
-
-// Mask is used to describe alpha bitmaps.
-type Mask struct {
-	Image    [2]uint8
-	Bounds   path.ScreenIntRect
-	RowBytes uint32
-}
 
 // Blitter is responsible for actually writing pixels into memory.
 //
@@ -51,8 +44,8 @@ type Blitter interface {
 	BlitAntiV2(x uint32, y uint32, alpha0 uint8, alpha1 uint8)
 
 	// Blits a solid rectangle one or more pixels wide.
-	BlitRect(rect path.ScreenIntRect)
+	BlitRect(rect image.Rectangle)
 
 	// Blits a pattern of pixels defined by a rectangle-clipped mask.
-	BlitMask(mask Mask, clip path.ScreenIntRect)
+	BlitMask(mask *image.Alpha, clip image.Rectangle)
 }

@@ -7,16 +7,16 @@
 package pipeline
 
 import (
-	"github.com/lumifloat/tinyskia/internal/path"
+	"image"
 )
 
 const HIGH_STAGE_WIDTH = 8
 
 type HighPipeline struct {
-	pixmapSrc *PixmapCtx
-	pixmapDst *SubPixmapCtx
+	src       *image.RGBA
+	dst       *image.RGBA
+	mask      *image.Alpha
 	aaMaskCtx *AAMaskCtx
-	maskCtx   *MaskCtx
 	ctx       *Context
 	r         [HIGH_STAGE_WIDTH]float32
 	g         [HIGH_STAGE_WIDTH]float32
@@ -32,29 +32,21 @@ type HighPipeline struct {
 	stop      bool
 }
 
-func StartHighPipeline(
-	stages []Stage,
-	rect *path.ScreenIntRect,
-	aaMaskCtx *AAMaskCtx,
-	maskCtx *MaskCtx,
-	ctx *Context,
-	pixmapSrc *PixmapCtx,
-	pixmapDst *SubPixmapCtx,
-) {
+func StartHighPipeline(stages []Stage, rect image.Rectangle, aaMask *AAMaskCtx, mask *image.Alpha, ctx *Context, src *image.RGBA, dst *image.RGBA) {
 	var p HighPipeline
-	p.pixmapSrc = pixmapSrc
-	p.pixmapDst = pixmapDst
-	p.maskCtx = maskCtx
-	p.aaMaskCtx = aaMaskCtx
+	p.src = src
+	p.dst = dst
+	p.mask = mask
+	p.aaMaskCtx = aaMask
 	p.ctx = ctx
 
-	for y := rect.Y(); y < rect.Bottom(); y++ {
-		x := int(rect.X())
-		end := int(rect.Right())
+	for y := rect.Min.Y; y < rect.Max.Y; y++ {
+		x := rect.Min.X
+		end := rect.Max.X
 
 		for x+HIGH_STAGE_WIDTH <= end {
 			p.dx = x
-			p.dy = int(y)
+			p.dy = y
 			p.tail = HIGH_STAGE_WIDTH
 			p.stop = false
 
@@ -388,7 +380,7 @@ func StartHighPipeline(
 
 		if x != end {
 			p.dx = x
-			p.dy = int(y)
+			p.dy = y
 			p.tail = end - x
 			p.stop = false
 			for _, stage := range stages {

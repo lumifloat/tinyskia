@@ -7,18 +7,16 @@
 package pipeline
 
 import (
+	"image"
 	"image/color"
-
-	"github.com/lumifloat/tinyskia/internal/core/blitter"
-	"github.com/lumifloat/tinyskia/internal/path"
 )
 
 const BYTES_PER_PIXEL = 4
 
 type RasterPipelineBlitter struct {
-	Mask             *MaskCtx
-	PixmapSrc        *PixmapCtx
-	Pixmap           *SubPixmapCtx
+	Mask             *image.Alpha
+	Src              *image.RGBA
+	Dst              *image.RGBA
 	Memset2dColor    color.RGBA
 	UseMemset2dColor bool
 	BlitAntiHRp      RasterPipeline
@@ -28,19 +26,11 @@ type RasterPipelineBlitter struct {
 }
 
 func (b *RasterPipelineBlitter) BlitH(x, y uint32, width uint32) {
-	r := path.NewScreenIntRectFromXYWHSafe(x, y, width, 1)
+	r := image.Rect(int(x), int(y), int(x+width), int(y+1))
 	b.BlitRect(r)
 }
 
 func (b *RasterPipelineBlitter) BlitAntiH(x, y uint32, aa []uint8, runs []uint16) {
-	var maskCtx MaskCtx
-	if b.Mask != nil {
-		maskCtx = MaskCtx{
-			Data:      b.Mask.Data,
-			RealWidth: b.Mask.RealWidth,
-		}
-	}
-
 	aaOffset := 0
 	runOffset := 0
 	for runOffset < len(runs) {
@@ -58,8 +48,8 @@ func (b *RasterPipelineBlitter) BlitAntiH(x, y uint32, aa []uint8, runs []uint16
 			b.BlitH(x, y, width)
 		default:
 			b.BlitAntiHRp.Ctx.CurrentCoverage = float32(alpha) * (1.0 / 255.0)
-			rect := path.NewScreenIntRectFromXYWHSafe(x, y, width, 1)
-			b.BlitAntiHRp.Run(&rect, &AAMaskCtx{}, &maskCtx, b.PixmapSrc, b.Pixmap)
+			rect := image.Rect(int(x), int(y), int(x+width), int(y+1))
+			b.BlitAntiHRp.Run(rect, &AAMaskCtx{}, b.Mask, b.Src, b.Dst)
 		}
 
 		x += width
@@ -69,51 +59,45 @@ func (b *RasterPipelineBlitter) BlitAntiH(x, y uint32, aa []uint8, runs []uint16
 }
 
 func (b *RasterPipelineBlitter) BlitV(x, y, height uint32, alpha uint8) {
-	bounds := path.NewScreenIntRectFromXYWHSafe(x, y, 1, height)
-	mask := blitter.Mask{
-		Image:    [2]uint8{alpha, alpha},
-		Bounds:   bounds,
-		RowBytes: 0,
-	}
-	b.BlitMask(mask, bounds)
+	rect := image.Rect(int(x), int(y), int(x)+1, int(y+height))
+	mask := image.NewAlpha(rect)
+	mask.Pix[0] = alpha
+	mask.Pix[1] = alpha
+	b.BlitMask(mask, rect)
 }
 
 func (b *RasterPipelineBlitter) BlitAntiH2(x, y uint32, alpha0, alpha1 uint8) {
-	bounds, _ := path.NewScreenIntRectFromXYWH(x, y, 2, 1)
-	mask := blitter.Mask{
-		Image:    [2]uint8{alpha0, alpha1},
-		Bounds:   bounds,
-		RowBytes: 2,
-	}
-	b.BlitMask(mask, bounds)
+	rect := image.Rect(int(x), int(y), int(x)+2, int(y)+1)
+	mask := image.NewAlpha(rect)
+	mask.Pix[0] = alpha0
+	mask.Pix[1] = alpha1
+	b.BlitMask(mask, rect)
 }
 
 func (b *RasterPipelineBlitter) BlitAntiV2(x, y uint32, alpha0, alpha1 uint8) {
-	bounds, _ := path.NewScreenIntRectFromXYWH(x, y, 1, 2)
-	mask := blitter.Mask{
-		Image:    [2]uint8{alpha0, alpha1},
-		Bounds:   bounds,
-		RowBytes: 1,
-	}
-	b.BlitMask(mask, bounds)
+	rect := image.Rect(int(x), int(y), int(x)+1, int(y)+2)
+	mask := image.NewAlpha(rect)
+	mask.Pix[0] = alpha0
+	mask.Pix[1] = alpha1
+	b.BlitMask(mask, rect)
 }
 
-func (b *RasterPipelineBlitter) BlitRect(rect path.ScreenIntRect) {
+func (b *RasterPipelineBlitter) BlitRect(rect image.Rectangle) {
 	if b.UseMemset2dColor {
 		if b.IsMask {
-			for y := uint32(0); y < rect.Height(); y++ {
-				start := (int(rect.Y()+y)*b.Pixmap.RealWidth + int(rect.X())) * BYTES_PER_PIXEL
-				end := start + int(rect.Width())*BYTES_PER_PIXEL
-				data := b.Pixmap.Data[start:end]
+			width := rect.Dx()
+			for y := rect.Min.Y; y < rect.Max.Y; y++ {
+				idx := b.Dst.PixOffset(rect.Min.X, y)
+				data := b.Dst.Pix[idx : idx+width]
 				for i := range data {
 					data[i] = b.Memset2dColor.A
 				}
 			}
 		} else {
-			for y := uint32(0); y < rect.Height(); y++ {
-				start := (int(rect.Y()+y)*b.Pixmap.RealWidth + int(rect.X())) * BYTES_PER_PIXEL
-				end := start + int(rect.Width())*BYTES_PER_PIXEL
-				data := b.Pixmap.Data[start:end]
+			width := rect.Dx() * BYTES_PER_PIXEL
+			for y := rect.Min.Y; y < rect.Max.Y; y++ {
+				idx := b.Dst.PixOffset(rect.Min.X, y)
+				data := b.Dst.Pix[idx : idx+width]
 				for i := 0; i < len(data); i += BYTES_PER_PIXEL {
 					data[i+0] = b.Memset2dColor.R
 					data[i+1] = b.Memset2dColor.G
@@ -125,31 +109,15 @@ func (b *RasterPipelineBlitter) BlitRect(rect path.ScreenIntRect) {
 		return
 	}
 
-	var maskCtx MaskCtx
-	if b.Mask != nil {
-		maskCtx = MaskCtx{
-			Data:      b.Mask.Data,
-			RealWidth: b.Mask.RealWidth,
-		}
-	}
-
-	b.BlitRectRp.Run(&rect, &AAMaskCtx{}, &maskCtx, b.PixmapSrc, b.Pixmap)
+	b.BlitRectRp.Run(rect, &AAMaskCtx{}, b.Mask, b.Src, b.Dst)
 }
 
-func (b *RasterPipelineBlitter) BlitMask(mask blitter.Mask, clip path.ScreenIntRect) {
+func (b *RasterPipelineBlitter) BlitMask(mask *image.Alpha, clip image.Rectangle) {
 	aaMaskCtx := AAMaskCtx{
-		Pixels: mask.Image,
-		Stride: mask.RowBytes,
-		Shift:  int(mask.Bounds.Left() + mask.Bounds.Top()*mask.RowBytes),
+		Pixels: [2]uint8{mask.Pix[0], mask.Pix[1]},
+		Stride: uint32(mask.Stride),
+		Shift:  int(mask.Rect.Min.X + mask.Rect.Min.Y*mask.Stride),
 	}
 
-	var maskCtx MaskCtx
-	if b.Mask != nil {
-		maskCtx = MaskCtx{
-			Data:      b.Mask.Data,
-			RealWidth: b.Mask.RealWidth,
-		}
-	}
-
-	b.BlitMaskRp.Run(&clip, &aaMaskCtx, &maskCtx, b.PixmapSrc, b.Pixmap)
+	b.BlitMaskRp.Run(clip, &aaMaskCtx, b.Mask, b.Src, b.Dst)
 }

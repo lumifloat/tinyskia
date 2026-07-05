@@ -7,6 +7,7 @@
 package pipeline
 
 import (
+	"image"
 	"unsafe"
 
 	"github.com/chewxy/math32"
@@ -118,8 +119,8 @@ func (p *LowPipeline) SeedShader() {
 
 //go:fix inline
 func (p *LowPipeline) LoadDestination() {
-	baseIdx := (p.dy*p.pixmap.RealWidth + p.dx) * 4
-	data := p.pixmap.Data[baseIdx : baseIdx+LOW_STAGE_WIDTH*4]
+	offset := p.dst.PixOffset(p.dx, p.dy)
+	data := p.dst.Pix[offset : offset+LOW_STAGE_WIDTH*4]
 
 	p.dr[0], p.dr[1], p.dr[2], p.dr[3] = uint16(data[0]), uint16(data[4]), uint16(data[8]), uint16(data[12])
 	p.dr[4], p.dr[5], p.dr[6], p.dr[7] = uint16(data[16]), uint16(data[20]), uint16(data[24]), uint16(data[28])
@@ -142,8 +143,9 @@ func (p *LowPipeline) LoadDestination() {
 
 //go:fix inline
 func (p *LowPipeline) LoadDestinationTail() {
-	baseIdx := (p.dy*p.pixmap.RealWidth + p.dx) * 4
-	data := p.pixmap.Data[baseIdx : baseIdx+p.tail*4]
+	offset := p.dst.PixOffset(p.dx, p.dy)
+	data := p.dst.Pix[offset : offset+p.tail*4]
+
 	for i := 0; i < p.tail; i++ {
 		off := i * 4
 		p.dr[i] = uint16(data[off])
@@ -155,8 +157,8 @@ func (p *LowPipeline) LoadDestinationTail() {
 
 //go:fix inline
 func (p *LowPipeline) Store() {
-	baseIdx := (p.dy*p.pixmap.RealWidth + p.dx) * 4
-	data := p.pixmap.Data[baseIdx : baseIdx+LOW_STAGE_WIDTH*4]
+	offset := p.dst.PixOffset(p.dx, p.dy)
+	data := p.dst.Pix[offset : offset+LOW_STAGE_WIDTH*4]
 
 	data[0], data[4], data[8], data[12] = uint8(p.r[0]), uint8(p.r[1]), uint8(p.r[2]), uint8(p.r[3])
 	data[16], data[20], data[24], data[28] = uint8(p.r[4]), uint8(p.r[5]), uint8(p.r[6]), uint8(p.r[7])
@@ -179,8 +181,8 @@ func (p *LowPipeline) Store() {
 
 //go:fix inline
 func (p *LowPipeline) StoreTail() {
-	baseIdx := (p.dy*p.pixmap.RealWidth + p.dx) * 4
-	data := p.pixmap.Data[baseIdx : baseIdx+p.tail*4]
+	offset := p.dst.PixOffset(p.dx, p.dy)
+	data := p.dst.Pix[offset : offset+p.tail*4]
 
 	for i := 0; i < p.tail; i++ {
 		off := i * 4
@@ -193,30 +195,32 @@ func (p *LowPipeline) StoreTail() {
 
 //go:fix inline
 func (p *LowPipeline) LoadDestinationU8() {
-	baseIdx := (p.dy*p.pixmap.RealWidth + p.dx) * 4
-	data := p.pixmap.Data[baseIdx : baseIdx+LOW_STAGE_WIDTH*4]
+	dst := (*image.Alpha)(unsafe.Pointer(p.dst))
+	offset := dst.PixOffset(p.dx, p.dy)
+	data := dst.Pix[offset : offset+LOW_STAGE_WIDTH]
 
-	p.da[0], p.da[1], p.da[2], p.da[3] = uint16(data[3]), uint16(data[7]), uint16(data[11]), uint16(data[15])
-	p.da[4], p.da[5], p.da[6], p.da[7] = uint16(data[19]), uint16(data[23]), uint16(data[27]), uint16(data[31])
-	p.da[8], p.da[9], p.da[10], p.da[11] = uint16(data[35]), uint16(data[39]), uint16(data[43]), uint16(data[47])
-	p.da[12], p.da[13], p.da[14], p.da[15] = uint16(data[51]), uint16(data[55]), uint16(data[59]), uint16(data[63])
+	p.da[0], p.da[1], p.da[2], p.da[3] = uint16(data[0]), uint16(data[1]), uint16(data[2]), uint16(data[3])
+	p.da[4], p.da[5], p.da[6], p.da[7] = uint16(data[4]), uint16(data[5]), uint16(data[6]), uint16(data[7])
+	p.da[8], p.da[9], p.da[10], p.da[11] = uint16(data[8]), uint16(data[9]), uint16(data[10]), uint16(data[11])
+	p.da[12], p.da[13], p.da[14], p.da[15] = uint16(data[12]), uint16(data[13]), uint16(data[14]), uint16(data[15])
 }
 
 //go:fix inline
 func (p *LowPipeline) LoadDestinationU8Tail() {
-	baseIdx := (p.dy*p.pixmap.RealWidth + p.dx) * 4
-	data := p.pixmap.Data[baseIdx : baseIdx+p.tail*4]
+	dst := (*image.Alpha)(unsafe.Pointer(p.dst))
+	offset := dst.PixOffset(p.dx, p.dy)
+	data := dst.Pix[offset : offset+p.tail]
 
 	for i := 0; i < p.tail; i++ {
-		off := i * 4
-		p.da[i] = uint16(data[off+3])
+		p.da[i] = uint16(data[i])
 	}
 }
 
 //go:fix inline
 func (p *LowPipeline) StoreU8() {
-	baseIdx := (p.dy*p.pixmap.RealWidth + p.dx) * 4
-	data := p.pixmap.Data[baseIdx : baseIdx+LOW_STAGE_WIDTH]
+	dst := (*image.Alpha)(unsafe.Pointer(p.dst))
+	offset := dst.PixOffset(p.dx, p.dy)
+	data := dst.Pix[offset : offset+LOW_STAGE_WIDTH]
 
 	data[0], data[1], data[2], data[3] = uint8(p.a[0]), uint8(p.a[1]), uint8(p.a[2]), uint8(p.a[3])
 	data[4], data[5], data[6], data[7] = uint8(p.a[4]), uint8(p.a[5]), uint8(p.a[6]), uint8(p.a[7])
@@ -226,8 +230,9 @@ func (p *LowPipeline) StoreU8() {
 
 //go:fix inline
 func (p *LowPipeline) StoreU8Tail() {
-	baseIdx := (p.dy*p.pixmap.RealWidth + p.dx) * 4
-	data := p.pixmap.Data[baseIdx : baseIdx+p.tail]
+	dst := (*image.Alpha)(unsafe.Pointer(p.dst))
+	offset := dst.PixOffset(p.dx, p.dy)
+	data := dst.Pix[offset : offset+p.tail]
 
 	for i := 0; i < p.tail; i++ {
 		data[i] = uint8(p.a[i])
@@ -240,12 +245,11 @@ func (p *LowPipeline) Gather() {
 
 //go:fix inline
 func (p *LowPipeline) LoadMaskU8() {
-	baseIdx := int(p.maskCtx.RealWidth)*p.dy + p.dx
-	maskData := p.maskCtx.Data
+	offset := p.mask.PixOffset(p.dx, p.dy)
 
 	var c [LOW_STAGE_WIDTH]uint16
 	for i := 0; i < p.tail; i++ {
-		c[i] = uint16(maskData[baseIdx+i])
+		c[i] = uint16(p.mask.Pix[offset+i])
 	}
 
 	p.r = [LOW_STAGE_WIDTH]uint16{}
@@ -256,8 +260,8 @@ func (p *LowPipeline) LoadMaskU8() {
 
 //go:fix inline
 func (p *LowPipeline) MaskU8() {
-	baseIdx := int(p.maskCtx.RealWidth)*p.dy + p.dx
-	maskData := p.maskCtx.Data
+	baseIdx := p.mask.PixOffset(p.dx, p.dy)
+	maskData := p.mask.Pix
 
 	var c [LOW_STAGE_WIDTH]uint16
 	for i := 0; i < p.tail; i++ {
@@ -1144,8 +1148,8 @@ func (p *LowPipeline) Luminosity() {
 //go:fix inline
 func (p *LowPipeline) SourceOverRgba() {
 	// Load destination RGBA (4 pixels at a time, unrolled)
-	baseIdx := (p.dy*p.pixmap.RealWidth + p.dx) * 4
-	data := p.pixmap.Data[baseIdx : baseIdx+LOW_STAGE_WIDTH*4]
+	offset := p.dst.PixOffset(p.dx, p.dy)
+	data := p.dst.Pix[offset : offset+LOW_STAGE_WIDTH*4]
 
 	// Load dr (red channel)
 	p.dr[0], p.dr[1], p.dr[2], p.dr[3] = uint16(data[0]), uint16(data[4]), uint16(data[8]), uint16(data[12])
@@ -1225,8 +1229,8 @@ func (p *LowPipeline) SourceOverRgba() {
 //go:fix inline
 func (p *LowPipeline) SourceOverRgbaTail() {
 	// Load destination RGBA for tail pixels
-	baseIdx := (p.dy*p.pixmap.RealWidth + p.dx) * 4
-	data := p.pixmap.Data[baseIdx : baseIdx+p.tail*4]
+	offset := p.dst.PixOffset(p.dx, p.dy)
+	data := p.dst.Pix[offset : offset+p.tail*4]
 
 	for i := 0; i < p.tail; i++ {
 		off := i * 4

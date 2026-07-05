@@ -37,6 +37,7 @@ func TestGGStar(t *testing.T) {
 		p := points[index]
 		dc.LineTo(p[0], p[1])
 	}
+	dc.ClosePath()
 
 	dc.SetFillStyleSolidColor(color.RGBA{0, 128, 0, 255})
 	dc.FillWithFillRule(gg.FillRuleEvenOdd)

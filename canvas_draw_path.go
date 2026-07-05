@@ -57,11 +57,7 @@ func (dc *Context) FillPathWithFillRule(p *Path2D, fillRule FillRule) {
 		Colorspace:      dc.colorspace,
 		ForceHQPipeline: dc.forceHQPipeline,
 	}
-	var maskData []uint8
-	if dc.mask != nil {
-		maskData = dc.mask.Pix
-	}
-	blitter := paint.blitter(dc.canvas.im.Pix, maskData, dc.canvas.GetWidth(), dc.canvas.GetHeight())
+	blitter := paint.blitter(dc.canvas.im, dc.mask)
 	if blitter == nil {
 		return
 	}
@@ -132,11 +128,7 @@ func (dc *Context) StrokePath(p *Path2D) {
 		Colorspace:      dc.colorspace,
 		ForceHQPipeline: dc.forceHQPipeline,
 	}
-	var maskData []uint8
-	if dc.mask != nil {
-		maskData = dc.mask.Pix
-	}
-	blitter := paint.blitter(dc.canvas.im.Pix, maskData, dc.canvas.GetWidth(), dc.canvas.GetHeight())
+	blitter := paint.blitter(dc.canvas.im, dc.mask)
 	if blitter == nil {
 		return
 	}
@@ -200,7 +192,7 @@ func (dc *Context) ClipPathWithFillRule(p *Path2D, fillRule FillRule) {
 		Colorspace:      dc.colorspace,
 		ForceHQPipeline: dc.forceHQPipeline,
 	}
-	blitter := paint.blitter(tempRGBA.Pix, nil, width, height)
+	blitter := paint.blitter(tempRGBA, nil)
 	if blitter == nil {
 		return
 	}

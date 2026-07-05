@@ -7,6 +7,8 @@
 package pipeline
 
 import (
+	"image"
+
 	"github.com/lumifloat/tinyskia/internal/numeric/normalized"
 	"github.com/lumifloat/tinyskia/internal/path"
 )
@@ -374,17 +376,11 @@ func (b *RasterPipelineBuilder) Compile() *RasterPipeline {
 	}
 }
 
-func (p *RasterPipeline) Run(
-	rect *path.ScreenIntRect,
-	aaMaskCtx *AAMaskCtx,
-	maskCtx *MaskCtx,
-	pixmapSrc *PixmapCtx,
-	pixmapDst *SubPixmapCtx,
-) {
+func (p *RasterPipeline) Run(rect image.Rectangle, aaMask *AAMaskCtx, mask *image.Alpha, src *image.RGBA, dst *image.RGBA) {
 	switch k := p.Kind.(type) {
 	case RasterPipelineHigh:
-		StartHighPipeline(k, rect, aaMaskCtx, maskCtx, &p.Ctx, pixmapSrc, pixmapDst)
+		StartHighPipeline(k, rect, aaMask, mask, &p.Ctx, src, dst)
 	case RasterPipelineLow:
-		StartLowPipeline(k, rect, aaMaskCtx, maskCtx, &p.Ctx, pixmapDst)
+		StartLowPipeline(k, rect, aaMask, mask, &p.Ctx, dst)
 	}
 }

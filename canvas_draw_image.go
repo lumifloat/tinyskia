@@ -120,11 +120,7 @@ func (dc *Context) DrawImageWithSourceRect(im image.Image, sx, sy, sw, sh, dx, d
 		ForceHQPipeline: dc.forceHQPipeline,
 	}
 
-	var maskData []uint8
-	if dc.mask != nil {
-		maskData = dc.mask.Pix
-	}
-	blitter := paint.blitter(dc.canvas.im.Pix, maskData, dc.canvas.GetWidth(), dc.canvas.GetHeight())
+	blitter := paint.blitter(dc.canvas.im, dc.mask)
 	if blitter == nil {
 		return
 	}

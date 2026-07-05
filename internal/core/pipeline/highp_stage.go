@@ -7,6 +7,8 @@
 package pipeline
 
 import (
+	"image"
+
 	"github.com/chewxy/math32"
 )
 
@@ -101,8 +103,8 @@ func (p *HighPipeline) SeedShader() {
 func (p *HighPipeline) LoadDestination() {
 	const FACTOR = 1.0 / 255.0
 
-	offset := (p.dy*p.pixmapDst.RealWidth + p.dx) * 4
-	data := p.pixmapDst.Data[offset : offset+HIGH_STAGE_WIDTH*4]
+	offset := p.dst.PixOffset(p.dx, p.dy)
+	data := p.dst.Pix[offset : offset+HIGH_STAGE_WIDTH*4]
 
 	p.dr[0], p.dr[1], p.dr[2], p.dr[3] = float32(data[0])*FACTOR, float32(data[4])*FACTOR, float32(data[8])*FACTOR, float32(data[12])*FACTOR
 	p.dr[4], p.dr[5], p.dr[6], p.dr[7] = float32(data[16])*FACTOR, float32(data[20])*FACTOR, float32(data[24])*FACTOR, float32(data[28])*FACTOR
@@ -120,14 +122,15 @@ func (p *HighPipeline) LoadDestinationTail() {
 
 	tmp := [HIGH_STAGE_WIDTH * 4]uint8{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
-	offset := (p.dy*p.pixmapDst.RealWidth + p.dx) * 4
+	offset := p.dst.PixOffset(p.dx, p.dy)
+	data := p.dst.Pix[offset : offset+p.tail*4]
+
 	for i := 0; i < p.tail; i++ {
-		srcIdx := offset + i*4
-		dstIdx := i * 4
-		tmp[dstIdx+0] = p.pixmapDst.Data[srcIdx+0]
-		tmp[dstIdx+1] = p.pixmapDst.Data[srcIdx+1]
-		tmp[dstIdx+2] = p.pixmapDst.Data[srcIdx+2]
-		tmp[dstIdx+3] = p.pixmapDst.Data[srcIdx+3]
+		idx := i * 4
+		tmp[idx+0] = data[idx+0]
+		tmp[idx+1] = data[idx+1]
+		tmp[idx+2] = data[idx+2]
+		tmp[idx+3] = data[idx+3]
 	}
 
 	// Load from tmp array (rest are already zero/transparent)
@@ -143,8 +146,8 @@ func (p *HighPipeline) LoadDestinationTail() {
 
 //go:fix inline
 func (p *HighPipeline) Store() {
-	offset := (p.dy*p.pixmapDst.RealWidth + p.dx) * 4
-	data := p.pixmapDst.Data[offset : offset+HIGH_STAGE_WIDTH*4]
+	offset := p.dst.PixOffset(p.dx, p.dy)
+	data := p.dst.Pix[offset : offset+HIGH_STAGE_WIDTH*4]
 
 	data[0], data[4], data[8], data[12] = f32unnorm(p.r[0]), f32unnorm(p.r[1]), f32unnorm(p.r[2]), f32unnorm(p.r[3])
 	data[16], data[20], data[24], data[28] = f32unnorm(p.r[4]), f32unnorm(p.r[5]), f32unnorm(p.r[6]), f32unnorm(p.r[7])
@@ -169,13 +172,14 @@ func (p *HighPipeline) StoreTail() {
 	tmp[3], tmp[7], tmp[11], tmp[15] = f32unnorm(p.a[0]), f32unnorm(p.a[1]), f32unnorm(p.a[2]), f32unnorm(p.a[3])
 	tmp[19], tmp[23], tmp[27], tmp[31] = f32unnorm(p.a[4]), f32unnorm(p.a[5]), f32unnorm(p.a[6]), f32unnorm(p.a[7])
 
-	offset := (p.dy*p.pixmapDst.RealWidth + p.dx) * 4
+	offset := p.dst.PixOffset(p.dx, p.dy)
+	data := p.dst.Pix[offset : offset+p.tail*4]
 	for i := 0; i < p.tail; i++ {
-		dstIdx := offset + i*4
-		p.pixmapDst.Data[dstIdx+0] = tmp[i*4+0]
-		p.pixmapDst.Data[dstIdx+1] = tmp[i*4+1]
-		p.pixmapDst.Data[dstIdx+2] = tmp[i*4+2]
-		p.pixmapDst.Data[dstIdx+3] = tmp[i*4+3]
+		idx := i * 4
+		data[idx+0] = tmp[idx+0]
+		data[idx+1] = tmp[idx+1]
+		data[idx+2] = tmp[idx+2]
+		data[idx+3] = tmp[idx+3]
 	}
 }
 
@@ -208,9 +212,9 @@ func (p *HighPipeline) Gather() {
 		return math32.Float32frombits(bits - 1)
 	}
 
-	w := ulpsub(float32(p.pixmapSrc.Size.Width()))
-	h := ulpsub(float32(p.pixmapSrc.Size.Height()))
-	iw := int32(p.pixmapSrc.Size.Width())
+	w := ulpsub(float32(p.src.Rect.Dx()))
+	h := ulpsub(float32(p.src.Rect.Dy()))
+	iw := int32(p.src.Rect.Dx())
 
 	for i := 0; i < 8; i++ {
 		x := f32min(f32max(p.r[i], 0), w)
@@ -218,10 +222,10 @@ func (p *HighPipeline) Gather() {
 
 		offset := (int32(y)*iw + int32(x)) * 4
 
-		p.r[i] = float32(p.pixmapSrc.Data[offset+0]) * FACTOR
-		p.g[i] = float32(p.pixmapSrc.Data[offset+1]) * FACTOR
-		p.b[i] = float32(p.pixmapSrc.Data[offset+2]) * FACTOR
-		p.a[i] = float32(p.pixmapSrc.Data[offset+3]) * FACTOR
+		p.r[i] = float32(p.src.Pix[offset+0]) * FACTOR
+		p.g[i] = float32(p.src.Pix[offset+1]) * FACTOR
+		p.b[i] = float32(p.src.Pix[offset+2]) * FACTOR
+		p.a[i] = float32(p.src.Pix[offset+3]) * FACTOR
 	}
 }
 
@@ -234,11 +238,11 @@ func (p *HighPipeline) LoadMaskU8() {
 func (p *HighPipeline) MaskU8() {
 	const FACTOR = 1.0 / 255.0
 
-	offset := p.maskCtx.Offset(p.dx, p.dy)
+	offset := p.mask.PixOffset(p.dx, p.dy)
 
 	c := [8]float32{0, 0, 0, 0, 0, 0, 0, 0}
 	for i := 0; i < p.tail && i < 8; i++ {
-		c[i] = float32(p.maskCtx.Data[offset+i]) * FACTOR
+		c[i] = float32(p.mask.Pix[offset+i]) * FACTOR
 	}
 
 	if c[0] == 0 && c[1] == 0 && c[2] == 0 && c[3] == 0 && c[4] == 0 && c[5] == 0 && c[6] == 0 && c[7] == 0 {
@@ -1099,8 +1103,8 @@ func (p *HighPipeline) Luminosity() {
 //go:fix inline
 func (p *HighPipeline) SourceOverRgba() {
 	const FACTOR = 1.0 / 255.0
-	offset := (p.dy*p.pixmapDst.RealWidth + p.dx) * 4
-	data := p.pixmapDst.Data[offset : offset+HIGH_STAGE_WIDTH*4]
+	offset := p.dst.PixOffset(p.dx, p.dy)
+	data := p.dst.Pix[offset : offset+HIGH_STAGE_WIDTH*4]
 
 	p.dr[0], p.dr[1], p.dr[2], p.dr[3] = float32(data[0])*FACTOR, float32(data[4])*FACTOR, float32(data[8])*FACTOR, float32(data[12])*FACTOR
 	p.dr[4], p.dr[5], p.dr[6], p.dr[7] = float32(data[16])*FACTOR, float32(data[20])*FACTOR, float32(data[24])*FACTOR, float32(data[28])*FACTOR
@@ -1135,13 +1139,14 @@ func (p *HighPipeline) SourceOverRgbaTail() {
 	const FACTOR = 1.0 / 255.0
 
 	dstTmp := [32]uint8{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-	offset := (p.dy*p.pixmapDst.RealWidth + p.dx) * 4
+	offset := p.dst.PixOffset(p.dx, p.dy)
+	data := p.dst.Pix[offset : offset+p.tail*4]
 	for i := 0; i < p.tail; i++ {
-		srcIdx := offset + i*4
-		dstTmp[i*4+0] = p.pixmapDst.Data[srcIdx+0]
-		dstTmp[i*4+1] = p.pixmapDst.Data[srcIdx+1]
-		dstTmp[i*4+2] = p.pixmapDst.Data[srcIdx+2]
-		dstTmp[i*4+3] = p.pixmapDst.Data[srcIdx+3]
+		idx := i * 4
+		dstTmp[idx] = data[idx]
+		dstTmp[idx+1] = data[idx+1]
+		dstTmp[idx+2] = data[idx+2]
+		dstTmp[idx+3] = data[idx+3]
 	}
 
 	p.dr[0], p.dr[1], p.dr[2], p.dr[3] = float32(dstTmp[0])*FACTOR, float32(dstTmp[4])*FACTOR, float32(dstTmp[8])*FACTOR, float32(dstTmp[12])*FACTOR
@@ -1173,11 +1178,11 @@ func (p *HighPipeline) SourceOverRgbaTail() {
 	srcTmp[19], srcTmp[23], srcTmp[27], srcTmp[31] = f32unnorm(p.a[4]), f32unnorm(p.a[5]), f32unnorm(p.a[6]), f32unnorm(p.a[7])
 
 	for i := 0; i < p.tail; i++ {
-		dstIdx := offset + i*4
-		p.pixmapDst.Data[dstIdx+0] = srcTmp[i*4+0]
-		p.pixmapDst.Data[dstIdx+1] = srcTmp[i*4+1]
-		p.pixmapDst.Data[dstIdx+2] = srcTmp[i*4+2]
-		p.pixmapDst.Data[dstIdx+3] = srcTmp[i*4+3]
+		idx := i * 4
+		data[idx] = srcTmp[idx]
+		data[idx+1] = srcTmp[idx+1]
+		data[idx+2] = srcTmp[idx+2]
+		data[idx+3] = srcTmp[idx+3]
 	}
 }
 
@@ -1270,7 +1275,7 @@ func (p *HighPipeline) Bilinear() {
 				sx := x + start + float32(k)
 				sy := y + start + float32(j)
 				var rr, gg, bb, aa float32
-				samplePixel(p.pixmapSrc, &p.ctx.Sampler, sx, sy, &rr, &gg, &bb, &aa)
+				samplePixel(p.src, &p.ctx.Sampler, sx, sy, &rr, &gg, &bb, &aa)
 				w := wx0
 				if k == 1 {
 					w = wx1
@@ -1313,7 +1318,7 @@ func (p *HighPipeline) Bicubic() {
 				sx := x + start + float32(k)
 				sy := y + start + float32(j)
 				var rr, gg, bb, aa float32
-				samplePixel(p.pixmapSrc, &p.ctx.Sampler, sx, sy, &rr, &gg, &bb, &aa)
+				samplePixel(p.src, &p.ctx.Sampler, sx, sy, &rr, &gg, &bb, &aa)
 				w := wx[k] * wy[j]
 				r += w * rr
 				g += w * gg
@@ -1857,9 +1862,9 @@ func exclusiveReflect(v, limit, invLimit float32) float32 {
 	return f32abs((v - limit) - (limit+limit)*math32.Floor((v-limit)*(invLimit*0.5)) - limit)
 }
 
-func samplePixel(pixmap *PixmapCtx, ctx *SamplerCtx, x, y float32, r, g, b, a *float32) {
-	width := float32(pixmap.Size.Width())
-	height := float32(pixmap.Size.Height())
+func samplePixel(src *image.RGBA, ctx *SamplerCtx, x, y float32, r, g, b, a *float32) {
+	width := float32(src.Rect.Dx())
+	height := float32(src.Rect.Dy())
 	switch ctx.SpreadMode {
 	case 0: // Pad
 		// Do nothing
@@ -1875,9 +1880,9 @@ func samplePixel(pixmap *PixmapCtx, ctx *SamplerCtx, x, y float32, r, g, b, a *f
 	iy := int(y)
 	if ix >= 0 && ix < int(width) && iy >= 0 && iy < int(height) {
 		idx := (iy*int(width) + ix) * 4
-		*r = float32(pixmap.Data[idx]) / 255
-		*g = float32(pixmap.Data[idx+1]) / 255
-		*b = float32(pixmap.Data[idx+2]) / 255
-		*a = float32(pixmap.Data[idx+3]) / 255
+		*r = float32(src.Pix[idx]) / 255
+		*g = float32(src.Pix[idx+1]) / 255
+		*b = float32(src.Pix[idx+2]) / 255
+		*a = float32(src.Pix[idx+3]) / 255
 	}
 }

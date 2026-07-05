@@ -7,12 +7,12 @@
 package tinyskia
 
 import (
+	"image"
 	"image/color"
 
 	"github.com/lumifloat/tinyskia/internal/core/colorf"
 	"github.com/lumifloat/tinyskia/internal/core/pipeline"
 	"github.com/lumifloat/tinyskia/internal/core/shader"
-	"github.com/lumifloat/tinyskia/internal/path"
 )
 
 // Paint controls how a shape should be painted.
@@ -40,24 +40,12 @@ func DefaultPaint() Paint {
 	}
 }
 
-func (p *Paint) blitter(data, mask []uint8, width, height int) *pipeline.RasterPipelineBlitter {
-	size, ok := path.NewIntSize(uint32(width), uint32(height))
-	if !ok {
+func (p *Paint) blitter(dst *image.RGBA, mask *image.Alpha) *pipeline.RasterPipelineBlitter {
+	if dst == nil {
 		return nil
 	}
-
-	var maskCtx *pipeline.MaskCtx
-	if mask != nil {
-		maskCtx = &pipeline.MaskCtx{
-			Data:      mask,
-			RealWidth: uint32(width),
-		}
-	}
-
-	subPixmapCtx := &pipeline.SubPixmapCtx{
-		Data:      data,
-		Size:      size,
-		RealWidth: width,
+	if mask != nil && (mask.Rect.Dx() != dst.Rect.Dx() || mask.Rect.Dy() != dst.Rect.Dy()) {
+		return nil
 	}
 
 	switch p.BlendMode {
@@ -71,14 +59,14 @@ func (p *Paint) blitter(data, mask []uint8, width, height int) *pipeline.RasterP
 
 	// We can strength-reduce SourceOver into Source when opaque.
 	blendMode := p.BlendMode
-	if p.Shader.IsOpaque() && blendMode == CompositeOperationSourceOver && maskCtx == nil {
+	if p.Shader.IsOpaque() && blendMode == CompositeOperationSourceOver && mask == nil {
 		blendMode = CompositeOperationSource
 	}
 
 	// When we're drawing a constant color in Source mode, we can sometimes just memset.
 	var memset2dColor color.RGBA
 	var useMemset2dColor bool
-	if blendMode == CompositeOperationSource && maskCtx == nil {
+	if blendMode == CompositeOperationSource && mask == nil {
 		if solid, ok := p.Shader.(*shader.SolidColor); ok {
 			memset2dColor = color.RGBAModel.Convert(solid.Color()).(color.RGBA)
 			useMemset2dColor = true
@@ -86,7 +74,7 @@ func (p *Paint) blitter(data, mask []uint8, width, height int) *pipeline.RasterP
 	}
 
 	// Clear is just a transparent color memset.
-	if blendMode == CompositeOperationClear && !p.AntiAlias && maskCtx == nil {
+	if blendMode == CompositeOperationClear && !p.AntiAlias && mask == nil {
 		blendMode = CompositeOperationSource
 		memset2dColor = color.RGBA{0, 0, 0, 0}
 		useMemset2dColor = true
@@ -99,7 +87,7 @@ func (p *Paint) blitter(data, mask []uint8, width, height int) *pipeline.RasterP
 		return nil
 	}
 
-	if maskCtx != nil {
+	if mask != nil {
 		blitAntiHRpBuilder.Push(pipeline.StageMaskU8)
 	}
 
@@ -135,11 +123,11 @@ func (p *Paint) blitter(data, mask []uint8, width, height int) *pipeline.RasterP
 		return nil
 	}
 
-	if maskCtx != nil {
+	if mask != nil {
 		blitRectRpBuilder.Push(pipeline.StageMaskU8)
 	}
 
-	if blendMode == CompositeOperationSourceOver && maskCtx == nil {
+	if blendMode == CompositeOperationSourceOver && mask == nil {
 		if stage, ok := compress(p.Colorspace); ok {
 			blitRectRpBuilder.Push(stage)
 		}
@@ -169,7 +157,7 @@ func (p *Paint) blitter(data, mask []uint8, width, height int) *pipeline.RasterP
 		return nil
 	}
 
-	if maskCtx != nil {
+	if mask != nil {
 		blitMaskRpBuilder.Push(pipeline.StageMaskU8)
 	}
 
@@ -198,43 +186,19 @@ func (p *Paint) blitter(data, mask []uint8, width, height int) *pipeline.RasterP
 	blitMaskRpBuilder.Push(pipeline.StageStore)
 	blitMaskRp := blitMaskRpBuilder.Compile()
 
-	var pixmapCtx *pipeline.PixmapCtx
+	var src *image.RGBA
 	if pattern, ok := p.Shader.(*shader.Pattern); ok {
-		pixmapCtx = &pipeline.PixmapCtx{
-			Data: pattern.Data,
-			Size: pattern.Size,
-		}
+		src = image.NewRGBA(image.Rect(0, 0, int(pattern.Size.Width()), int(pattern.Size.Height())))
+		src.Pix = pattern.Data
 	} else {
-		size, _ := path.NewIntSize(1, 1)
-		pixmapCtx = &pipeline.PixmapCtx{
-			Data: []uint8{0, 0, 0, 0},
-			Size: size,
-		}
-	}
-
-	var maskCtx2 *pipeline.MaskCtx
-	if maskCtx != nil {
-		maskCtxVal := pipeline.MaskCtx{
-			Data:      maskCtx.Data,
-			RealWidth: maskCtx.RealWidth,
-		}
-		maskCtx2 = &maskCtxVal
-	}
-
-	var subPixmapCtx2 *pipeline.SubPixmapCtx
-	if subPixmapCtx != nil {
-		subPixmapCtxVal := pipeline.SubPixmapCtx{
-			Data:      subPixmapCtx.Data,
-			Size:      subPixmapCtx.Size,
-			RealWidth: subPixmapCtx.RealWidth,
-		}
-		subPixmapCtx2 = &subPixmapCtxVal
+		src = image.NewRGBA(image.Rect(0, 0, 1, 1))
+		src.Pix = []uint8{0, 0, 0, 0}
 	}
 
 	return &pipeline.RasterPipelineBlitter{
-		Mask:             maskCtx2,
-		PixmapSrc:        pixmapCtx,
-		Pixmap:           subPixmapCtx2,
+		Mask:             mask,
+		Src:              src,
+		Dst:              dst,
 		Memset2dColor:    memset2dColor,
 		UseMemset2dColor: useMemset2dColor,
 		BlitAntiHRp:      *blitAntiHRp,

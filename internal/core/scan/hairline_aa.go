@@ -7,6 +7,8 @@
 package scan
 
 import (
+	"image"
+
 	"github.com/lumifloat/tinyskia/internal/core/blitter"
 	"github.com/lumifloat/tinyskia/internal/core/edge"
 	"github.com/lumifloat/tinyskia/internal/numeric/fixed"
@@ -98,10 +100,8 @@ func fillDot8(l, t, r, b fixed.FDot8, fillInner bool, blitter blitter.Blitter) {
 			width := right - left
 			if fillInner {
 				if width > 0 {
-					rect, ok := path.NewScreenIntRectFromXYWH(uint32(left), uint32(top), uint32(width), h64)
-					if ok {
-						blitter.BlitRect(rect)
-					}
+					rect := image.Rect(int(left), int(top), int(left+width), int(top)+int(h64))
+					blitter.BlitRect(rect)
 				}
 			}
 
@@ -765,12 +765,12 @@ func (r *rectClipBlitter) BlitH(x, y, count uint32) {
 	r.blitter.BlitH(x, y, count)
 }
 
-func (r *rectClipBlitter) BlitMask(mask blitter.Mask, rect path.ScreenIntRect) {
+func (r *rectClipBlitter) BlitMask(mask *image.Alpha, rect image.Rectangle) {
 	// TODO: implement masking with clipping
 	r.blitter.BlitMask(mask, rect)
 }
 
-func (r *rectClipBlitter) BlitRect(rect path.ScreenIntRect) {
+func (r *rectClipBlitter) BlitRect(rect image.Rectangle) {
 	// TODO: implement rect clipping
 	r.blitter.BlitRect(rect)
 }

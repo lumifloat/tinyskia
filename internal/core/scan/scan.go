@@ -7,6 +7,8 @@
 package scan
 
 import (
+	"image"
+
 	"github.com/lumifloat/tinyskia/internal/core/blitter"
 	"github.com/lumifloat/tinyskia/internal/path"
 )
@@ -36,7 +38,7 @@ func fillIntRect(rect path.IntRect, clip path.ScreenIntRect, blitter blitter.Bli
 		return
 	}
 
-	screenRect, ok := intersected.ToScreenIntRect()
+	screenRect := image.Rect(int(intersected.X()), int(intersected.Y()), int(intersected.X())+int(intersected.Width()), int(intersected.Y())+int(intersected.Height()))
 	if !ok {
 		return
 	}

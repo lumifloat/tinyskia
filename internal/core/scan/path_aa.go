@@ -7,6 +7,8 @@
 package scan
 
 import (
+	"image"
+
 	"github.com/chewxy/math32"
 	"github.com/lumifloat/tinyskia/internal/core/blitter"
 	"github.com/lumifloat/tinyskia/internal/core/edge"
@@ -239,11 +241,11 @@ func (sb *superBlitter) BlitH(x uint32, y uint32, width uint32) {
 
 // Implement rest of Blitter interface with empty methods or as needed
 func (sb *superBlitter) BlitV(x, y, height uint32, alpha uint8)              {}
-func (sb *superBlitter) BlitRect(rect path.ScreenIntRect)                    {}
+func (sb *superBlitter) BlitRect(rect image.Rectangle)                       {}
 func (sb *superBlitter) BlitAntiH(x, y uint32, alpha []uint8, runs []uint16) {}
 func (sb *superBlitter) BlitAntiH2(x, y uint32, alpha0, alpha1 uint8)        {}
 func (sb *superBlitter) BlitAntiV2(x, y uint32, alpha0, alpha1 uint8)        {}
-func (sb *superBlitter) BlitMask(mask blitter.Mask, clip path.ScreenIntRect) {}
+func (sb *superBlitter) BlitMask(mask *image.Alpha, clip image.Rectangle)    {}
 
 func coverageToPartialAlpha(aa uint32) uint8 {
 	aa <<= 8 - 2*shift

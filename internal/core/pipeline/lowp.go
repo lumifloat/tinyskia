@@ -7,16 +7,16 @@
 package pipeline
 
 import (
-	"github.com/lumifloat/tinyskia/internal/path"
+	"image"
 )
 
 const LOW_STAGE_WIDTH = 16
 
 // LowPipeline 低精度渲染管线结构体
 type LowPipeline struct {
-	pixmap    *SubPixmapCtx
+	dst       *image.RGBA
+	mask      *image.Alpha
 	aaMaskCtx *AAMaskCtx
-	maskCtx   *MaskCtx
 	ctx       *Context
 	r         [LOW_STAGE_WIDTH]uint16
 	g         [LOW_STAGE_WIDTH]uint16
@@ -32,27 +32,20 @@ type LowPipeline struct {
 	stop      bool
 }
 
-func StartLowPipeline(
-	stages []Stage,
-	rect *path.ScreenIntRect,
-	aaMaskCtx *AAMaskCtx,
-	maskCtx *MaskCtx,
-	ctx *Context,
-	pixmap *SubPixmapCtx,
-) {
+func StartLowPipeline(stages []Stage, rect image.Rectangle, aaMask *AAMaskCtx, mask *image.Alpha, ctx *Context, dst *image.RGBA) {
 	var p LowPipeline
-	p.pixmap = pixmap
-	p.maskCtx = maskCtx
-	p.aaMaskCtx = aaMaskCtx
+	p.dst = dst
+	p.mask = mask
+	p.aaMaskCtx = aaMask
 	p.ctx = ctx
 
-	for y := rect.Y(); y < rect.Bottom(); y++ {
-		x := int(rect.X())
-		end := int(rect.Right())
+	for y := rect.Min.Y; y < rect.Max.Y; y++ {
+		x := rect.Min.X
+		end := rect.Max.X
 
 		for x+LOW_STAGE_WIDTH <= end {
 			p.dx = x
-			p.dy = int(y)
+			p.dy = y
 			p.tail = LOW_STAGE_WIDTH
 			p.stop = false
 
@@ -314,7 +307,7 @@ func StartLowPipeline(
 
 		if x != end {
 			p.dx = x
-			p.dy = int(y)
+			p.dy = y
 			p.tail = end - x
 			p.stop = false
 
