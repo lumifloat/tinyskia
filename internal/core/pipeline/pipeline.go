@@ -9,6 +9,7 @@ package pipeline
 import (
 	"image"
 
+	"github.com/lumifloat/tinyskia/internal/core/colorf"
 	"github.com/lumifloat/tinyskia/internal/numeric/normalized"
 	"github.com/lumifloat/tinyskia/internal/path"
 )
@@ -247,6 +248,32 @@ func (b *RasterPipelineBuilder) PushTransform(ts path.Transform) {
 func (b *RasterPipelineBuilder) PushUniformColor(c UniformColorCtx) {
 	b.Ctx.UniformColor = c
 	b.Stages = append(b.Stages, StageUniformColor)
+}
+
+func (b *RasterPipelineBuilder) PushColorSpaceExpand(cs colorf.ColorSpace) {
+	switch cs {
+	case colorf.ColorSpaceLinear:
+		// PASS
+	case colorf.ColorSpaceGamma2:
+		b.Push(StageGammaExpand2)
+	case colorf.ColorSpaceSimpleSRGB:
+		b.Push(StageGammaExpand22)
+	case colorf.ColorSpaceFullSRGBGamma:
+		b.Push(StageGammaExpandSrgb)
+	}
+}
+
+func (b *RasterPipelineBuilder) PushColorSpaceCompress(cs colorf.ColorSpace) {
+	switch cs {
+	case colorf.ColorSpaceLinear:
+		// PASS
+	case colorf.ColorSpaceGamma2:
+		b.Push(StageGammaCompress2)
+	case colorf.ColorSpaceSimpleSRGB:
+		b.Push(StageGammaCompress22)
+	case colorf.ColorSpaceFullSRGBGamma:
+		b.Push(StageGammaCompressSrgb)
+	}
 }
 
 type RasterPipelineKind interface {

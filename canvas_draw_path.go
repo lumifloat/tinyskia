@@ -8,9 +8,9 @@ package tinyskia
 
 import (
 	"image"
-
 	"image/color"
 
+	"github.com/lumifloat/tinyskia/internal/core/painter"
 	"github.com/lumifloat/tinyskia/internal/core/scan"
 	"github.com/lumifloat/tinyskia/internal/core/shader"
 	"github.com/lumifloat/tinyskia/internal/path"
@@ -43,30 +43,14 @@ func (dc *Context) FillPathWithFillRule(p *Path2D, fillRule FillRule) {
 		return
 	}
 
-	var tp *path.Path
-	if !dc.matrix.transform.IsIdentity() {
-		tp = pp.Transform(dc.matrix.transform)
-	} else {
-		tp = pp
-	}
-
-	paint := &Paint{
+	paint := &painter.Paint{
 		Shader:          toShader(dc.fillStyle, dc.matrix.transform),
 		AntiAlias:       dc.antiAlias,
 		BlendMode:       dc.composite,
 		Colorspace:      dc.colorspace,
 		ForceHQPipeline: dc.forceHQPipeline,
 	}
-	blitter := paint.blitter(dc.canvas.im, dc.mask)
-	if blitter == nil {
-		return
-	}
-	screen, _ := path.NewScreenIntRectFromXYWH(0, 0, uint32(dc.canvas.GetWidth()), uint32(dc.canvas.GetHeight()))
-	if dc.antiAlias {
-		scan.FillPathAA(tp, int(fillRule), screen, blitter)
-	} else {
-		scan.FillPath(tp, int(fillRule), screen, blitter)
-	}
+	paint.FillPath(dc.canvas.im, dc.mask, pp, dc.matrix.transform, scan.FillRule(fillRule))
 }
 
 // Stroke the subpaths of the current default path with the current stroke style.
@@ -81,17 +65,7 @@ func (dc *Context) StrokePath(p *Path2D) {
 		return
 	}
 
-	var tp *path.Path
-	var lineWidth float32
-	if !dc.matrix.transform.IsIdentity() {
-		tp = pp.Transform(dc.matrix.transform)
-		resScale := path.ComputeResolutionScale(dc.matrix.transform)
-		lineWidth = float32(dc.lineWidth) * resScale
-	} else {
-		tp = pp
-		lineWidth = float32(dc.lineWidth)
-	}
-
+	var strokeDash *path.StrokeDash
 	if len(dc.lineDash) > 0 {
 		dashArray := make([]float32, len(dc.lineDash))
 		for i, d := range dc.lineDash {
@@ -105,48 +79,25 @@ func (dc *Context) StrokePath(p *Path2D) {
 			dashArray = doubled
 		}
 
-		strokeDash := path.NewStrokeDash(dashArray, float32(dc.lineDashOffset))
-		if strokeDash != nil {
-			dashedPath := tp.Dash(strokeDash, path.ComputeResolutionScale(dc.matrix.transform))
-			if dashedPath != nil {
-				tp = dashedPath
-			}
-		}
+		strokeDash = path.NewStrokeDash(dashArray, float32(dc.lineDashOffset))
 	}
 
 	stroke := path.Stroke{
-		Width:      lineWidth,
+		Width:      float32(dc.lineWidth),
 		LineCap:    path.LineCap(dc.lineCap),
 		LineJoin:   path.LineJoin(dc.lineJoin),
 		MiterLimit: float32(dc.miterLimit),
 	}
 
-	paint := &Paint{
+	paint := &painter.Paint{
 		Shader:          toShader(dc.strokeStyle, dc.matrix.transform),
 		AntiAlias:       dc.antiAlias,
 		BlendMode:       dc.composite,
 		Colorspace:      dc.colorspace,
 		ForceHQPipeline: dc.forceHQPipeline,
 	}
-	blitter := paint.blitter(dc.canvas.im, dc.mask)
-	if blitter == nil {
-		return
-	}
-	screen, _ := path.NewScreenIntRectFromXYWH(0, 0, uint32(dc.canvas.GetWidth()), uint32(dc.canvas.GetHeight()))
 
-	resScale := path.ComputeResolutionScale(dc.matrix.transform)
-
-	stroker := path.NewPathStroker()
-	strokedPath := stroker.Stroke(tp, stroke, resScale)
-	if strokedPath == nil {
-		return
-	}
-
-	if dc.antiAlias {
-		scan.FillPathAA(strokedPath, int(FillRuleWinding), screen, blitter)
-	} else {
-		scan.FillPath(strokedPath, int(FillRuleWinding), screen, blitter)
-	}
+	paint.StrokePath(dc.canvas.im, dc.mask, pp, dc.matrix.transform, stroke, strokeDash)
 }
 
 // Clip further constrains the clipping region to the current default path, using the given fill rule to determine what points are in the path.
@@ -171,55 +122,16 @@ func (dc *Context) ClipPathWithFillRule(p *Path2D, fillRule FillRule) {
 		return
 	}
 
-	var tp *path.Path
-	if !dc.matrix.transform.IsIdentity() {
-		tp = pp.Transform(dc.matrix.transform)
-	} else {
-		tp = pp
-	}
-
-	// Create a temporary alpha mask for the clip path
-	width := dc.canvas.GetWidth()
-	height := dc.canvas.GetHeight()
-	clipMask := image.NewAlpha(image.Rect(0, 0, width, height))
-
-	// Render path to a temporary RGBA image first (blitter expects RGBA)
-	tempRGBA := image.NewRGBA(image.Rect(0, 0, width, height))
-	paint := &Paint{
+	paint := &painter.Paint{
 		Shader:          shader.NewSolidColor(color.NRGBA{255, 255, 255, 255}),
 		AntiAlias:       dc.antiAlias,
 		BlendMode:       CompositeOperationSource,
 		Colorspace:      dc.colorspace,
 		ForceHQPipeline: dc.forceHQPipeline,
 	}
-	blitter := paint.blitter(tempRGBA, nil)
-	if blitter == nil {
-		return
-	}
-	screen, _ := path.NewScreenIntRectFromXYWH(0, 0, uint32(width), uint32(height))
-	scan.FillPathAA(tp, int(fillRule), screen, blitter)
 
-	// Extract alpha channel from RGBA to Alpha mask
-	for i := 0; i < width*height; i++ {
-		clipMask.Pix[i] = tempRGBA.Pix[i*4+3] // Alpha channel
-	}
+	mask := image.NewAlpha(image.Rect(0, 0, dc.canvas.GetWidth(), dc.canvas.GetHeight()))
 
-	// Intersect with existing mask (take minimum of alpha values)
-	if dc.mask == nil {
-		dc.mask = clipMask
-	} else {
-		// Create new mask by intersecting old mask and clip mask
-		// Intersection = min(old_alpha, clip_alpha) for each pixel
-		mask := image.NewAlpha(image.Rect(0, 0, width, height))
-		for i := range mask.Pix {
-			clipAlpha := clipMask.Pix[i]
-			oldAlpha := dc.mask.Pix[i]
-			if clipAlpha < oldAlpha {
-				mask.Pix[i] = clipAlpha
-			} else {
-				mask.Pix[i] = oldAlpha
-			}
-		}
-		dc.mask = mask
-	}
+	paint.ClipPath(mask, dc.mask, pp, dc.matrix.transform, scan.FillRule(fillRule))
+	dc.mask = mask
 }

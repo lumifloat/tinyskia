@@ -9,6 +9,7 @@ package tinyskia
 import (
 	"image"
 
+	"github.com/lumifloat/tinyskia/internal/core/painter"
 	"github.com/lumifloat/tinyskia/internal/core/scan"
 	"github.com/lumifloat/tinyskia/internal/path"
 )
@@ -112,31 +113,17 @@ func (dc *Context) DrawImageWithSourceRect(im image.Image, sx, sy, sw, sh, dx, d
 
 	finalTransform := dc.matrix.transform.PreConcat(translateTransform)
 
-	paint := &Paint{
+	paint := &painter.Paint{
 		Shader:          patternShader,
 		BlendMode:       dc.composite,
 		AntiAlias:       dc.antiAlias,
 		Colorspace:      dc.colorspace,
 		ForceHQPipeline: dc.forceHQPipeline,
 	}
-
-	blitter := paint.blitter(dc.canvas.im, dc.mask)
-	if blitter == nil {
-		return
-	}
-
-	screen, _ := path.NewScreenIntRectFromXYWH(0, 0, uint32(dc.canvas.GetWidth()), uint32(dc.canvas.GetHeight()))
-
 	rectPath := path.NewPathBuilder()
 	rect, _ := path.NewRectFromXYWH(0, 0, float32(dw), float32(dh))
 	rectPath.PushRect(rect)
 	finalPath := rectPath.Finish()
 
-	transformedPath := finalPath.Transform(finalTransform)
-
-	if dc.antiAlias {
-		scan.FillPathAA(transformedPath, int(FillRuleWinding), screen, blitter)
-	} else {
-		scan.FillPath(transformedPath, int(FillRuleWinding), screen, blitter)
-	}
+	paint.FillPath(dc.canvas.im, dc.mask, finalPath, finalTransform, scan.FillRuleWinding)
 }

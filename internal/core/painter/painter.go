@@ -4,11 +4,12 @@
 //
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
-package tinyskia
+package painter
 
 import (
 	"image"
 	"image/color"
+	"unsafe"
 
 	"github.com/lumifloat/tinyskia/internal/core/colorf"
 	"github.com/lumifloat/tinyskia/internal/core/pipeline"
@@ -94,25 +95,19 @@ func (p *Paint) blitter(dst *image.RGBA, mask *image.Alpha) *pipeline.RasterPipe
 	if blendMode.ShouldPreScaleCoverage() {
 		blitAntiHRpBuilder.Push(pipeline.StageScale1Float)
 		blitAntiHRpBuilder.Push(pipeline.StageLoadDestination)
-		if stage, ok := expand(p.Colorspace); ok {
-			blitAntiHRpBuilder.Push(stage)
-		}
+		blitAntiHRpBuilder.PushColorSpaceExpand(p.Colorspace)
 		if blendStage, ok := blendMode.stage(); ok {
 			blitAntiHRpBuilder.Push(blendStage)
 		}
 	} else {
 		blitAntiHRpBuilder.Push(pipeline.StageLoadDestination)
-		if stage, ok := expand(p.Colorspace); ok {
-			blitAntiHRpBuilder.Push(stage)
-		}
+		blitAntiHRpBuilder.PushColorSpaceExpand(p.Colorspace)
 		if blendStage, ok := blendMode.stage(); ok {
 			blitAntiHRpBuilder.Push(blendStage)
 		}
 		blitAntiHRpBuilder.Push(pipeline.StageLerp1Float)
 	}
-	if stage, ok := compress(p.Colorspace); ok {
-		blitAntiHRpBuilder.Push(stage)
-	}
+	blitAntiHRpBuilder.PushColorSpaceCompress(p.Colorspace)
 	blitAntiHRpBuilder.Push(pipeline.StageStore)
 	blitAntiHRp := blitAntiHRpBuilder.Compile()
 
@@ -128,24 +123,18 @@ func (p *Paint) blitter(dst *image.RGBA, mask *image.Alpha) *pipeline.RasterPipe
 	}
 
 	if blendMode == CompositeOperationSourceOver && mask == nil {
-		if stage, ok := compress(p.Colorspace); ok {
-			blitRectRpBuilder.Push(stage)
-		}
+		blitRectRpBuilder.PushColorSpaceCompress(p.Colorspace)
 		// TODO: ignore when dither_rate is non-zero
 		blitRectRpBuilder.Push(pipeline.StageSourceOverRgba)
 	} else {
 		if blendMode != CompositeOperationSource {
 			blitRectRpBuilder.Push(pipeline.StageLoadDestination)
 			if blendStage, ok := blendMode.stage(); ok {
-				if stage, ok := expand(p.Colorspace); ok {
-					blitRectRpBuilder.Push(stage)
-				}
+				blitRectRpBuilder.PushColorSpaceExpand(p.Colorspace)
 				blitRectRpBuilder.Push(blendStage)
 			}
 		}
-		if stage, ok := compress(p.Colorspace); ok {
-			blitRectRpBuilder.Push(stage)
-		}
+		blitRectRpBuilder.PushColorSpaceCompress(p.Colorspace)
 		blitRectRpBuilder.Push(pipeline.StageStore)
 	}
 	blitRectRp := blitRectRpBuilder.Compile()
@@ -164,25 +153,19 @@ func (p *Paint) blitter(dst *image.RGBA, mask *image.Alpha) *pipeline.RasterPipe
 	if blendMode.ShouldPreScaleCoverage() {
 		blitMaskRpBuilder.Push(pipeline.StageScaleU8)
 		blitMaskRpBuilder.Push(pipeline.StageLoadDestination)
-		if stage, ok := expand(p.Colorspace); ok {
-			blitMaskRpBuilder.Push(stage)
-		}
+		blitMaskRpBuilder.PushColorSpaceExpand(p.Colorspace)
 		if blendStage, ok := blendMode.stage(); ok {
 			blitMaskRpBuilder.Push(blendStage)
 		}
 	} else {
 		blitMaskRpBuilder.Push(pipeline.StageLoadDestination)
-		if stage, ok := expand(p.Colorspace); ok {
-			blitMaskRpBuilder.Push(stage)
-		}
+		blitMaskRpBuilder.PushColorSpaceExpand(p.Colorspace)
 		if blendStage, ok := blendMode.stage(); ok {
 			blitMaskRpBuilder.Push(blendStage)
 		}
 		blitMaskRpBuilder.Push(pipeline.StageLerpU8)
 	}
-	if stage, ok := compress(p.Colorspace); ok {
-		blitMaskRpBuilder.Push(stage)
-	}
+	blitMaskRpBuilder.PushColorSpaceCompress(p.Colorspace)
 	blitMaskRpBuilder.Push(pipeline.StageStore)
 	blitMaskRp := blitMaskRpBuilder.Compile()
 
@@ -205,6 +188,50 @@ func (p *Paint) blitter(dst *image.RGBA, mask *image.Alpha) *pipeline.RasterPipe
 		BlitRectRp:       *blitRectRp,
 		BlitMaskRp:       *blitMaskRp,
 		IsMask:           false,
+	}
+}
+
+func (p *Paint) NewMaskBlitter(dst *image.Alpha, mask *image.Alpha) *pipeline.RasterPipelineBlitter {
+	dst0 := (*image.RGBA)(unsafe.Pointer(dst))
+
+	uc := pipeline.UniformColorCtx{
+		R0: 0xff, G0: 0xff, B0: 0xff, A0: 0xff,
+		R1: 1.0, G1: 1.0, B1: 1.0, A1: 1.0,
+	}
+
+	blitAntiHRpBuilder := pipeline.NewRasterPipelineBuilder()
+	blitAntiHRpBuilder.PushUniformColor(uc)
+	if mask != nil {
+		blitAntiHRpBuilder.Push(pipeline.StageMaskU8)
+	}
+	blitAntiHRpBuilder.Push(pipeline.StageLoadDestinationU8)
+	blitAntiHRpBuilder.Push(pipeline.StageLerp1Float)
+	blitAntiHRpBuilder.Push(pipeline.StageStoreU8)
+
+	blitRectRpBuilder := pipeline.NewRasterPipelineBuilder()
+	blitRectRpBuilder.PushUniformColor(uc)
+	if mask != nil {
+		blitRectRpBuilder.Push(pipeline.StageMaskU8)
+	}
+	blitRectRpBuilder.Push(pipeline.StageStoreU8)
+
+	blitMaskRpBuilder := pipeline.NewRasterPipelineBuilder()
+	blitMaskRpBuilder.PushUniformColor(uc)
+	if mask != nil {
+		blitMaskRpBuilder.Push(pipeline.StageMaskU8)
+	}
+	blitMaskRpBuilder.Push(pipeline.StageLoadDestinationU8)
+	blitMaskRpBuilder.Push(pipeline.StageLerpU8)
+	blitMaskRpBuilder.Push(pipeline.StageStoreU8)
+
+	return &pipeline.RasterPipelineBlitter{
+		Mask:        mask,
+		Src:         nil,
+		Dst:         dst0,
+		BlitAntiHRp: *blitAntiHRpBuilder.Compile(),
+		BlitRectRp:  *blitRectRpBuilder.Compile(),
+		BlitMaskRp:  *blitMaskRpBuilder.Compile(),
+		IsMask:      true,
 	}
 }
 
@@ -233,34 +260,6 @@ func (p *Paint) Copy() Paint {
 		Colorspace:      p.Colorspace,
 		ForceHQPipeline: p.ForceHQPipeline,
 	}
-}
-
-func expand(self colorf.ColorSpace) (pipeline.Stage, bool) {
-	switch self {
-	case colorf.ColorSpaceLinear:
-		return 0, false
-	case colorf.ColorSpaceGamma2:
-		return pipeline.StageGammaExpand2, true
-	case colorf.ColorSpaceSimpleSRGB:
-		return pipeline.StageGammaExpand22, true
-	case colorf.ColorSpaceFullSRGBGamma:
-		return pipeline.StageGammaExpandSrgb, true
-	}
-	return 0, false
-}
-
-func compress(self colorf.ColorSpace) (pipeline.Stage, bool) {
-	switch self {
-	case colorf.ColorSpaceLinear:
-		return 0, false
-	case colorf.ColorSpaceGamma2:
-		return pipeline.StageGammaCompress2, true
-	case colorf.ColorSpaceSimpleSRGB:
-		return pipeline.StageGammaCompress22, true
-	case colorf.ColorSpaceFullSRGBGamma:
-		return pipeline.StageGammaCompressSrgb, true
-	}
-	return 0, false
 }
 
 func (b CompositeOperation) stage() (pipeline.Stage, bool) {

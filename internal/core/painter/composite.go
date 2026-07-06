@@ -4,12 +4,10 @@
 //
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
-package tinyskia
-
-import "github.com/lumifloat/tinyskia/internal/core/painter"
+package painter
 
 // A CompositeOperation mode.
-type CompositeOperation = painter.CompositeOperation
+type CompositeOperation int
 
 const (
 	// Replaces destination with zero: fully transparent.
@@ -71,13 +69,3 @@ const (
 	// Luminosity of source with hue and saturation of destination.
 	CompositeOperationLuminosity
 )
-
-// SetGlobalCompositeOperation change the current compositing and blending operator.
-func (dc *Context) SetGlobalCompositeOperation(op CompositeOperation) {
-	dc.composite = op
-}
-
-// GetGlobalCompositeOperation returns the current compositing and blending operator, from the values defined in Compositing and Blending.
-func (dc *Context) GetGlobalCompositeOperation() CompositeOperation {
-	return dc.composite
-}

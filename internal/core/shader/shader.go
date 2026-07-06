@@ -32,7 +32,7 @@ type Shader interface {
 	IsOpaque() bool
 	PushStages(cs colorf.ColorSpace, p *pipeline.RasterPipelineBuilder) bool
 	Transform(ts path.Transform)
-	// ApplyOpacity(opacity float32)
+	ApplyOpacity(opacity float32)
 }
 
 // SolidColor a solid color shader.

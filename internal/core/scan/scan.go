@@ -16,6 +16,13 @@ import (
 const fillRuleWinding int = 0
 const fillRuleEvenOdd int = 1
 
+type FillRule int
+
+const (
+	FillRuleWinding FillRule = iota
+	FillRuleEvenOdd
+)
+
 // FillRect fills the specified rectangle with the blitter.
 func FillRect(rect path.Rect, clip path.ScreenIntRect, blitter blitter.Blitter) {
 	// Check for empty rectangle before attempting to fill

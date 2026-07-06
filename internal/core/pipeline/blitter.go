@@ -9,6 +9,7 @@ package pipeline
 import (
 	"image"
 	"image/color"
+	"unsafe"
 )
 
 const BYTES_PER_PIXEL = 4
@@ -85,10 +86,11 @@ func (b *RasterPipelineBlitter) BlitAntiV2(x, y uint32, alpha0, alpha1 uint8) {
 func (b *RasterPipelineBlitter) BlitRect(rect image.Rectangle) {
 	if b.UseMemset2dColor {
 		if b.IsMask {
+			mask := (*image.Alpha)(unsafe.Pointer(b.Dst))
 			width := rect.Dx()
 			for y := rect.Min.Y; y < rect.Max.Y; y++ {
-				idx := b.Dst.PixOffset(rect.Min.X, y)
-				data := b.Dst.Pix[idx : idx+width]
+				idx := mask.PixOffset(rect.Min.X, y)
+				data := mask.Pix[idx : idx+width]
 				for i := range data {
 					data[i] = b.Memset2dColor.A
 				}
