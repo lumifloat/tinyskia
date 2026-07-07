@@ -252,8 +252,8 @@ func (p *Paint) IsSolidColor() bool {
 }
 
 // Copy creates a deep copy of the Paint.
-func (p *Paint) Copy() Paint {
-	return Paint{
+func (p *Paint) Copy() *Paint {
+	return &Paint{
 		Shader:          p.Shader,
 		BlendMode:       p.BlendMode,
 		AntiAlias:       p.AntiAlias,

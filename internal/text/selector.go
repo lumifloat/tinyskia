@@ -1,5 +1,16 @@
 package text
 
+import (
+	"sync"
+
+	"github.com/go-text/typesetting/fontscan"
+)
+
+var (
+	FontMap  *fontscan.FontMap
+	FontLock sync.Mutex
+)
+
 func IsGenericFamily(family string) bool {
 	if family == "sans-serif" || family == "serif" || family == "monospace" ||
 		family == "cursive" || family == "fantasy" || family == "math" || family == "emoji" {
