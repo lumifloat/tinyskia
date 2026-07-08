@@ -7,7 +7,6 @@
 package painter
 
 import (
-	"fmt"
 	"image"
 	"image/color"
 
@@ -89,9 +88,9 @@ func (p *Paint) ClipPath(dst *image.Alpha, mask *image.Alpha, sp *path.Path, tra
 	scan.FillPath(tp, int(fillRule), screen, blitter)
 }
 
-func (p *Paint) FillText(dst *image.RGBA, mask *image.Alpha, shapes []shaping.Output, x, y fixed.Int26_6, kerning uint32, transform path.Transform) {
+func (p *Paint) FillTextShapes(dst *image.RGBA, mask *image.Alpha, shapes []shaping.Output, x, y fixed.Int26_6, transform path.Transform) {
 	for _, shape := range shapes {
-		scale := fixed.Int26_6((int64(shape.Size) << 6) / int64(shape.Face.Upem()))
+		scale := float32(shape.Size) / float32(shape.Face.Upem()) / 64
 		for _, glyph := range shape.Glyphs {
 			data := shape.Face.GlyphData(glyph.GlyphID)
 			switch data := data.(type) {
@@ -107,9 +106,9 @@ func (p *Paint) FillText(dst *image.RGBA, mask *image.Alpha, shapes []shaping.Ou
 	}
 }
 
-func (p *Paint) StrokeText(dst *image.RGBA, mask *image.Alpha, shapes []shaping.Output, x, y fixed.Int26_6, kerning uint32, transform path.Transform, stroke path.Stroke, dash *path.StrokeDash) {
+func (p *Paint) StrokeTextShapes(dst *image.RGBA, mask *image.Alpha, shapes []shaping.Output, x, y fixed.Int26_6, transform path.Transform, stroke path.Stroke, dash *path.StrokeDash) {
 	for _, shape := range shapes {
-		scale := fixed.Int26_6((int64(shape.Size) << 6) / int64(shape.Face.Upem()))
+		scale := float32(shape.Size) / float32(shape.Face.Upem()) / 64
 		for _, glyph := range shape.Glyphs {
 			data := shape.Face.GlyphData(glyph.GlyphID)
 			switch data := data.(type) {
@@ -126,7 +125,7 @@ func (p *Paint) StrokeText(dst *image.RGBA, mask *image.Alpha, shapes []shaping.
 	}
 }
 
-func DrawTextPaintTable(p *Paint, dst *image.RGBA, mask *image.Alpha, face *font.Face, table tables.PaintTable, x, y, scale fixed.Int26_6, transform path.Transform) {
+func DrawTextPaintTable(p *Paint, dst *image.RGBA, mask *image.Alpha, face *font.Face, table tables.PaintTable, x, y fixed.Int26_6, scale float32, transform path.Transform) {
 	switch t := table.(type) {
 	case tables.PaintColrLayers:
 		if face.Font.COLR == nil {
@@ -192,28 +191,12 @@ func DrawTextPaintTable(p *Paint, dst *image.RGBA, mask *image.Alpha, face *font
 	}
 }
 
-func (p *Paint) FillTextOutline(dst *image.RGBA, mask *image.Alpha, face *font.Face, outline font.GlyphOutline, x, y, scale fixed.Int26_6, transform path.Transform) {
-	o := text.Outline(outline, float32(scale), float32(x), float32(y))
+func (p *Paint) FillTextOutline(dst *image.RGBA, mask *image.Alpha, face *font.Face, outline font.GlyphOutline, x, y fixed.Int26_6, scale float32, transform path.Transform) {
+	o := text.Outline(outline, scale, float32(x)/64, float32(y)/64)
 	p.FillPath(dst, mask, o, transform, scan.FillRuleWinding)
 }
 
-func (p *Paint) StrokeTextOutline(dst *image.RGBA, mask *image.Alpha, face *font.Face, outline font.GlyphOutline, x, y, scale fixed.Int26_6, transform path.Transform, stroke path.Stroke, dash *path.StrokeDash) {
-	o := text.Outline(outline, float32(scale), float32(x), float32(y))
+func (p *Paint) StrokeTextOutline(dst *image.RGBA, mask *image.Alpha, face *font.Face, outline font.GlyphOutline, x, y fixed.Int26_6, scale float32, transform path.Transform, stroke path.Stroke, dash *path.StrokeDash) {
+	o := text.Outline(outline, scale, float32(x)/64, float32(y)/64)
 	p.StrokePath(dst, mask, o, transform, stroke, dash)
-}
-
-func (p *Paint) FillFontGlyphData(dst *image.RGBA, mask *image.Alpha, face *font.Face, data font.GlyphData, x, y, scale fixed.Int26_6, transform path.Transform) {
-	switch data := data.(type) {
-	case font.GlyphOutline:
-		p.FillTextOutline(dst, mask, face, data, x, y, scale, transform)
-
-	case font.GlyphColor:
-		DrawTextPaintTable(p, dst, mask, face, data.Paint, x, y, scale, transform)
-
-	case font.GlyphBitmap:
-		// pass
-
-	default:
-		fmt.Println("Unknown glyph data:", data)
-	}
 }

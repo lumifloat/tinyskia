@@ -12,6 +12,9 @@ import (
 	"github.com/go-text/typesetting/font/opentype"
 	"github.com/go-text/typesetting/fontscan"
 	"github.com/go-text/typesetting/shaping"
+	"github.com/lumifloat/tinyskia/internal/core/painter"
+	"github.com/lumifloat/tinyskia/internal/path"
+	"github.com/lumifloat/tinyskia/internal/text"
 	"golang.org/x/image/math/fixed"
 )
 
@@ -81,29 +84,22 @@ func (ctx *Context) MeasureText(s string) (metrics TextMetrics) {
 		FontFeatures: features,
 	}
 
-	var segmenter shaping.Segmenter
-	flock.Lock()
 	// TODO ADD PREFERENCE
-	fonts.SetQuery(fontscan.Query{
+	query := fontscan.Query{
 		Families: ctx.font.Family,
 		Aspect: font.Aspect{
 			Weight:  font.Weight(ctx.font.Weight),
 			Style:   font.Style(ctx.font.Style),
 			Stretch: font.Stretch(ctx.fontStretch),
 		},
-	})
-	outputs := segmenter.Split(input, fonts)
-	flock.Unlock()
+	}
 
-	shaper := shaping.HarfbuzzShaper{}
+	shapes, width := text.Shape(input, query)
 
-	var width fixed.Int26_6
 	var fascent, fdescent fixed.Int26_6
 	var ascent, descent, left, right fixed.Int26_6
 
-	for _, output := range outputs {
-		shape := shaper.Shape(output)
-
+	for _, shape := range shapes {
 		for _, glyph := range shape.Glyphs {
 			l := width + glyph.XOffset + glyph.XBearing
 			r := l + glyph.Width
@@ -114,7 +110,6 @@ func (ctx *Context) MeasureText(s string) (metrics TextMetrics) {
 			if r > right {
 				right = r
 			}
-			width += glyph.Advance
 		}
 
 		if ascent < shape.GlyphBounds.Ascent {
@@ -145,15 +140,7 @@ func (ctx *Context) MeasureText(s string) (metrics TextMetrics) {
 	return metrics
 }
 
-func (dc *Context) FillText(s string, x, y float64) {
-	dc.drawText(s, x, y, false)
-}
-
-func (dc *Context) StrokeText(s string, x, y float64) {
-	dc.drawText(s, x, y, true)
-}
-
-func (ctx *Context) drawText(s string, x, y float64, stroke bool) {
+func (ctx *Context) FillText(s string, x, y float64) {
 	runes := []rune(s)
 	if len(runes) == 0 {
 		return
@@ -218,30 +205,21 @@ func (ctx *Context) drawText(s string, x, y float64, stroke bool) {
 		FontFeatures: features,
 	}
 
-	var segmenter shaping.Segmenter
-	flock.Lock()
-	fonts.SetQuery(fontscan.Query{
+	// TODO ADD PREFERENCE
+	query := fontscan.Query{
 		Families: ctx.font.Family,
 		Aspect: font.Aspect{
 			Weight:  font.Weight(ctx.font.Weight),
 			Style:   font.Style(ctx.font.Style),
 			Stretch: font.Stretch(ctx.fontStretch),
 		},
-	})
-	outputs := segmenter.Split(input, fonts)
-	flock.Unlock()
-
-	fx := float32(x)
-	fy := float32(y)
-
-	shaper := shaping.HarfbuzzShaper{}
-	shapes := []shaping.Output{}
-	width := float32(0)
-	for _, output := range outputs {
-		shape := shaper.Shape(output)
-		shapes = append(shapes, shape)
-		width += float32(shape.Advance) / 64
 	}
+
+	shapes, width := text.Shape(input, query)
+
+	fx := fixed.Int26_6(x*64 + 0.5)
+	fy := fixed.Int26_6(y*64 + 0.5)
+
 	switch ctx.textAlign {
 	case TextAlignLeft, TextAlignStart:
 		break
@@ -251,68 +229,137 @@ func (ctx *Context) drawText(s string, x, y float64, stroke bool) {
 		fx -= width / 2.0
 	}
 
-	for _, shape := range shapes {
-		upem := shape.Face.Upem()
-		scale := float32(ppem) / float32(upem) / 64.0
-		for _, glyph := range shape.Glyphs {
-			data := shape.Face.GlyphData(glyph.GlyphID)
-			switch d := data.(type) {
-			case font.GlyphOutline:
-				path2d := outline(d, scale, fx, fy)
-				// TODO USE PAINT RAW
-				if stroke {
-					ctx.StrokePath(path2d)
-				} else {
-					ctx.FillPath(path2d)
-				}
-			}
-			// TODO ADD CLIP AND MORE
-			fx += float32(glyph.Advance) / 64
-		}
+	paint := &painter.Paint{
+		Shader:          toShader(ctx.strokeStyle, ctx.matrix.transform),
+		AntiAlias:       ctx.antiAlias,
+		BlendMode:       ctx.composite,
+		Colorspace:      ctx.colorspace,
+		ForceHQPipeline: ctx.forceHQPipeline,
 	}
 
+	paint.FillTextShapes(ctx.canvas.im, ctx.mask, shapes, fx, fy, ctx.matrix.transform)
 }
 
-// TODO ADD ITALIC AND BOLD
-func outline(outline font.GlyphOutline, scale float32, x, y float32) *Path2D {
-	var path2d = NewPath2D()
-	var hasPath = false
-	for _, s := range outline.Segments {
-		switch s.Op {
-		case opentype.SegmentOpMoveTo:
-			if hasPath {
-				path2d.builder.Close()
-			}
-			path2d.builder.MoveTo(
-				s.Args[0].X*scale+x,
-				-s.Args[0].Y*scale+y,
-			)
-			hasPath = true
-		case opentype.SegmentOpLineTo:
-			path2d.builder.LineTo(
-				s.Args[0].X*scale+x,
-				-s.Args[0].Y*scale+y,
-			)
-		case opentype.SegmentOpQuadTo:
-			path2d.builder.QuadTo(
-				s.Args[0].X*scale+x,
-				-s.Args[0].Y*scale+y,
-				s.Args[1].X*scale+x,
-				-s.Args[1].Y*scale+y,
-			)
-		case opentype.SegmentOpCubeTo:
-			path2d.builder.CubicTo(
-				s.Args[0].X*scale+x,
-				-s.Args[0].Y*scale+y,
-				s.Args[1].X*scale+x,
-				-s.Args[1].Y*scale+y,
-				s.Args[2].X*scale+x,
-				-s.Args[2].Y*scale+y,
-			)
+func (ctx *Context) StrokeText(s string, x, y float64) {
+	runes := []rune(s)
+	if len(runes) == 0 {
+		return
+	}
+
+	ppem := fixed.Int26_6(ctx.font.Size * 64)
+
+	features := []shaping.FontFeature{
+		{
+			Tag:   opentype.NewTag('k', 'e', 'r', 'n'),
+			Value: uint32(ctx.fontKerning),
+		},
+	}
+
+	switch ctx.fontVariant {
+	case FontVariantNormal:
+		break
+	case FontVariantSmallCaps:
+		features = append(features, shaping.FontFeature{
+			Tag:   opentype.NewTag('s', 'm', 'c', 'p'),
+			Value: 1,
+		})
+	case FontVariantAllSmallCaps:
+		features = append(features, shaping.FontFeature{
+			Tag:   opentype.NewTag('c', '2', 's', 'c'),
+			Value: 1,
+		}, shaping.FontFeature{
+			Tag:   opentype.NewTag('s', 'm', 'c', 'p'),
+			Value: 1,
+		})
+	case FontVariantPetiteCaps:
+		features = append(features, shaping.FontFeature{
+			Tag:   opentype.NewTag('p', 'c', 'a', 'p'),
+			Value: 1,
+		})
+	case FontVariantAllPetiteCaps:
+		features = append(features, shaping.FontFeature{
+			Tag:   opentype.NewTag('c', '2', 'p', 'c'),
+			Value: 1,
+		}, shaping.FontFeature{
+			Tag:   opentype.NewTag('p', 'c', 'a', 'p'),
+			Value: 1,
+		})
+	case FontVariantUnicase:
+		features = append(features, shaping.FontFeature{
+			Tag:   opentype.NewTag('u', 'n', 'i', 'c'),
+			Value: 1,
+		})
+	case FontVariantTitlingCaps:
+		features = append(features, shaping.FontFeature{
+			Tag:   opentype.NewTag('t', 'i', 't', 'l'),
+			Value: 1,
+		})
+	}
+
+	input := shaping.Input{
+		Text:         runes,
+		RunStart:     0,
+		RunEnd:       len(runes),
+		Size:         ppem,
+		Direction:    di.Direction(ctx.direction),
+		FontFeatures: features,
+	}
+
+	// TODO ADD PREFERENCE
+	query := fontscan.Query{
+		Families: ctx.font.Family,
+		Aspect: font.Aspect{
+			Weight:  font.Weight(ctx.font.Weight),
+			Style:   font.Style(ctx.font.Style),
+			Stretch: font.Stretch(ctx.fontStretch),
+		},
+	}
+
+	shapes, width := text.Shape(input, query)
+
+	fx := fixed.Int26_6(x*64 + 0.5)
+	fy := fixed.Int26_6(y*64 + 0.5)
+
+	switch ctx.textAlign {
+	case TextAlignLeft, TextAlignStart:
+		break
+	case TextAlignRight, TextAlignEnd:
+		fx -= width
+	case TextAlignCenter:
+		fx -= width / 2.0
+	}
+
+	var strokeDash *path.StrokeDash
+	if len(ctx.lineDash) > 0 {
+		dashArray := make([]float32, len(ctx.lineDash))
+		for i, d := range ctx.lineDash {
+			dashArray[i] = float32(d)
 		}
+
+		if len(dashArray)%2 != 0 {
+			doubled := make([]float32, len(dashArray)*2)
+			copy(doubled, dashArray)
+			copy(doubled[len(dashArray):], dashArray)
+			dashArray = doubled
+		}
+
+		strokeDash = path.NewStrokeDash(dashArray, float32(ctx.lineDashOffset))
 	}
-	if hasPath {
-		path2d.builder.Close()
+
+	stroke := path.Stroke{
+		Width:      float32(ctx.lineWidth),
+		LineCap:    path.LineCap(ctx.lineCap),
+		LineJoin:   path.LineJoin(ctx.lineJoin),
+		MiterLimit: float32(ctx.miterLimit),
 	}
-	return path2d
+
+	paint := &painter.Paint{
+		Shader:          toShader(ctx.strokeStyle, ctx.matrix.transform),
+		AntiAlias:       ctx.antiAlias,
+		BlendMode:       ctx.composite,
+		Colorspace:      ctx.colorspace,
+		ForceHQPipeline: ctx.forceHQPipeline,
+	}
+
+	paint.StrokeTextShapes(ctx.canvas.im, ctx.mask, shapes, fx, fy, ctx.matrix.transform, stroke, strokeDash)
 }

@@ -9,34 +9,13 @@ package tinyskia
 
 import (
 	"fmt"
-	"io"
-	"log"
 	"os"
-	"path/filepath"
-	"runtime"
-	"sync"
 
 	"github.com/go-text/typesetting/di"
 	"github.com/go-text/typesetting/font"
 	"github.com/go-text/typesetting/fontscan"
+	"github.com/lumifloat/tinyskia/internal/text"
 )
-
-var (
-	fonts *fontscan.FontMap
-	flock sync.Mutex
-)
-
-func init() {
-	// TODO
-	fonts = fontscan.NewFontMap(log.New(io.Discard, "", 0))
-	cacheDir := ""
-	if runtime.GOOS == "android" {
-		parent := os.Getenv("FILESDIR")
-		cacheDir = filepath.Join(parent, "fontcache")
-	}
-
-	fonts.UseSystemFonts(cacheDir)
-}
 
 type FontAttr struct {
 	Family []string
@@ -236,8 +215,8 @@ func RegisterFont(file string, face FontFace) error {
 	if face.Style == 0 {
 		face.Style = FontStyleNormal
 	}
-	flock.Lock()
-	defer flock.Unlock()
+	text.FontLock.Lock()
+	defer text.FontLock.Unlock()
 	fi, err := os.Open(file)
 	if err != nil {
 		return err
@@ -254,7 +233,7 @@ func RegisterFont(file string, face FontFace) error {
 			Style:  font.Style(face.Style),
 		},
 	}
-	fonts.AddFace(faces[0], loc, desc)
+	text.FontMap.AddFace(faces[0], loc, desc)
 	return nil
 }
 
@@ -265,8 +244,8 @@ func RegisterFontWithResource(file font.Resource, location string, face FontFace
 	if face.Style == 0 {
 		face.Style = FontStyleNormal
 	}
-	flock.Lock()
-	defer flock.Unlock()
+	text.FontLock.Lock()
+	defer text.FontLock.Unlock()
 	faces, err := font.ParseTTC(file)
 	if err != nil {
 		return fmt.Errorf("unsupported font resource: %s", err)
@@ -279,6 +258,6 @@ func RegisterFontWithResource(file font.Resource, location string, face FontFace
 			Style:  font.Style(face.Style),
 		},
 	}
-	fonts.AddFace(faces[0], loc, desc)
+	text.FontMap.AddFace(faces[0], loc, desc)
 	return nil
 }

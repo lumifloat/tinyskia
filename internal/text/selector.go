@@ -1,6 +1,11 @@
 package text
 
 import (
+	"io"
+	"log"
+	"os"
+	"path/filepath"
+	"runtime"
 	"sync"
 
 	"github.com/go-text/typesetting/fontscan"
@@ -10,6 +15,18 @@ var (
 	FontMap  *fontscan.FontMap
 	FontLock sync.Mutex
 )
+
+func init() {
+	// TODO
+	FontMap = fontscan.NewFontMap(log.New(io.Discard, "", 0))
+	cacheDir := ""
+	if runtime.GOOS == "android" {
+		parent := os.Getenv("FILESDIR")
+		cacheDir = filepath.Join(parent, "fontcache")
+	}
+
+	FontMap.UseSystemFonts(cacheDir)
+}
 
 func IsGenericFamily(family string) bool {
 	if family == "sans-serif" || family == "serif" || family == "monospace" ||
