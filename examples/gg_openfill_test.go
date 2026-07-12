@@ -25,7 +25,7 @@ func TestGGOpenFill(t *testing.T) {
 			y := float64(j)*100 + 50
 			a1 := rand.Float64() * 2 * math.Pi
 			a2 := a1 + rand.Float64()*math.Pi + math.Pi/2
-			dc.Arc(x, y, 40, a1, a2, false)
+			dc.Arc(x, y, 40, a1, a2)
 		}
 	}
 

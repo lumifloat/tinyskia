@@ -15,106 +15,99 @@ import (
 	"github.com/lumifloat/tinyskia/internal/path"
 )
 
-type FillRule int
-
-const (
-	FillRuleWinding FillRule = iota
-	FillRuleEvenOdd
-)
-
 // SetFillStyle to change the fill style.
-func (dc *Context) SetFillStyle(style style) {
-	dc.fillStyle = style
+func (ctx *Context) SetFillStyle(style Style) {
+	ctx.fillStyle = style
 }
 
 // SetFillStyleSolidColor to change the fill style to a solid color.
-func (dc *Context) SetFillStyleSolidColor(c color.Color) {
-	dc.fillStyle = dc.CreateSolidColor(c)
+func (ctx *Context) SetFillStyleSolidColor(c color.Color) {
+	ctx.fillStyle = ctx.CreateSolidColor(c)
 }
 
 // SetFillStylePattern to change the fill style to a pattern.
-func (dc *Context) SetFillStylePattern(p Pattern) {
-	dc.fillStyle = p
+func (ctx *Context) SetFillStylePattern(p Pattern) {
+	ctx.fillStyle = p
 }
 
 // SetFillStyleGradient to change the fill style to a gradient.
-func (dc *Context) SetFillStyleGradient(g Gradient) {
-	dc.fillStyle = g
+func (ctx *Context) SetFillStyleGradient(g Gradient) {
+	ctx.fillStyle = g
 }
 
 // GetFillStyle returns the current fill style.
-func (dc *Context) GetFillStyle() style {
-	return dc.fillStyle
+func (ctx *Context) GetFillStyle() Style {
+	return ctx.fillStyle
 }
 
 // GetFillStyleSolidColor returns the current fill style solid color.
-func (dc *Context) GetFillStyleSolidColor() color.Color {
-	if solid, ok := dc.fillStyle.(*SolidColor); ok {
+func (ctx *Context) GetFillStyleSolidColor() color.Color {
+	if solid, ok := ctx.fillStyle.(*SolidColor); ok {
 		return solid.color
 	}
 	return nil
 }
 
 // GetFillStylePattern returns the current fill style pattern.
-func (dc *Context) GetFillStylePattern() Pattern {
-	if pattern, ok := dc.fillStyle.(Pattern); ok {
+func (ctx *Context) GetFillStylePattern() Pattern {
+	if pattern, ok := ctx.fillStyle.(Pattern); ok {
 		return pattern
 	}
 	return nil
 }
 
 // GetFillStyleGradient returns the current fill style gradient.
-func (dc *Context) GetFillStyleGradient() Gradient {
-	if gradient, ok := dc.fillStyle.(Gradient); ok {
+func (ctx *Context) GetFillStyleGradient() Gradient {
+	if gradient, ok := ctx.fillStyle.(Gradient); ok {
 		return gradient
 	}
 	return nil
 }
 
 // SetStrokeStyle to change the stroke style.
-func (dc *Context) SetStrokeStyle(style style) {
-	dc.strokeStyle = style
+func (ctx *Context) SetStrokeStyle(style Style) {
+	ctx.strokeStyle = style
 }
 
 // SetStrokeStyleSolidColor to change the stroke style to a solid color.
-func (dc *Context) SetStrokeStyleSolidColor(c color.Color) {
-	dc.strokeStyle = dc.CreateSolidColor(c)
+func (ctx *Context) SetStrokeStyleSolidColor(c color.Color) {
+	ctx.strokeStyle = ctx.CreateSolidColor(c)
 }
 
 // SetStrokeStylePattern to change the stroke style to a pattern.
-func (dc *Context) SetStrokeStylePattern(p Pattern) {
-	dc.strokeStyle = p
+func (ctx *Context) SetStrokeStylePattern(p Pattern) {
+	ctx.strokeStyle = p
 }
 
 // SetStrokeStyleGradient to change the stroke style to a gradient.
-func (dc *Context) SetStrokeStyleGradient(g Gradient) {
-	dc.strokeStyle = g
+func (ctx *Context) SetStrokeStyleGradient(g Gradient) {
+	ctx.strokeStyle = g
 }
 
 // GetStrokeStyle returns the current stroke style.
-func (dc *Context) GetStrokeStyle() style {
-	return dc.strokeStyle
+func (ctx *Context) GetStrokeStyle() Style {
+	return ctx.strokeStyle
 }
 
 // GetStrokeStyleSolidColor returns the current stroke style solid color.
-func (dc *Context) GetStrokeStyleSolidColor() color.Color {
-	if solid, ok := dc.strokeStyle.(*SolidColor); ok {
+func (ctx *Context) GetStrokeStyleSolidColor() color.Color {
+	if solid, ok := ctx.strokeStyle.(*SolidColor); ok {
 		return solid.color
 	}
 	return nil
 }
 
 // GetStrokeStylePattern returns the current stroke style pattern.
-func (dc *Context) GetStrokeStylePattern() Pattern {
-	if pattern, ok := dc.strokeStyle.(Pattern); ok {
+func (ctx *Context) GetStrokeStylePattern() Pattern {
+	if pattern, ok := ctx.strokeStyle.(Pattern); ok {
 		return pattern
 	}
 	return nil
 }
 
 // GetStrokeStyleGradient returns the current stroke style gradient.
-func (dc *Context) GetStrokeStyleGradient() Gradient {
-	if gradient, ok := dc.strokeStyle.(Gradient); ok {
+func (ctx *Context) GetStrokeStyleGradient() Gradient {
+	if gradient, ok := ctx.strokeStyle.(Gradient); ok {
 		return gradient
 	}
 	return nil
@@ -125,24 +118,24 @@ type SolidColor struct {
 }
 
 // CreateSolidColor returns a solid color style.
-func (dc *Context) CreateSolidColor(c color.Color) *SolidColor {
+func (ctx *Context) CreateSolidColor(c color.Color) *SolidColor {
 	return &SolidColor{color: c}
 }
 
 func (p *SolidColor) style() {}
 
-type PatternRepeatOp int
+type RepeatMode string
 
 const (
-	PatternRepeatBoth PatternRepeatOp = iota
-	PatternRepeatX
-	PatternRepeatY
-	PatternRepeatNone
+	RepeatModeRepeat   = "repeat"
+	RepeatModeRepeatX  = "repeat-x"
+	RepeatModeRepeatY  = "repeat-y"
+	RepeatModeNoRepeat = "no-repeat"
 )
 
 type ImagePattern struct {
 	im        image.Image
-	op        PatternRepeatOp
+	op        RepeatMode
 	transform *Matrix
 }
 
@@ -151,7 +144,7 @@ type ImagePattern struct {
 // The allowed values for repetition are repeat (both directions),
 // repeat-x (horizontal only), repeat-y (vertical only), and no-repeat (neither).
 // If the repetition argument is empty, the value repeat is used.
-func (dc *Context) CreatePattern(im image.Image, op PatternRepeatOp) Pattern {
+func (ctx *Context) CreatePattern(im image.Image, op RepeatMode) Pattern {
 	return &ImagePattern{im: im, op: op}
 }
 
@@ -186,7 +179,7 @@ type LinearGradient struct {
 
 // CreateLinearGradient returns a CanvasGradient object that represents
 // a linear gradient that paints along the line given by the coordinates represented by the arguments.
-func (dc *Context) CreateLinearGradient(x0, y0, x1, y1 float64) Gradient {
+func (ctx *Context) CreateLinearGradient(x0, y0, x1, y1 float64) Gradient {
 	g := &LinearGradient{
 		x0: x0, y0: y0,
 		x1: x1, y1: y1,
@@ -207,7 +200,7 @@ type RadialGradient struct {
 
 // CreateRadialGradient returns a CanvasGradient object that represents
 // a radial gradient that paints along the cone given by the circles represented by the arguments.
-func (dc *Context) CreateRadialGradient(x0, y0, r0, x1, y1, r1 float64) Gradient {
+func (ctx *Context) CreateRadialGradient(x0, y0, r0, x1, y1, r1 float64) Gradient {
 	c0 := circle{x0, y0, r0}
 	c1 := circle{x1, y1, r1}
 	cd := circle{x1 - x0, y1 - y0, r1 - r0}
@@ -229,7 +222,7 @@ type ConicGradient struct {
 
 // CreateConicGradient returns a CanvasGradient object that represents
 // a conic gradient that paints clockwise along the rotation around the center represented by the arguments.
-func (dc *Context) CreateConicGradient(startAngle, x, y float64) Gradient {
+func (ctx *Context) CreateConicGradient(startAngle, x, y float64) Gradient {
 	g := &ConicGradient{
 		x: x, y: y,
 		startAngle: startAngle,
@@ -239,11 +232,11 @@ func (dc *Context) CreateConicGradient(startAngle, x, y float64) Gradient {
 
 func (g *ConicGradient) style() {}
 
-type style interface {
+type Style interface {
 	style()
 }
 
-func toShader(style style, transform path.Transform) shader.Shader {
+func toShader(style Style, transform path.Transform) shader.Shader {
 	switch s := style.(type) {
 	case *LinearGradient:
 		stops := make([]shader.GradientStop, len(s.stops))
@@ -301,7 +294,7 @@ func toShader(style style, transform path.Transform) shader.Shader {
 	}
 }
 
-func imageToPatternShader(im image.Image, op PatternRepeatOp, transform path.Transform) shader.Shader {
+func imageToPatternShader(im image.Image, op RepeatMode, transform path.Transform) shader.Shader {
 	bounds := im.Bounds()
 	width := bounds.Dx()
 	height := bounds.Dy()
@@ -327,15 +320,15 @@ func imageToPatternShader(im image.Image, op PatternRepeatOp, transform path.Tra
 
 	var spreadMode shader.SpreadMode
 	switch op {
-	case PatternRepeatBoth:
+	case RepeatModeRepeat:
 		spreadMode = shader.SpreadModeRepeat
-	case PatternRepeatX:
-		// tinyskia 不支持单向重复，使用 Repeat 作为近似
+	case RepeatModeRepeatX:
+		// TODO tinyskia 不支持单向重复，使用 Repeat 作为近似
 		spreadMode = shader.SpreadModeRepeat
-	case PatternRepeatY:
-		// tinyskia 不支持单向重复，使用 Repeat 作为近似
+	case RepeatModeRepeatY:
+		// TODO tinyskia 不支持单向重复，使用 Repeat 作为近似
 		spreadMode = shader.SpreadModeRepeat
-	case PatternRepeatNone:
+	case RepeatModeNoRepeat:
 		spreadMode = shader.SpreadModePad
 	default:
 		spreadMode = shader.SpreadModeRepeat

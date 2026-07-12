@@ -29,7 +29,7 @@ func TestSheetRotate(t *testing.T) {
 	// Point of transform origin
 	ctx.SetFillStyleSolidColor(color.RGBA{0, 0, 255, 255}) // blue
 	ctx.BeginPath()
-	ctx.Arc(0, 0, 5, 0, 2*math.Pi, false)
+	ctx.Arc(0, 0, 5, 0, 2*math.Pi)
 	ctx.Fill()
 
 	// Non-rotated rectangle
@@ -42,7 +42,7 @@ func TestSheetRotate(t *testing.T) {
 	ctx.FillRect(100, 0, 80, 20)
 
 	// Reset transformation matrix to the identity matrix
-	ctx.SetTransform(1, 0, 0, 1, 0, 0)
+	ctx.SetTransformValues(1, 0, 0, 1, 0, 0)
 
 	outputPath := "sheet_out.png"
 	fi, err := os.Create(outputPath)

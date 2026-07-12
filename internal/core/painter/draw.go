@@ -193,10 +193,16 @@ func DrawTextPaintTable(p *Paint, dst *image.RGBA, mask *image.Alpha, face *font
 
 func (p *Paint) FillTextOutline(dst *image.RGBA, mask *image.Alpha, face *font.Face, outline font.GlyphOutline, x, y fixed.Int26_6, scale float32, transform path.Transform) {
 	o := text.Outline(outline, scale, float32(x)/64, float32(y)/64)
+	if o == nil {
+		return
+	}
 	p.FillPath(dst, mask, o, transform, scan.FillRuleWinding)
 }
 
 func (p *Paint) StrokeTextOutline(dst *image.RGBA, mask *image.Alpha, face *font.Face, outline font.GlyphOutline, x, y fixed.Int26_6, scale float32, transform path.Transform, stroke path.Stroke, dash *path.StrokeDash) {
 	o := text.Outline(outline, scale, float32(x)/64, float32(y)/64)
+	if o == nil {
+		return
+	}
 	p.StrokePath(dst, mask, o, transform, stroke, dash)
 }

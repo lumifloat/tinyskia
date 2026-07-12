@@ -7,13 +7,13 @@
 package tinyskia
 
 // ClearRect clears all pixels on the bitmap in the given rectangle to transparent black.
-func (dc *Context) ClearRect(x, y, w, h float64) {
+func (ctx *Context) ClearRect(x, y, w, h float64) {
 	x1 := int(x)
 	y1 := int(y)
 	x2 := int(x + w)
 	y2 := int(y + h)
 
-	bounds := dc.canvas.im.Bounds()
+	bounds := ctx.canvas.im.Bounds()
 	if x1 < bounds.Min.X {
 		x1 = bounds.Min.X
 	}
@@ -28,27 +28,27 @@ func (dc *Context) ClearRect(x, y, w, h float64) {
 	}
 
 	for row := y1; row < y2; row++ {
-		offset := row * dc.canvas.im.Stride
+		offset := row * ctx.canvas.im.Stride
 		for col := x1; col < x2; col++ {
 			pixelIndex := offset + col*4
-			dc.canvas.im.Pix[pixelIndex+0] = 0
-			dc.canvas.im.Pix[pixelIndex+1] = 0
-			dc.canvas.im.Pix[pixelIndex+2] = 0
-			dc.canvas.im.Pix[pixelIndex+3] = 0
+			ctx.canvas.im.Pix[pixelIndex+0] = 0
+			ctx.canvas.im.Pix[pixelIndex+1] = 0
+			ctx.canvas.im.Pix[pixelIndex+2] = 0
+			ctx.canvas.im.Pix[pixelIndex+3] = 0
 		}
 	}
 }
 
 // FillRect paints the given rectangle onto the bitmap, using the current fill style.
-func (dc *Context) FillRect(x, y, w, h float64) {
+func (ctx *Context) FillRect(x, y, w, h float64) {
 	pd := NewPath2D()
 	pd.Rect(x, y, w, h)
-	dc.FillPath(pd)
+	ctx.FillPath(pd)
 }
 
 // StrokeRect paints the box that outlines the given rectangle onto the bitmap, using the current stroke style.
-func (dc *Context) StrokeRect(x, y, w, h float64) {
+func (ctx *Context) StrokeRect(x, y, w, h float64) {
 	pd := NewPath2D()
 	pd.Rect(x, y, w, h)
-	dc.StrokePath(pd)
+	ctx.StrokePath(pd)
 }

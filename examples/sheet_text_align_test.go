@@ -33,13 +33,13 @@ func TestSheetTextAlign(t *testing.T) {
 
 	ctx.SetFont(tinyskia.FontAttr{Family: []string{"arial"}, Size: 30})
 
-	ctx.SetTextAlign(tinyskia.TextAlignLeft)
+	ctx.SetTextAlign(tinyskia.CanvasTextAlignLeft)
 	ctx.FillText("left-aligned", x, 40)
 
-	ctx.SetTextAlign(tinyskia.TextAlignCenter)
+	ctx.SetTextAlign(tinyskia.CanvasTextAlignCenter)
 	ctx.FillText("center-aligned", x, 85)
 
-	ctx.SetTextAlign(tinyskia.TextAlignRight)
+	ctx.SetTextAlign(tinyskia.CanvasTextAlignRight)
 	ctx.FillText("right-aligned", x, 130)
 
 	outputPath := "sheet_out.png"

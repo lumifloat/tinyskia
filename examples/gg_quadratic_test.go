@@ -56,27 +56,27 @@ func TestGGQuadratic(t *testing.T) {
 	dc.SetStrokeStyleSolidColor(color.Black)
 
 	dc.BeginPath()
-	dc.Arc(x0, y0, 20, 0, 2*math.Pi, false)
+	dc.Arc(x0, y0, 20, 0, 2*math.Pi)
 	dc.Fill()
 	dc.Stroke()
 
 	dc.BeginPath()
-	dc.Arc(x1, y1, 20, 0, 2*math.Pi, false)
+	dc.Arc(x1, y1, 20, 0, 2*math.Pi)
 	dc.Fill()
 	dc.Stroke()
 
 	dc.BeginPath()
-	dc.Arc(x2, y2, 20, 0, 2*math.Pi, false)
+	dc.Arc(x2, y2, 20, 0, 2*math.Pi)
 	dc.Fill()
 	dc.Stroke()
 
 	dc.BeginPath()
-	dc.Arc(x3, y3, 20, 0, 2*math.Pi, false)
+	dc.Arc(x3, y3, 20, 0, 2*math.Pi)
 	dc.Fill()
 	dc.Stroke()
 
 	dc.BeginPath()
-	dc.Arc(x4, y4, 20, 0, 2*math.Pi, false)
+	dc.Arc(x4, y4, 20, 0, 2*math.Pi)
 	dc.Fill()
 	dc.Stroke()
 

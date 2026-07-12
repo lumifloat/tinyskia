@@ -12,7 +12,7 @@ import (
 )
 
 type Gradient interface {
-	style
+	Style
 	AddColorStop(offset float64, color color.Color)
 }
 

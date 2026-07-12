@@ -7,9 +7,9 @@ package tinyskia
 
 import (
 	"image"
+	"image/color"
 
 	"github.com/lumifloat/tinyskia/internal/core/colorf"
-	"golang.org/x/image/font/sfnt"
 )
 
 // Context is the main drawing context, similar to gg.Context.
@@ -19,50 +19,67 @@ type Context struct {
 
 	mask *image.Alpha
 
-	// FillStrokeStyles
-	fillStyle   style
-	strokeStyle style
+	// CanvasState
+	stack       []*Context
+	contextLost bool // Tracks if the rendering context was lost
 
-	// Transform
+	// CanvasTransform
 	matrix *Matrix
 
-	// Composite
-	composite CompositeOperation
+	// CanvasCompositing
+	globalAlpha              float64
+	globalCompositeOperation CompositeOperation
 
-	// PathDrawingStyles
+	// CanvasImageSmoothing
+	imageSmoothingEnabled bool
+	imageSmoothingQuality ImageSmoothingQuality
+
+	// CanvasFillStrokeStyles
+	fillStyle   Style
+	strokeStyle Style
+
+	// CanvasShadowStyles
+	shadowOffsetX float64
+	shadowOffsetY float64
+	shadowBlur    float64
+	shadowColor   color.Color
+
+	// CanvasFilters
+	filters []Filter
+
+	// CanvasPathDrawingStyles
 	lineWidth      float64
-	lineCap        LineCap
-	lineJoin       LineJoin
+	lineCap        CanvasLineCap
+	lineJoin       CanvasLineJoin
 	miterLimit     float64
 	lineDash       []float64
 	lineDashOffset float64
 
-	// Path
-	path2d *Path2D
+	// CanvasTextDrawingStyles
+	lang            string
+	font            FontAttr
+	textAlign       CanvasTextAlign
+	textBaseline    CanvasTextBaseline
+	direction       CanvasDirection
+	fontKerning     CanvasFontKerning
+	fontStretch     CanvasFontStretch
+	fontVariantCaps CanvasFontVariantCaps
+	textRendering   CanvasTextRendering
+	wordSpacing     float64
 
-	// TextDrawingStyles
-	lang        string
-	font        FontAttr
-	buf         sfnt.Buffer
-	textAlign   TextAlign
-	direction   Direction
-	fontStretch FontStretch
-	fontVariant FontVariant
-	fontKerning FontKerning
-	fontBuffer  sfnt.Buffer
+	// CanvasPath
+	path2d *Path2D
 
 	antiAlias       bool
 	colorspace      colorf.ColorSpace
 	forceHQPipeline bool
-	stack           []*Context
-	contextLost     bool // Tracks if the rendering context was lost
 }
 
 // SetAntiAlias enables or disables anti-aliasing.
-func (dc *Context) SetAntiAlias(aa bool) {
-	dc.antiAlias = aa
+func (ctx *Context) SetAntiAlias(aa bool) {
+	ctx.antiAlias = aa
 }
 
-func (dc *Context) SetForceHQPipeline(force bool) {
-	dc.forceHQPipeline = force
+func (ctx *Context) SetForceHQPipeline(force bool) {
+	ctx.forceHQPipeline = force
 }

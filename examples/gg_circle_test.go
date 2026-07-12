@@ -19,7 +19,7 @@ func TestGGCircle(t *testing.T) {
 	dc := c.GetContext()
 
 	dc.BeginPath()
-	dc.Arc(500, 500, 400, 0, 2*math.Pi, false)
+	dc.Arc(500, 500, 400, 0, 2*math.Pi)
 	dc.SetFillStyleSolidColor(color.RGBA{0, 0, 0, 255})
 	dc.Fill()
 

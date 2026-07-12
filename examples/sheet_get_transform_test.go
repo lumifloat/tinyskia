@@ -27,7 +27,7 @@ func TestSheetGetTransform(t *testing.T) {
 	ctx := canvas.GetContext()
 
 	// Set transform on first context
-	ctx.SetTransform(1, 0.2, 0.8, 1, 0, 0)
+	ctx.SetTransformValues(1, 0.2, 0.8, 1, 0, 0)
 
 	// Draw a rectangle with the transform
 	ctx.SetFillStyleSolidColor(color.RGBA{255, 0, 0, 255}) // red
@@ -65,13 +65,13 @@ func TestSheetGetTransform(t *testing.T) {
 	}
 
 	// Reset transform and apply the stored transform
-	ctx.SetTransform(1, 0, 0, 1, 0, 0) // identity
-	ctx.SetTransform(storedTransform.A(), storedTransform.B(), storedTransform.C(), storedTransform.D(), storedTransform.E(), storedTransform.F())
+	ctx.SetTransformValues(1, 0, 0, 1, 0, 0) // identity
+	ctx.SetTransformValues(storedTransform.A(), storedTransform.B(), storedTransform.C(), storedTransform.D(), storedTransform.E(), storedTransform.F())
 
 	// Draw an arc with the same transform
 	ctx.SetFillStyleSolidColor(color.RGBA{0, 0, 255, 255}) // blue
 	ctx.BeginPath()
-	ctx.Arc(50, 50, 50, 0, 2*math.Pi, false)
+	ctx.Arc(50, 50, 50, 0, 2*math.Pi)
 	ctx.Fill()
 
 	outputPath := "sheet_out.png"

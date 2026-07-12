@@ -33,7 +33,7 @@ func TestSheetStrokeStyle(t *testing.T) {
 			b := uint8(math.Floor(255 - 42.5*float64(j)))
 			ctx.SetStrokeStyleSolidColor(color.RGBA{r, g, b, 255})
 			ctx.BeginPath()
-			ctx.Arc(12.5+float64(j*25), 12.5+float64(i*25), 10, 0, math.Pi*2, true)
+			ctx.Arc(12.5+float64(j*25), 12.5+float64(i*25), 10, 0, math.Pi*2)
 			ctx.Stroke()
 		}
 	}

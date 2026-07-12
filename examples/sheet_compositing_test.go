@@ -25,8 +25,8 @@ func TestSheetCompositing(t *testing.T) {
 		{"destination-in", tinyskia.CompositeOperationDestinationIn},
 		{"destination-out", tinyskia.CompositeOperationDestinationOut},
 		{"destination-atop", tinyskia.CompositeOperationDestinationAtop},
-		{"lighter", tinyskia.CompositeOperationPlus},
-		{"copy", tinyskia.CompositeOperationSource},
+		{"lighter", tinyskia.CompositeOperationLighter},
+		{"copy", tinyskia.CompositeOperationCopy},
 		{"xor", tinyskia.CompositeOperationXor},
 		{"multiply", tinyskia.CompositeOperationMultiply},
 		{"screen", tinyskia.CompositeOperationScreen},
@@ -68,7 +68,7 @@ func TestSheetCompositing(t *testing.T) {
 
 		sctx.SetFillStyleSolidColor(color.RGBA{255, 0, 0, 255})
 		sctx.BeginPath()
-		sctx.Arc(-40, 20, 80, 0, 2*math.Pi, true)
+		sctx.Arc(-40, 20, 80, 0, 2*math.Pi)
 		sctx.ClosePath()
 		sctx.Fill()
 
@@ -76,7 +76,7 @@ func TestSheetCompositing(t *testing.T) {
 
 		sctx.SetFillStyleSolidColor(color.RGBA{255, 165, 0, 255})
 		sctx.BeginPath()
-		sctx.Arc(40, 20, 80, 0, 2*math.Pi, true)
+		sctx.Arc(40, 20, 80, 0, 2*math.Pi)
 		sctx.ClosePath()
 		sctx.Fill()
 

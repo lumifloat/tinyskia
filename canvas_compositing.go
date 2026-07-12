@@ -8,76 +8,148 @@ package tinyskia
 
 import "github.com/lumifloat/tinyskia/internal/core/painter"
 
-// A CompositeOperation mode.
-type CompositeOperation = painter.CompositeOperation
+// A Composite mode.
+type CompositeOperation string
 
 const (
 	// Replaces destination with zero: fully transparent.
-	CompositeOperationClear CompositeOperation = iota
+	CompositeOperationClear CompositeOperation = "clear"
 	// Replaces destination.
-	CompositeOperationSource
+	CompositeOperationCopy CompositeOperation = "copy"
 	// Preserves destination.
-	CompositeOperationDestination
+	CompositeOperationDestination CompositeOperation = "destination"
 	// Source over destination.
-	CompositeOperationSourceOver
+	CompositeOperationSourceOver CompositeOperation = "source-over"
 	// Destination over source.
-	CompositeOperationDestinationOver
+	CompositeOperationDestinationOver CompositeOperation = "destination-over"
 	// Source trimmed inside destination.
-	CompositeOperationSourceIn
+	CompositeOperationSourceIn CompositeOperation = "source-in"
 	// Destination trimmed by source.
-	CompositeOperationDestinationIn
+	CompositeOperationDestinationIn CompositeOperation = "destination-in"
 	// Source trimmed outside destination.
-	CompositeOperationSourceOut
+	CompositeOperationSourceOut CompositeOperation = "source-out"
 	// Destination trimmed outside source.
-	CompositeOperationDestinationOut
+	CompositeOperationDestinationOut CompositeOperation = "destination-out"
 	// Source inside destination blended with destination.
-	CompositeOperationSourceAtop
+	CompositeOperationSourceAtop CompositeOperation = "source-atop"
 	// Destination inside source blended with source.
-	CompositeOperationDestinationAtop
+	CompositeOperationDestinationAtop CompositeOperation = "destination-atop"
 	// Each of source and destination trimmed outside the other.
-	CompositeOperationXor
+	CompositeOperationXor CompositeOperation = "xor"
 	// Sum of colors.
-	CompositeOperationPlus
-	// Product of premultiplied colors; darkens destination.
-	CompositeOperationModulate
-	// Multiply inverse of pixels, inverting result; brightens destination.
-	CompositeOperationScreen
-	// Multiply or screen, depending on destination.
-	CompositeOperationOverlay
-	// Darker of source and destination.
-	CompositeOperationDarken
-	// Lighter of source and destination.
-	CompositeOperationLighten
-	// Brighten destination to reflect source.
-	CompositeOperationColorDodge
-	// Darken destination to reflect source.
-	CompositeOperationColorBurn
-	// Multiply or screen, depending on source.
-	CompositeOperationHardLight
-	// Lighten or darken, depending on source.
-	CompositeOperationSoftLight
-	// Subtract darker from lighter with higher contrast.
-	CompositeOperationDifference
-	// Subtract darker from lighter with lower contrast.
-	CompositeOperationExclusion
+	CompositeOperationLighter CompositeOperation = "lighter"
 	// Multiply source with destination, darkening image.
-	CompositeOperationMultiply
+	CompositeOperationMultiply CompositeOperation = "multiply"
+	// Multiply inverse of pixels, inverting result; brightens destination.
+	CompositeOperationScreen CompositeOperation = "screen"
+	// Multiply or screen, depending on destination.
+	CompositeOperationOverlay CompositeOperation = "overlay"
+	// Darker of source and destination.
+	CompositeOperationDarken CompositeOperation = "darken"
+	// Lighter of source and destination.
+	CompositeOperationLighten CompositeOperation = "lighten"
+	// Brighten destination to reflect source.
+	CompositeOperationColorDodge CompositeOperation = "color-dodge"
+	// Darken destination to reflect source.
+	CompositeOperationColorBurn CompositeOperation = "color-burn"
+	// Multiply or screen, depending on source.
+	CompositeOperationHardLight CompositeOperation = "hard-light"
+	// Lighten or darken, depending on source.
+	CompositeOperationSoftLight CompositeOperation = "soft-light"
+	// Subtract darker from lighter with higher contrast.
+	CompositeOperationDifference CompositeOperation = "difference"
+	// Subtract darker from lighter with lower contrast.
+	CompositeOperationExclusion CompositeOperation = "exclusion"
 	// Hue of source with saturation and luminosity of destination.
-	CompositeOperationHue
+	CompositeOperationHue CompositeOperation = "hue"
 	// Saturation of source with hue and luminosity of destination.
-	CompositeOperationSaturation
+	CompositeOperationSaturation CompositeOperation = "saturation"
 	// Hue and saturation of source with luminosity of destination.
-	CompositeOperationColor
+	CompositeOperationColor CompositeOperation = "color"
 	// Luminosity of source with hue and saturation of destination.
-	CompositeOperationLuminosity
+	CompositeOperationLuminosity CompositeOperation = "luminosity"
 )
 
-// SetGlobalCompositeOperation change the current compositing and blending operator.
-func (dc *Context) SetGlobalCompositeOperation(op CompositeOperation) {
-	dc.composite = op
+// GetGlobalAlpha return this's global alpha.
+func (ctx *Context) GetGlobalAlpha() float64 {
+	return ctx.globalAlpha
 }
 
-// GetGlobalCompositeOperation returns the current compositing and blending operator, from the values defined in Compositing and Blending.
-func (dc *Context) GetGlobalCompositeOperation() CompositeOperation {
-	return dc.composite
+// SetGlobalAlpha set this's global alpha to the given value.
+func (ctx *Context) SetGlobalAlpha(alpha float64) {
+	// TODO
+	ctx.globalAlpha = alpha
+}
+
+// GetGlobalCompositeOperation return this's current compositing and blending operator.
+func (ctx *Context) GetGlobalCompositeOperation() CompositeOperation {
+	return ctx.globalCompositeOperation
+}
+
+// SetGlobalCompositeOperation set this's current compositing and blending operator to the given value.
+func (ctx *Context) SetGlobalCompositeOperation(op CompositeOperation) {
+	ctx.globalCompositeOperation = op
+}
+
+func composite(op CompositeOperation) painter.CompositeOperation {
+	switch op {
+	case CompositeOperationClear:
+		return painter.CompositeOperationClear
+	case CompositeOperationCopy:
+		return painter.CompositeOperationCopy
+	case CompositeOperationDestination:
+		return painter.CompositeOperationDestination
+	case CompositeOperationSourceOver:
+		return painter.CompositeOperationSourceOver
+	case CompositeOperationDestinationOver:
+		return painter.CompositeOperationDestinationOver
+	case CompositeOperationSourceIn:
+		return painter.CompositeOperationSourceIn
+	case CompositeOperationDestinationIn:
+		return painter.CompositeOperationDestinationIn
+	case CompositeOperationSourceOut:
+		return painter.CompositeOperationSourceOut
+	case CompositeOperationDestinationOut:
+		return painter.CompositeOperationDestinationOut
+	case CompositeOperationSourceAtop:
+		return painter.CompositeOperationSourceAtop
+	case CompositeOperationDestinationAtop:
+		return painter.CompositeOperationDestinationAtop
+	case CompositeOperationXor:
+		return painter.CompositeOperationXor
+	case CompositeOperationLighter:
+		return painter.CompositeOperationLighter
+	case CompositeOperationMultiply:
+		return painter.CompositeOperationMultiply
+	case CompositeOperationScreen:
+		return painter.CompositeOperationScreen
+	case CompositeOperationOverlay:
+		return painter.CompositeOperationOverlay
+	case CompositeOperationDarken:
+		return painter.CompositeOperationDarken
+	case CompositeOperationLighten:
+		return painter.CompositeOperationLighten
+	case CompositeOperationColorDodge:
+		return painter.CompositeOperationColorDodge
+	case CompositeOperationColorBurn:
+		return painter.CompositeOperationColorBurn
+	case CompositeOperationHardLight:
+		return painter.CompositeOperationHardLight
+	case CompositeOperationSoftLight:
+		return painter.CompositeOperationSoftLight
+	case CompositeOperationDifference:
+		return painter.CompositeOperationDifference
+	case CompositeOperationExclusion:
+		return painter.CompositeOperationExclusion
+	case CompositeOperationHue:
+		return painter.CompositeOperationHue
+	case CompositeOperationSaturation:
+		return painter.CompositeOperationSaturation
+	case CompositeOperationColor:
+		return painter.CompositeOperationColor
+	case CompositeOperationLuminosity:
+		return painter.CompositeOperationLuminosity
+	default:
+		return painter.CompositeOperationSourceOver
+	}
 }

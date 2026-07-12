@@ -7,10 +7,20 @@
 package tinyskia
 
 type Pattern interface {
-	style
-	SetTransform(transform *Matrix)
+	Style
+	SetTransform()
+	SetTransformWithMatrix(transform *Matrix)
 }
 
-func (p *ImagePattern) SetTransform(transform *Matrix) {
+// SetTransform resets the pattern's transformation matrix to the identity matrix.
+func (p *ImagePattern) SetTransform() {
+	p.transform = NewMatrixIdentity()
+}
+
+// SetTransformWithMatrix sets the pattern's transform matrix to the specified matrix.
+func (p *ImagePattern) SetTransformWithMatrix(transform *Matrix) {
+	if transform == nil {
+		transform = NewMatrixIdentity()
+	}
 	p.transform = transform
 }

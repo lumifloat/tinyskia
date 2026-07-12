@@ -24,11 +24,11 @@ func TestSheetLineCap(t *testing.T) {
 
 	lineCaps := []struct {
 		name string
-		cap  tinyskia.LineCap
+		cap  tinyskia.CanvasLineCap
 	}{
-		{"butt", tinyskia.LineCapButt},
-		{"round", tinyskia.LineCapRound},
-		{"square", tinyskia.LineCapSquare},
+		{"butt", tinyskia.CanvasLineCapButt},
+		{"round", tinyskia.CanvasLineCapRound},
+		{"square", tinyskia.CanvasLineCapSquare},
 	}
 
 	canvas := tinyskia.NewCanvas(width, height)

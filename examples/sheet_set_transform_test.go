@@ -25,7 +25,7 @@ func TestSheetSetTransform(t *testing.T) {
 	canvas := tinyskia.NewCanvas(width, height)
 	ctx := canvas.GetContext()
 
-	ctx.SetTransform(1, 0.2, 0.8, 1, 0, 0)
+	ctx.SetTransformValues(1, 0.2, 0.8, 1, 0, 0)
 	ctx.SetFillStyleSolidColor(color.RGBA{0, 0, 0, 255}) // black
 	ctx.FillRect(0, 0, 100, 100)
 

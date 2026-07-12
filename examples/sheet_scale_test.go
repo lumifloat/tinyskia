@@ -27,7 +27,7 @@ func TestSheetScale(t *testing.T) {
 	ctx.Scale(-1, 1)
 	ctx.SetFont(tinyskia.FontAttr{Family: []string{"serif"}, Size: 48})
 	ctx.FillText("Hello world!", -280, 90)
-	ctx.SetTransform(1, 0, 0, 1, 0, 0)
+	ctx.SetTransformValues(1, 0, 0, 1, 0, 0)
 
 	outputPath := "sheet_out.png"
 	fi, err := os.Create(outputPath)

@@ -19,11 +19,11 @@ func TestGGClip(t *testing.T) {
 	dc := c.GetContext()
 
 	dc.BeginPath()
-	dc.Arc(350, 500, 300, 0, 2*math.Pi, false)
+	dc.Arc(350, 500, 300, 0, 2*math.Pi)
 	dc.Clip()
 
 	dc.BeginPath()
-	dc.Arc(650, 500, 300, 0, 2*math.Pi, false)
+	dc.Arc(650, 500, 300, 0, 2*math.Pi)
 	dc.Clip()
 
 	dc.BeginPath()

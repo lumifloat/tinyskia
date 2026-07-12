@@ -6,79 +6,109 @@
 // found in the LICENSE file.
 package tinyskia
 
-type LineCap int
+import "github.com/lumifloat/tinyskia/internal/path"
+
+type CanvasLineCap string
 
 const (
-	LineCapButt LineCap = iota
-	LineCapRound
-	LineCapSquare
+	CanvasLineCapButt   CanvasLineCap = "butt"
+	CanvasLineCapRound  CanvasLineCap = "round"
+	CanvasLineCapSquare CanvasLineCap = "square"
 )
 
-type LineJoin int
+type CanvasLineJoin string
 
 const (
-	LineJoinMiter LineJoin = iota
-	LineJoinMiterClip
-	LineJoinRound
-	LineJoinBevel
+	CanvasLineJoinRound CanvasLineJoin = "round"
+	CanvasLineJoinBevel CanvasLineJoin = "bevel"
+	CanvasLineJoinMiter CanvasLineJoin = "miter"
 )
 
 // SetLineWidth to change the line width.
-func (dc *Context) SetLineWidth(width float64) {
-	dc.lineWidth = width
+func (ctx *Context) SetLineWidth(width float64) {
+	ctx.lineWidth = width
 }
 
 // GetLineWidth returns the current line width.
-func (dc *Context) GetLineWidth() float64 {
-	return dc.lineWidth
+func (ctx *Context) GetLineWidth() float64 {
+	return ctx.lineWidth
 }
 
 // SetLineCap to change the line cap style.
-func (dc *Context) SetLineCap(cap LineCap) {
-	dc.lineCap = cap
+func (ctx *Context) SetLineCap(cap CanvasLineCap) {
+	ctx.lineCap = cap
 }
 
 // GetLineCap returns the current line cap style.
-func (dc *Context) GetLineCap() LineCap {
-	return dc.lineCap
+func (ctx *Context) GetLineCap() CanvasLineCap {
+	return ctx.lineCap
 }
 
 // SetLineJoin to change the line join style.
-func (dc *Context) SetLineJoin(join LineJoin) {
-	dc.lineJoin = join
+func (ctx *Context) SetLineJoin(join CanvasLineJoin) {
+	ctx.lineJoin = join
 }
 
 // GetLineJoin returns the current line join style.
-func (dc *Context) GetLineJoin() LineJoin {
-	return dc.lineJoin
+func (ctx *Context) GetLineJoin() CanvasLineJoin {
+	return ctx.lineJoin
 }
 
 // SetMiterLimit to change the miter limit ratio.
-func (dc *Context) SetMiterLimit(limit float64) {
-	dc.miterLimit = limit
+func (ctx *Context) SetMiterLimit(limit float64) {
+	ctx.miterLimit = limit
 }
 
 // GetMiterLimit returns the current miter limit ratio.
-func (dc *Context) GetMiterLimit() float64 {
-	return dc.miterLimit
+func (ctx *Context) GetMiterLimit() float64 {
+	return ctx.miterLimit
 }
 
 // SetLineDash to change the line dash pattern.
-func (dc *Context) SetLineDash(segments []float64) {
-	dc.lineDash = segments
+func (ctx *Context) SetLineDash(segments []float64) {
+	if segments == nil {
+		segments = []float64{}
+	}
+	ctx.lineDash = segments
 }
 
 // GetLineDash returns the current line dash pattern.
-func (dc *Context) GetLineDash() []float64 {
-	return dc.lineDash
+func (ctx *Context) GetLineDash() []float64 {
+	return ctx.lineDash
 }
 
 // SetLineDashOffset to change the line dash offset.
-func (dc *Context) SetLineDashOffset(offset float64) {
-	dc.lineDashOffset = offset
+func (ctx *Context) SetLineDashOffset(offset float64) {
+	ctx.lineDashOffset = offset
 }
 
 // GetLineDashOffset returns the current line dash offset.
-func (dc *Context) GetLineDashOffset() float64 {
-	return dc.lineDashOffset
+func (ctx *Context) GetLineDashOffset() float64 {
+	return ctx.lineDashOffset
+}
+
+func cap(c CanvasLineCap) path.LineCap {
+	switch c {
+	case CanvasLineCapButt:
+		return path.LineCapButt
+	case CanvasLineCapRound:
+		return path.LineCapRound
+	case CanvasLineCapSquare:
+		return path.LineCapSquare
+	default:
+		return path.LineCapButt
+	}
+}
+
+func join(j CanvasLineJoin) path.LineJoin {
+	switch j {
+	case CanvasLineJoinRound:
+		return path.LineJoinRound
+	case CanvasLineJoinBevel:
+		return path.LineJoinBevel
+	case CanvasLineJoinMiter:
+		return path.LineJoinMiter
+	default:
+		return path.LineJoinRound
+	}
 }

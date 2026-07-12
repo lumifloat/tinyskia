@@ -61,13 +61,13 @@ func (p *Paint) blitter(dst *image.RGBA, mask *image.Alpha) *pipeline.RasterPipe
 	// We can strength-reduce SourceOver into Source when opaque.
 	blendMode := p.BlendMode
 	if p.Shader.IsOpaque() && blendMode == CompositeOperationSourceOver && mask == nil {
-		blendMode = CompositeOperationSource
+		blendMode = CompositeOperationCopy
 	}
 
 	// When we're drawing a constant color in Source mode, we can sometimes just memset.
 	var memset2dColor color.RGBA
 	var useMemset2dColor bool
-	if blendMode == CompositeOperationSource && mask == nil {
+	if blendMode == CompositeOperationCopy && mask == nil {
 		if solid, ok := p.Shader.(*shader.SolidColor); ok {
 			memset2dColor = color.RGBAModel.Convert(solid.Color()).(color.RGBA)
 			useMemset2dColor = true
@@ -76,7 +76,7 @@ func (p *Paint) blitter(dst *image.RGBA, mask *image.Alpha) *pipeline.RasterPipe
 
 	// Clear is just a transparent color memset.
 	if blendMode == CompositeOperationClear && !p.AntiAlias && mask == nil {
-		blendMode = CompositeOperationSource
+		blendMode = CompositeOperationCopy
 		memset2dColor = color.RGBA{0, 0, 0, 0}
 		useMemset2dColor = true
 	}
@@ -127,7 +127,7 @@ func (p *Paint) blitter(dst *image.RGBA, mask *image.Alpha) *pipeline.RasterPipe
 		// TODO: ignore when dither_rate is non-zero
 		blitRectRpBuilder.Push(pipeline.StageSourceOverRgba)
 	} else {
-		if blendMode != CompositeOperationSource {
+		if blendMode != CompositeOperationCopy {
 			blitRectRpBuilder.Push(pipeline.StageLoadDestination)
 			if blendStage, ok := blendMode.stage(); ok {
 				blitRectRpBuilder.PushColorSpaceExpand(p.Colorspace)
@@ -266,7 +266,7 @@ func (b CompositeOperation) stage() (pipeline.Stage, bool) {
 	switch b {
 	case CompositeOperationClear:
 		return pipeline.StageClear, true
-	case CompositeOperationSource:
+	case CompositeOperationCopy:
 		return 0, false // This stage is a no-op.
 	case CompositeOperationDestination:
 		return pipeline.StageMoveDestinationToSource, true
@@ -288,7 +288,7 @@ func (b CompositeOperation) stage() (pipeline.Stage, bool) {
 		return pipeline.StageDestinationAtop, true
 	case CompositeOperationXor:
 		return pipeline.StageXor, true
-	case CompositeOperationPlus:
+	case CompositeOperationLighter:
 		return pipeline.StagePlus, true
 	case CompositeOperationModulate:
 		return pipeline.StageModulate, true
@@ -344,7 +344,7 @@ func (b CompositeOperation) ShouldPreScaleCoverage() bool {
 	switch b {
 	case CompositeOperationDestination,
 		CompositeOperationDestinationOver,
-		CompositeOperationPlus,
+		CompositeOperationLighter,
 		CompositeOperationDestinationOut,
 		CompositeOperationSourceAtop,
 		CompositeOperationSourceOver,

@@ -7,9 +7,7 @@
 package tinyskia
 
 import (
-	"github.com/go-text/typesetting/di"
 	"github.com/go-text/typesetting/font"
-	"github.com/go-text/typesetting/font/opentype"
 	"github.com/go-text/typesetting/fontscan"
 	"github.com/go-text/typesetting/shaping"
 	"github.com/lumifloat/tinyskia/internal/core/painter"
@@ -27,60 +25,16 @@ func (ctx *Context) MeasureText(s string) (metrics TextMetrics) {
 
 	ppem := fixed.Int26_6(ctx.font.Size * 64)
 
-	features := []shaping.FontFeature{
-		{
-			Tag:   opentype.NewTag('k', 'e', 'r', 'n'),
-			Value: uint32(ctx.fontKerning),
-		},
-	}
-
-	switch ctx.fontVariant {
-	case FontVariantNormal:
-		break
-	case FontVariantSmallCaps:
-		features = append(features, shaping.FontFeature{
-			Tag:   opentype.NewTag('s', 'm', 'c', 'p'),
-			Value: 1,
-		})
-	case FontVariantAllSmallCaps:
-		features = append(features, shaping.FontFeature{
-			Tag:   opentype.NewTag('c', '2', 's', 'c'),
-			Value: 1,
-		}, shaping.FontFeature{
-			Tag:   opentype.NewTag('s', 'm', 'c', 'p'),
-			Value: 1,
-		})
-	case FontVariantPetiteCaps:
-		features = append(features, shaping.FontFeature{
-			Tag:   opentype.NewTag('p', 'c', 'a', 'p'),
-			Value: 1,
-		})
-	case FontVariantAllPetiteCaps:
-		features = append(features, shaping.FontFeature{
-			Tag:   opentype.NewTag('c', '2', 'p', 'c'),
-			Value: 1,
-		}, shaping.FontFeature{
-			Tag:   opentype.NewTag('p', 'c', 'a', 'p'),
-			Value: 1,
-		})
-	case FontVariantUnicase:
-		features = append(features, shaping.FontFeature{
-			Tag:   opentype.NewTag('u', 'n', 'i', 'c'),
-			Value: 1,
-		})
-	case FontVariantTitlingCaps:
-		features = append(features, shaping.FontFeature{
-			Tag:   opentype.NewTag('t', 'i', 't', 'l'),
-			Value: 1,
-		})
-	}
+	features := []shaping.FontFeature{}
+	kerning(ctx.fontKerning, features)
+	variant(ctx.fontVariantCaps, features)
 
 	input := shaping.Input{
 		Text:         runes,
 		RunStart:     0,
 		RunEnd:       len(runes),
 		Size:         ppem,
-		Direction:    di.Direction(ctx.direction),
+		Direction:    direction(ctx.direction),
 		FontFeatures: features,
 	}
 
@@ -90,7 +44,7 @@ func (ctx *Context) MeasureText(s string) (metrics TextMetrics) {
 		Aspect: font.Aspect{
 			Weight:  font.Weight(ctx.font.Weight),
 			Style:   font.Style(ctx.font.Style),
-			Stretch: font.Stretch(ctx.fontStretch),
+			Stretch: stretch(ctx.fontStretch),
 		},
 	}
 
@@ -148,60 +102,16 @@ func (ctx *Context) FillText(s string, x, y float64) {
 
 	ppem := fixed.Int26_6(ctx.font.Size * 64)
 
-	features := []shaping.FontFeature{
-		{
-			Tag:   opentype.NewTag('k', 'e', 'r', 'n'),
-			Value: uint32(ctx.fontKerning),
-		},
-	}
-
-	switch ctx.fontVariant {
-	case FontVariantNormal:
-		break
-	case FontVariantSmallCaps:
-		features = append(features, shaping.FontFeature{
-			Tag:   opentype.NewTag('s', 'm', 'c', 'p'),
-			Value: 1,
-		})
-	case FontVariantAllSmallCaps:
-		features = append(features, shaping.FontFeature{
-			Tag:   opentype.NewTag('c', '2', 's', 'c'),
-			Value: 1,
-		}, shaping.FontFeature{
-			Tag:   opentype.NewTag('s', 'm', 'c', 'p'),
-			Value: 1,
-		})
-	case FontVariantPetiteCaps:
-		features = append(features, shaping.FontFeature{
-			Tag:   opentype.NewTag('p', 'c', 'a', 'p'),
-			Value: 1,
-		})
-	case FontVariantAllPetiteCaps:
-		features = append(features, shaping.FontFeature{
-			Tag:   opentype.NewTag('c', '2', 'p', 'c'),
-			Value: 1,
-		}, shaping.FontFeature{
-			Tag:   opentype.NewTag('p', 'c', 'a', 'p'),
-			Value: 1,
-		})
-	case FontVariantUnicase:
-		features = append(features, shaping.FontFeature{
-			Tag:   opentype.NewTag('u', 'n', 'i', 'c'),
-			Value: 1,
-		})
-	case FontVariantTitlingCaps:
-		features = append(features, shaping.FontFeature{
-			Tag:   opentype.NewTag('t', 'i', 't', 'l'),
-			Value: 1,
-		})
-	}
+	features := []shaping.FontFeature{}
+	kerning(ctx.fontKerning, features)
+	variant(ctx.fontVariantCaps, features)
 
 	input := shaping.Input{
 		Text:         runes,
 		RunStart:     0,
 		RunEnd:       len(runes),
 		Size:         ppem,
-		Direction:    di.Direction(ctx.direction),
+		Direction:    direction(ctx.direction),
 		FontFeatures: features,
 	}
 
@@ -211,7 +121,7 @@ func (ctx *Context) FillText(s string, x, y float64) {
 		Aspect: font.Aspect{
 			Weight:  font.Weight(ctx.font.Weight),
 			Style:   font.Style(ctx.font.Style),
-			Stretch: font.Stretch(ctx.fontStretch),
+			Stretch: stretch(ctx.fontStretch),
 		},
 	}
 
@@ -221,18 +131,18 @@ func (ctx *Context) FillText(s string, x, y float64) {
 	fy := fixed.Int26_6(y*64 + 0.5)
 
 	switch ctx.textAlign {
-	case TextAlignLeft, TextAlignStart:
+	case CanvasTextAlignLeft, CanvasTextAlignStart:
 		break
-	case TextAlignRight, TextAlignEnd:
+	case CanvasTextAlignRight, CanvasTextAlignEnd:
 		fx -= width
-	case TextAlignCenter:
+	case CanvasTextAlignCenter:
 		fx -= width / 2.0
 	}
 
 	paint := &painter.Paint{
-		Shader:          toShader(ctx.strokeStyle, ctx.matrix.transform),
+		Shader:          toShader(ctx.fillStyle, ctx.matrix.transform),
 		AntiAlias:       ctx.antiAlias,
-		BlendMode:       ctx.composite,
+		BlendMode:       composite(ctx.globalCompositeOperation),
 		Colorspace:      ctx.colorspace,
 		ForceHQPipeline: ctx.forceHQPipeline,
 	}
@@ -248,60 +158,16 @@ func (ctx *Context) StrokeText(s string, x, y float64) {
 
 	ppem := fixed.Int26_6(ctx.font.Size * 64)
 
-	features := []shaping.FontFeature{
-		{
-			Tag:   opentype.NewTag('k', 'e', 'r', 'n'),
-			Value: uint32(ctx.fontKerning),
-		},
-	}
-
-	switch ctx.fontVariant {
-	case FontVariantNormal:
-		break
-	case FontVariantSmallCaps:
-		features = append(features, shaping.FontFeature{
-			Tag:   opentype.NewTag('s', 'm', 'c', 'p'),
-			Value: 1,
-		})
-	case FontVariantAllSmallCaps:
-		features = append(features, shaping.FontFeature{
-			Tag:   opentype.NewTag('c', '2', 's', 'c'),
-			Value: 1,
-		}, shaping.FontFeature{
-			Tag:   opentype.NewTag('s', 'm', 'c', 'p'),
-			Value: 1,
-		})
-	case FontVariantPetiteCaps:
-		features = append(features, shaping.FontFeature{
-			Tag:   opentype.NewTag('p', 'c', 'a', 'p'),
-			Value: 1,
-		})
-	case FontVariantAllPetiteCaps:
-		features = append(features, shaping.FontFeature{
-			Tag:   opentype.NewTag('c', '2', 'p', 'c'),
-			Value: 1,
-		}, shaping.FontFeature{
-			Tag:   opentype.NewTag('p', 'c', 'a', 'p'),
-			Value: 1,
-		})
-	case FontVariantUnicase:
-		features = append(features, shaping.FontFeature{
-			Tag:   opentype.NewTag('u', 'n', 'i', 'c'),
-			Value: 1,
-		})
-	case FontVariantTitlingCaps:
-		features = append(features, shaping.FontFeature{
-			Tag:   opentype.NewTag('t', 'i', 't', 'l'),
-			Value: 1,
-		})
-	}
+	features := []shaping.FontFeature{}
+	kerning(ctx.fontKerning, features)
+	variant(ctx.fontVariantCaps, features)
 
 	input := shaping.Input{
 		Text:         runes,
 		RunStart:     0,
 		RunEnd:       len(runes),
 		Size:         ppem,
-		Direction:    di.Direction(ctx.direction),
+		Direction:    direction(ctx.direction),
 		FontFeatures: features,
 	}
 
@@ -311,7 +177,7 @@ func (ctx *Context) StrokeText(s string, x, y float64) {
 		Aspect: font.Aspect{
 			Weight:  font.Weight(ctx.font.Weight),
 			Style:   font.Style(ctx.font.Style),
-			Stretch: font.Stretch(ctx.fontStretch),
+			Stretch: stretch(ctx.fontStretch),
 		},
 	}
 
@@ -321,11 +187,11 @@ func (ctx *Context) StrokeText(s string, x, y float64) {
 	fy := fixed.Int26_6(y*64 + 0.5)
 
 	switch ctx.textAlign {
-	case TextAlignLeft, TextAlignStart:
+	case CanvasTextAlignLeft, CanvasTextAlignStart:
 		break
-	case TextAlignRight, TextAlignEnd:
+	case CanvasTextAlignRight, CanvasTextAlignEnd:
 		fx -= width
-	case TextAlignCenter:
+	case CanvasTextAlignCenter:
 		fx -= width / 2.0
 	}
 
@@ -348,15 +214,15 @@ func (ctx *Context) StrokeText(s string, x, y float64) {
 
 	stroke := path.Stroke{
 		Width:      float32(ctx.lineWidth),
-		LineCap:    path.LineCap(ctx.lineCap),
-		LineJoin:   path.LineJoin(ctx.lineJoin),
+		LineCap:    cap(ctx.lineCap),
+		LineJoin:   join(ctx.lineJoin),
 		MiterLimit: float32(ctx.miterLimit),
 	}
 
 	paint := &painter.Paint{
 		Shader:          toShader(ctx.strokeStyle, ctx.matrix.transform),
 		AntiAlias:       ctx.antiAlias,
-		BlendMode:       ctx.composite,
+		BlendMode:       composite(ctx.globalCompositeOperation),
 		Colorspace:      ctx.colorspace,
 		ForceHQPipeline: ctx.forceHQPipeline,
 	}

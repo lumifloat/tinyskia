@@ -34,12 +34,12 @@ func TestGGGradientConic(t *testing.T) {
 
 	dc.SetStrokeStyle(grad1)
 	dc.SetLineWidth(20)
-	dc.Arc(200, 200, 180, 0, 2*math.Pi, false)
+	dc.Arc(200, 200, 180, 0, 2*math.Pi)
 	dc.Stroke()
 
 	dc.BeginPath()
 	dc.SetFillStyle(grad2)
-	dc.Arc(200, 200, 150, 0, 2*math.Pi, false)
+	dc.Arc(200, 200, 150, 0, 2*math.Pi)
 	dc.Fill()
 
 	fi, err := os.Create("gg_out.png")

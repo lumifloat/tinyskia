@@ -29,7 +29,7 @@ func TestGoFont(t *testing.T) {
 		return
 	}
 	dc.SetFont(gg.FontAttr{Family: []string{"go"}, Size: 48})
-	dc.SetTextAlign(gg.TextAlignCenter)
+	dc.SetTextAlign(gg.CanvasTextAlignCenter)
 	text := "Hello, world!"
 
 	x := S / 2

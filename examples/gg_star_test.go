@@ -40,7 +40,7 @@ func TestGGStar(t *testing.T) {
 	dc.ClosePath()
 
 	dc.SetFillStyleSolidColor(color.RGBA{0, 128, 0, 255})
-	dc.FillWithFillRule(gg.FillRuleEvenOdd)
+	dc.FillWithFillRule(gg.CanvasFillRuleEvenodd)
 
 	dc.SetStrokeStyleSolidColor(color.RGBA{0, 255, 0, 128})
 	dc.SetLineWidth(16)

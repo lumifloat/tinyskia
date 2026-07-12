@@ -46,14 +46,14 @@ func TestSheetArcTo(t *testing.T) {
 	// Draw start point (blue)
 	ctx.BeginPath()
 	ctx.SetFillStyleSolidColor(color.RGBA{0, 0, 255, 255}) // blue
-	ctx.Arc(200, 20, 5, 0, 2*math.Pi, false)
+	ctx.Arc(200, 20, 5, 0, 2*math.Pi)
 	ctx.Fill()
 
 	// Draw control points (red)
 	ctx.BeginPath()
 	ctx.SetFillStyleSolidColor(color.RGBA{255, 0, 0, 255}) // red
-	ctx.Arc(200, 130, 5, 0, 2*math.Pi, false)              // control point 1
-	ctx.Arc(50, 20, 5, 0, 2*math.Pi, false)                // control point 2
+	ctx.Arc(200, 130, 5, 0, 2*math.Pi)                     // control point 1
+	ctx.Arc(50, 20, 5, 0, 2*math.Pi)                       // control point 2
 	ctx.Fill()
 
 	outputPath := "sheet_out.png"

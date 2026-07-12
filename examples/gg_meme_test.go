@@ -31,7 +31,7 @@ func TestGGMeme(t *testing.T) {
 
 	dc.SetStrokeStyleSolidColor(color.Black)
 	dc.SetLineWidth(12)
-	dc.SetLineJoin(gg.LineJoinRound)
+	dc.SetLineJoin(gg.CanvasLineJoinRound)
 	dc.StrokeText(s, x, y)
 
 	dc.SetFillStyleSolidColor(color.White)

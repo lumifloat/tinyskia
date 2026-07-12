@@ -41,7 +41,7 @@ func TestSheetArc(t *testing.T) {
 			endAngle := math.Pi + (math.Pi*float64(j))/2.0 // ending angle
 			counterclockwise := i%2 == 1                   // counterclockwise?
 
-			ctx.Arc(x, y, radius, startAngle, endAngle, counterclockwise)
+			ctx.ArcWithCounterclockwise(x, y, radius, startAngle, endAngle, counterclockwise)
 
 			if i > 1 {
 				ctx.Fill() // fill shape

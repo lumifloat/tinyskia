@@ -102,7 +102,7 @@ func splitOnSpace(s string) []string {
 }
 
 // drawWrappedText draws wrapped text with alignment
-func drawWrappedText(dc *gg.Context, text string, x, y, anchorX, anchorY, maxWidth, lineSpacing float64, align gg.TextAlign) {
+func drawWrappedText(dc *gg.Context, text string, x, y, anchorX, anchorY, maxWidth, lineSpacing float64, align gg.CanvasTextAlign) {
 	lines := wrapText(dc, text, maxWidth)
 	if len(lines) == 0 {
 		return
@@ -123,12 +123,12 @@ func drawWrappedText(dc *gg.Context, text string, x, y, anchorX, anchorY, maxWid
 	// Adjust x based on text alignment
 	var ax float64
 	switch align {
-	case gg.TextAlignLeft:
+	case gg.CanvasTextAlignLeft:
 		ax = 0
-	case gg.TextAlignCenter:
+	case gg.CanvasTextAlignCenter:
 		ax = 0.5
 		x += maxWidth / 2
-	case gg.TextAlignRight:
+	case gg.CanvasTextAlignRight:
 		ax = 1
 		x += maxWidth
 	default:
@@ -137,7 +137,7 @@ func drawWrappedText(dc *gg.Context, text string, x, y, anchorX, anchorY, maxWid
 
 	// Save and restore text align
 	prevAlign := dc.GetTextAlign()
-	dc.SetTextAlign(gg.TextAlignLeft)
+	dc.SetTextAlign(gg.CanvasTextAlignLeft)
 
 	// Draw each line
 	for _, line := range lines {
@@ -181,21 +181,21 @@ func TestGGWrap(t *testing.T) {
 
 	// Draw corner labels
 	dc.SetFont(gg.FontAttr{Family: []string{"arial"}, Weight: gg.FontWeightBold, Size: 18})
-	drawWrappedText(dc, "UPPER LEFT", P, P, 0, 0, 0, 1, gg.TextAlignLeft)
-	drawWrappedText(dc, "UPPER RIGHT", W-P, P, 1, 0, 0, 1, gg.TextAlignRight)
-	drawWrappedText(dc, "BOTTOM LEFT", P, H-P, 0, 1, 0, 1, gg.TextAlignLeft)
-	drawWrappedText(dc, "BOTTOM RIGHT", W-P, H-P, 1, 1, 0, 1, gg.TextAlignRight)
-	drawWrappedText(dc, "UPPER MIDDLE", W/2, P, 0.5, 0, 0, 1, gg.TextAlignCenter)
-	drawWrappedText(dc, "LOWER MIDDLE", W/2, H-P, 0.5, 1, 0, 1, gg.TextAlignCenter)
-	drawWrappedText(dc, "LEFT MIDDLE", P, H/2, 0, 0.5, 0, 1, gg.TextAlignLeft)
-	drawWrappedText(dc, "RIGHT MIDDLE", W-P, H/2, 1, 0.5, 0, 1, gg.TextAlignRight)
+	drawWrappedText(dc, "UPPER LEFT", P, P, 0, 0, 0, 1, gg.CanvasTextAlignLeft)
+	drawWrappedText(dc, "UPPER RIGHT", W-P, P, 1, 0, 0, 1, gg.CanvasTextAlignRight)
+	drawWrappedText(dc, "BOTTOM LEFT", P, H-P, 0, 1, 0, 1, gg.CanvasTextAlignLeft)
+	drawWrappedText(dc, "BOTTOM RIGHT", W-P, H-P, 1, 1, 0, 1, gg.CanvasTextAlignRight)
+	drawWrappedText(dc, "UPPER MIDDLE", W/2, P, 0.5, 0, 0, 1, gg.CanvasTextAlignCenter)
+	drawWrappedText(dc, "LOWER MIDDLE", W/2, H-P, 0.5, 1, 0, 1, gg.CanvasTextAlignCenter)
+	drawWrappedText(dc, "LEFT MIDDLE", P, H/2, 0, 0.5, 0, 1, gg.CanvasTextAlignLeft)
+	drawWrappedText(dc, "RIGHT MIDDLE", W-P, H/2, 1, 0.5, 0, 1, gg.CanvasTextAlignRight)
 
 	// Load regular font for body text
 	dc.SetFont(gg.FontAttr{Family: []string{"arial"}, Size: 12})
-	drawWrappedText(dc, WRAP_TEXT, W/2-P, H/2-P, 1, 1, W/3, 1, gg.TextAlignLeft)
-	drawWrappedText(dc, WRAP_TEXT, W/2+P, H/2-P, 0, 1, W/3, 1.2, gg.TextAlignLeft)
-	drawWrappedText(dc, WRAP_TEXT, W/2-P, H/2+P, 1, 0, W/3, 1.4, gg.TextAlignLeft)
-	drawWrappedText(dc, WRAP_TEXT, W/2+P, H/2+P, 0, 0, W/3, 1.6, gg.TextAlignLeft)
+	drawWrappedText(dc, WRAP_TEXT, W/2-P, H/2-P, 1, 1, W/3, 1, gg.CanvasTextAlignLeft)
+	drawWrappedText(dc, WRAP_TEXT, W/2+P, H/2-P, 0, 1, W/3, 1.2, gg.CanvasTextAlignLeft)
+	drawWrappedText(dc, WRAP_TEXT, W/2-P, H/2+P, 1, 0, W/3, 1.4, gg.CanvasTextAlignLeft)
+	drawWrappedText(dc, WRAP_TEXT, W/2+P, H/2+P, 0, 0, W/3, 1.6, gg.CanvasTextAlignLeft)
 
 	fi, err := os.Create("gg_out.png")
 	if err != nil {

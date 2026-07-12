@@ -261,7 +261,7 @@ func TestEndCrystal(t *testing.T) {
 		centerX := float64(width) / 2
 		centerY := float64(height) / 2
 
-		ctx.SetTransformWithMatrix(tinyskia.NewMatrixFromTranslate(centerX, centerY))
+		ctx.SetTransform(tinyskia.NewMatrixFromTranslate(centerX, centerY))
 
 		// Animation parameters - designed for 100-frame loop
 		angle := float64(frame) * (2 * math.Pi / 100)

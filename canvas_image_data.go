@@ -11,20 +11,20 @@ import (
 
 // CreateImageData returns an image.Image object with the same dimensions and color space as the argument.
 // All the pixels in the returned object are transparent black.
-func (dc *Context) CreateImageData(sw, sh int) image.Image {
+func (ctx *Context) CreateImageData(sw, sh int) image.Image {
 	return image.NewRGBA(image.Rect(0, 0, sw, sh))
 }
 
-// CreateImageDataFrom returns an image.Image object with the same dimensions.
+// CreateImageDataWithImage returns an image.Image object with the same dimensions.
 // All the pixels in the returned object are transparent black.
-func (dc *Context) CreateImageDataFrom(im image.Image) image.Image {
+func (ctx *Context) CreateImageDataWithImage(im image.Image) image.Image {
 	return image.NewRGBA(im.Bounds())
 }
 
 // GetImageData returns an image containing the pixel data for the specified rectangle
-func (dc *Context) GetImageData(sx, sy, sw, sh int) image.Image {
-	canvasWidth := dc.canvas.GetWidth()
-	canvasHeight := dc.canvas.GetHeight()
+func (ctx *Context) GetImageData(sx, sy, sw, sh int) image.Image {
+	canvasWidth := ctx.canvas.GetWidth()
+	canvasHeight := ctx.canvas.GetHeight()
 
 	if sw <= 0 || sh <= 0 {
 		return image.NewRGBA(image.Rect(0, 0, 0, 0))
@@ -54,7 +54,7 @@ func (dc *Context) GetImageData(sx, sy, sw, sh int) image.Image {
 			canvasX := sx + x
 			canvasY := sy + y
 
-			c := dc.canvas.im.At(canvasX, canvasY)
+			c := ctx.canvas.im.At(canvasX, canvasY)
 			img.Set(x, y, c)
 		}
 	}
@@ -63,12 +63,12 @@ func (dc *Context) GetImageData(sx, sy, sw, sh int) image.Image {
 }
 
 // PutImageData paints data from the given image onto the bitmap at the specified position
-func (dc *Context) PutImageData(im image.Image, dx, dy int) {
-	dc.PutImageDataWithDirtyRect(im, dx, dy, 0, 0, im.Bounds().Dx(), im.Bounds().Dy())
+func (ctx *Context) PutImageData(im image.Image, dx, dy int) {
+	ctx.PutImageDataWithDirtyRect(im, dx, dy, 0, 0, im.Bounds().Dx(), im.Bounds().Dy())
 }
 
 // PutImageDataWithDirtyRect paints data from the given image onto the bitmap, using the dirty rectangle
-func (dc *Context) PutImageDataWithDirtyRect(im image.Image, dx, dy, dirtyX, dirtyY, dirtyWidth, dirtyHeight int) {
+func (ctx *Context) PutImageDataWithDirtyRect(im image.Image, dx, dy, dirtyX, dirtyY, dirtyWidth, dirtyHeight int) {
 	if im == nil {
 		return
 	}
@@ -81,8 +81,8 @@ func (dc *Context) PutImageDataWithDirtyRect(im image.Image, dx, dy, dirtyX, dir
 		return
 	}
 
-	canvasWidth := dc.canvas.GetWidth()
-	canvasHeight := dc.canvas.GetHeight()
+	canvasWidth := ctx.canvas.GetWidth()
+	canvasHeight := ctx.canvas.GetHeight()
 
 	if dirtyX < 0 {
 		dirtyX = 0
@@ -134,7 +134,7 @@ func (dc *Context) PutImageDataWithDirtyRect(im image.Image, dx, dy, dirtyX, dir
 			canvasX := startX + x
 			canvasY := startY + y
 
-			dc.canvas.im.SetRGBA(canvasX, canvasY, color.RGBAModel.Convert(im.At(imageX, imageY)).(color.RGBA))
+			ctx.canvas.im.SetRGBA(canvasX, canvasY, color.RGBAModel.Convert(im.At(imageX, imageY)).(color.RGBA))
 		}
 	}
 }

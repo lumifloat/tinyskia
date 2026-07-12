@@ -36,14 +36,14 @@ func TestSheetQuadraticCurveTo(t *testing.T) {
 	// Start and end points
 	ctx.SetFillStyleSolidColor(color.RGBA{0, 0, 255, 255}) // blue
 	ctx.BeginPath()
-	ctx.Arc(50, 20, 5, 0, 2*math.Pi, false)  // Start point
-	ctx.Arc(50, 100, 5, 0, 2*math.Pi, false) // End point
+	ctx.Arc(50, 20, 5, 0, 2*math.Pi)  // Start point
+	ctx.Arc(50, 100, 5, 0, 2*math.Pi) // End point
 	ctx.Fill()
 
 	// Control point
 	ctx.SetFillStyleSolidColor(color.RGBA{255, 0, 0, 255}) // red
 	ctx.BeginPath()
-	ctx.Arc(230, 30, 5, 0, 2*math.Pi, false)
+	ctx.Arc(230, 30, 5, 0, 2*math.Pi)
 	ctx.Fill()
 
 	outputPath := "sheet_out.png"

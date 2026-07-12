@@ -34,7 +34,7 @@ func TestSheetCreatePattern(t *testing.T) {
 	// Draw an arc
 	patternCtx.SetStrokeStyleSolidColor(color.RGBA{0, 0, 0, 255}) // black
 	patternCtx.BeginPath()
-	patternCtx.Arc(0, 0, 50, 0, 0.5*math.Pi, false)
+	patternCtx.Arc(0, 0, 50, 0, 0.5*math.Pi)
 	patternCtx.Stroke()
 
 	// Create our primary canvas and fill it with the pattern
@@ -42,7 +42,7 @@ func TestSheetCreatePattern(t *testing.T) {
 	ctx := canvas.GetContext()
 
 	// Create pattern from the offscreen canvas
-	pattern := ctx.CreatePattern(patternCanvas.Image(), tinyskia.PatternRepeatBoth)
+	pattern := ctx.CreatePattern(patternCanvas.Image(), tinyskia.RepeatModeRepeat)
 	ctx.SetFillStylePattern(pattern)
 	ctx.FillRect(0, 0, float64(width), float64(height))
 

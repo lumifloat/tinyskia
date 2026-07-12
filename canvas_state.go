@@ -13,54 +13,97 @@ import (
 )
 
 // Save pushes the current state onto the stack.
-func (dc *Context) Save() {
-	x := *dc
-	dc.stack = append(dc.stack, &x)
+func (ctx *Context) Save() {
+	x := *ctx
+	ctx.stack = append(ctx.stack, &x)
 }
 
 // Restore pops the top state on the stack, restoring the context to that state.
-func (dc *Context) Restore() {
-	if len(dc.stack) == 0 {
+func (ctx *Context) Restore() {
+	if len(ctx.stack) == 0 {
 		return
 	}
 
-	currentIm := dc.canvas.im
-	currentMask := dc.mask
+	currentIm := ctx.canvas.im
+	currentMask := ctx.mask
 
-	savedState := dc.stack[len(dc.stack)-1]
-	dc.stack = dc.stack[:len(dc.stack)-1]
+	savedState := ctx.stack[len(ctx.stack)-1]
+	ctx.stack = ctx.stack[:len(ctx.stack)-1]
 
-	*dc = *savedState
+	*ctx = *savedState
 
-	dc.canvas.im = currentIm
-	dc.mask = currentMask
+	ctx.canvas.im = currentIm
+	ctx.mask = currentMask
 }
 
 // Reset resets the rendering context, which includes the backing buffer, the drawing state stack, path, and styles.
-func (dc *Context) Reset() {
-	for i := 0; i < len(dc.canvas.im.Pix); i++ {
-		dc.canvas.im.Pix[i] = 0
+func (ctx *Context) Reset() {
+	for i := 0; i < len(ctx.canvas.im.Pix); i++ {
+		ctx.canvas.im.Pix[i] = 0
 	}
+	ctx.mask = nil
 
-	dc.stack = nil
-	dc.path2d = NewPath2D()
-	dc.lineDash = nil
-	dc.lineDashOffset = 0
-	dc.lineWidth = 1
-	dc.lineCap = LineCapRound
-	dc.lineJoin = LineJoinRound
-	dc.matrix = NewMatrixIdentity()
-	dc.composite = CompositeOperationSourceOver
-	dc.antiAlias = true
-	dc.colorspace = colorf.ColorSpaceLinear
-	dc.forceHQPipeline = true
-	dc.fillStyle = dc.CreateSolidColor(color.Transparent)
-	dc.strokeStyle = dc.CreateSolidColor(color.Transparent)
-	dc.mask = nil
-	dc.contextLost = false
+	// CanvasState
+	ctx.stack = nil
+	ctx.contextLost = false
+
+	// CanvasTransform
+	ctx.matrix = NewMatrixIdentity()
+
+	// CanvasCompositing
+	ctx.globalAlpha = 1.0
+	ctx.globalCompositeOperation = CompositeOperationSourceOver
+
+	// CanvasImageSmoothing
+	ctx.imageSmoothingEnabled = true
+	ctx.imageSmoothingQuality = ImageSmoothingQualityLow
+
+	// CanvasFillStrokeStyles
+	ctx.fillStyle = &SolidColor{color: color.RGBA{0, 0, 0, 255}}
+	ctx.strokeStyle = &SolidColor{color: color.RGBA{0, 0, 0, 255}}
+
+	// CanvasShadowStyles
+	ctx.shadowOffsetX = 0
+	ctx.shadowOffsetY = 0
+	ctx.shadowBlur = 0
+	ctx.shadowColor = color.RGBA{0, 0, 0, 255}
+
+	// CanvasFilters
+	ctx.filters = nil
+
+	// CanvasPathDrawingStyles
+	ctx.lineWidth = 1
+	ctx.lineCap = CanvasLineCapButt
+	ctx.lineJoin = CanvasLineJoinMiter
+	ctx.miterLimit = 10
+	ctx.lineDash = []float64{}
+	ctx.lineDashOffset = 0
+
+	// CanvasTextDrawingStyles
+	ctx.lang = "inherit"
+	ctx.font = FontAttr{
+		Family: []string{string(FontGenericSansSerif)},
+		Weight: FontWeightNormal,
+		Style:  FontStyleNormal,
+		Size:   10,
+	}
+	ctx.textAlign = CanvasTextAlignStart
+	ctx.direction = CanvasDirectionLTR
+	ctx.fontKerning = CanvasFontKerningAuto
+	ctx.fontStretch = CanvasFontStretchNormal
+	ctx.fontVariantCaps = CanvasFontVariantCapsNormal
+	ctx.textRendering = CanvasTextRenderingAuto
+	ctx.wordSpacing = 0
+
+	// CanvasPath
+	ctx.path2d = NewPath2D()
+
+	ctx.antiAlias = true
+	ctx.colorspace = colorf.ColorSpaceLinear
+	ctx.forceHQPipeline = true
 }
 
 // IsContextLost returns true if the rendering context was lost. Context loss can occur due to driver crashes, running out of memory, etc. In these cases, the canvas loses its backing storage and takes steps to reset the rendering context to its default state.
-func (dc *Context) IsContextLost() bool {
-	return dc.contextLost
+func (ctx *Context) IsContextLost() bool {
+	return ctx.contextLost
 }

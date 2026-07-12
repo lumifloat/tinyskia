@@ -13,7 +13,9 @@ import (
 
 	"github.com/go-text/typesetting/di"
 	"github.com/go-text/typesetting/font"
+	"github.com/go-text/typesetting/font/opentype"
 	"github.com/go-text/typesetting/fontscan"
+	"github.com/go-text/typesetting/shaping"
 	"github.com/lumifloat/tinyskia/internal/text"
 )
 
@@ -71,77 +73,90 @@ const (
 	FontGenericMonospace FontGeneric = "monospace"
 )
 
-type TextAlign int
+type CanvasTextAlign string
 
 const (
-	// Align to the start edge of the text (left side in left-to-right text, right side in right-to-left text).
-	TextAlignStart TextAlign = iota
-	// Align to the end edge of the text (right side in left-to-right text, left side in right-to-left text).
-	TextAlignEnd
-	// Align to the left.
-	TextAlignLeft
-	// Align to the left.
-	TextAlignCenter
-	// Align to the center.
-	TextAlignRight
+	CanvasTextAlignStart  CanvasTextAlign = "start"
+	CanvasTextAlignEnd    CanvasTextAlign = "end"
+	CanvasTextAlignLeft   CanvasTextAlign = "left"
+	CanvasTextAlignCenter CanvasTextAlign = "center"
+	CanvasTextAlignRight  CanvasTextAlign = "right"
 )
 
-type Direction uint8
+type CanvasTextBaseline string
 
 const (
-	DirectionLTR = Direction(di.DirectionLTR)
-	DirectionRTL = Direction(di.DirectionRTL)
+	CanvasTextBaselineTop         CanvasTextBaseline = "top"
+	CanvasTextBaselineHanging     CanvasTextBaseline = "hanging"
+	CanvasTextBaselineMiddle      CanvasTextBaseline = "middle"
+	CanvasTextBaselineAlphabetic  CanvasTextBaseline = "alphabetic"
+	CanvasTextBaselineIdeographic CanvasTextBaseline = "ideographic"
+	CanvasTextBaselineBottom      CanvasTextBaseline = "bottom"
 )
 
-type FontStretch float32
+type CanvasDirection string
 
 const (
-	FontStretchUltraCondensed = FontStretch(font.StretchUltraCondensed)
-	FontStretchExtraCondensed = FontStretch(font.StretchExtraCondensed)
-	FontStretchCondensed      = FontStretch(font.StretchCondensed)
-	FontStretchSemiCondensed  = FontStretch(font.StretchSemiCondensed)
-	FontStretchNormal         = FontStretch(font.StretchNormal)
-	FontStretchSemiExpanded   = FontStretch(font.StretchSemiExpanded)
-	FontStretchExpanded       = FontStretch(font.StretchExpanded)
-	FontStretchExtraExpanded  = FontStretch(font.StretchExtraExpanded)
-	FontStretchUltraExpanded  = FontStretch(font.StretchUltraExpanded)
+	CanvasDirectionLTR     CanvasDirection = "ltr"
+	CanvasDirectionRTL     CanvasDirection = "rtl"
+	CanvasDirectionInherit CanvasDirection = "inherit"
 )
 
-type FontVariant string
+type CanvasFontKerning string
 
 const (
-	FontVariantNormal        FontVariant = "normal"
-	FontVariantSmallCaps     FontVariant = "small-caps"
-	FontVariantAllSmallCaps  FontVariant = "all-small-caps"
-	FontVariantPetiteCaps    FontVariant = "petite-caps"
-	FontVariantAllPetiteCaps FontVariant = "all-petite-caps"
-	FontVariantUnicase       FontVariant = "unicase"
-	FontVariantTitlingCaps   FontVariant = "titling-caps"
+	CanvasFontKerningAuto   CanvasFontKerning = "auto"
+	CanvasFontKerningNormal CanvasFontKerning = "normal"
+	CanvasFontKerningNone   CanvasFontKerning = "none"
 )
 
-type FontKerning uint32
+type CanvasFontStretch string
 
 const (
-	// FontKerningAuto
-	FontKerningAuto FontKerning = 1
-	// FontKerningNormal
-	FontKerningNormal FontKerning = 1
-	// FontKerningNone
-	FontKerningNone FontKerning = 0
+	CanvasFontStretchUltraCondensed CanvasFontStretch = "ultra-condensed"
+	CanvasFontStretchExtraCondensed CanvasFontStretch = "extra-condensed"
+	CanvasFontStretchCondensed      CanvasFontStretch = "condensed"
+	CanvasFontStretchSemiCondensed  CanvasFontStretch = "semi-condensed"
+	CanvasFontStretchNormal         CanvasFontStretch = "normal"
+	CanvasFontStretchSemiExpanded   CanvasFontStretch = "semi-expanded"
+	CanvasFontStretchExpanded       CanvasFontStretch = "expanded"
+	CanvasFontStretchExtraExpanded  CanvasFontStretch = "extra-expanded"
+	CanvasFontStretchUltraExpanded  CanvasFontStretch = "ultra-expanded"
+)
+
+type CanvasFontVariantCaps string
+
+const (
+	CanvasFontVariantCapsNormal        CanvasFontVariantCaps = "normal"
+	CanvasFontVariantCapsSmallCaps     CanvasFontVariantCaps = "small-caps"
+	CanvasFontVariantCapsAllSmallCaps  CanvasFontVariantCaps = "all-small-caps"
+	CanvasFontVariantCapsPetiteCaps    CanvasFontVariantCaps = "petite-caps"
+	CanvasFontVariantCapsAllPetiteCaps CanvasFontVariantCaps = "all-petite-caps"
+	CanvasFontVariantCapsUnicase       CanvasFontVariantCaps = "unicase"
+	CanvasFontVariantCapsTitlingCaps   CanvasFontVariantCaps = "titling-caps"
+)
+
+type CanvasTextRendering string
+
+const (
+	CanvasTextRenderingAuto               CanvasTextRendering = "auto"
+	CanvasTextRenderingOptimizeSpeed      CanvasTextRendering = "optimizeSpeed"
+	CanvasTextRenderingOptimizeLegibility CanvasTextRendering = "optimizeLegibility"
+	CanvasTextRenderingGeometricPrecision CanvasTextRendering = "geometricPrecision"
 )
 
 // SetLang
-func (dc *Context) SetLang(lang string) {
-	dc.lang = lang
+func (ctx *Context) SetLang(lang string) {
+	ctx.lang = lang
 }
 
 // GetLang
-func (dc *Context) GetLang() string {
-	return dc.lang
+func (ctx *Context) GetLang() string {
+	return ctx.lang
 }
 
 // SetFont
-func (dc *Context) SetFont(font FontAttr) {
+func (ctx *Context) SetFont(font FontAttr) {
 	if len(font.Family) == 0 {
 		return
 	}
@@ -150,62 +165,187 @@ func (dc *Context) SetFont(font FontAttr) {
 			return
 		}
 	}
-	dc.font = font
+	ctx.font = font
 }
 
 // GetFont
-func (dc *Context) GetFont() FontAttr {
-	return dc.font
+func (ctx *Context) GetFont() FontAttr {
+	return ctx.font
 }
 
 // SetTextAlign
-func (dc *Context) SetTextAlign(align TextAlign) {
-	dc.textAlign = align
+func (ctx *Context) SetTextAlign(align CanvasTextAlign) {
+	ctx.textAlign = align
 }
 
 // GetTextAlign
-func (dc *Context) GetTextAlign() TextAlign {
-	return dc.textAlign
+func (ctx *Context) GetTextAlign() CanvasTextAlign {
+	return ctx.textAlign
+}
+
+// SetTextBaseline
+func (ctx *Context) SetTextBaseline(baseline CanvasTextBaseline) {
+	ctx.textBaseline = baseline
+}
+
+// GetTextBaseline
+func (ctx *Context) GetTextBaseline() CanvasTextBaseline {
+	return ctx.textBaseline
 }
 
 // SetDirection
-func (dc *Context) SetDirection(direction Direction) {
-	dc.direction = direction
+func (ctx *Context) SetDirection(direction CanvasDirection) {
+	ctx.direction = direction
 }
 
 // GetDirection
-func (dc *Context) GetDirection() Direction {
-	return dc.direction
-}
-
-// SetFontStretch
-func (dc *Context) SetFontStretch(stretch FontStretch) {
-	dc.fontStretch = stretch
-}
-
-// GetFontStretch
-func (dc *Context) GetFontStretch() FontStretch {
-	return dc.fontStretch
-}
-
-// SetFontVariant
-func (dc *Context) SetFontVariant(variant FontVariant) {
-	dc.fontVariant = variant
-}
-
-// GetFontVariant
-func (dc *Context) GetFontVariant() FontVariant {
-	return dc.fontVariant
+func (ctx *Context) GetDirection() CanvasDirection {
+	return ctx.direction
 }
 
 // SetFontKerning
-func (dc *Context) SetFontKerning(kerning FontKerning) {
-	dc.fontKerning = kerning
+func (ctx *Context) SetFontKerning(kerning CanvasFontKerning) {
+	ctx.fontKerning = kerning
 }
 
 // GetFontKerning
-func (dc *Context) GetFontKerning() FontKerning {
-	return dc.fontKerning
+func (ctx *Context) GetFontKerning() CanvasFontKerning {
+	return ctx.fontKerning
+}
+
+// SetFontStretch
+func (ctx *Context) SetFontStretch(stretch CanvasFontStretch) {
+	ctx.fontStretch = stretch
+}
+
+// GetFontStretch
+func (ctx *Context) GetFontStretch() CanvasFontStretch {
+	return ctx.fontStretch
+}
+
+// SetFontVariant
+func (ctx *Context) SetFontVariantCaps(variant CanvasFontVariantCaps) {
+	ctx.fontVariantCaps = variant
+}
+
+// GetFontVariant
+func (ctx *Context) GetFontVariantCaps() CanvasFontVariantCaps {
+	return ctx.fontVariantCaps
+}
+
+// SetTextRendering
+func (ctx *Context) SetTextRendering(rendering CanvasTextRendering) {
+	ctx.textRendering = rendering
+}
+
+// GetTextRendering
+func (ctx *Context) GetTextRendering() CanvasTextRendering {
+	return ctx.textRendering
+}
+
+// SetWordSpacing
+func (ctx *Context) SetWordSpacing(spacing float64) {
+	// TODO
+	ctx.wordSpacing = spacing
+}
+
+// GetWordSpacing
+func (ctx *Context) GetWordSpacing() float64 {
+	return ctx.wordSpacing
+}
+
+func direction(d CanvasDirection) di.Direction {
+	switch d {
+	case CanvasDirectionLTR:
+		return di.DirectionLTR
+	case CanvasDirectionRTL:
+		return di.DirectionRTL
+	default:
+		return di.DirectionLTR
+	}
+}
+
+func kerning(k CanvasFontKerning, features []shaping.FontFeature) {
+	switch k {
+	case CanvasFontKerningAuto:
+		// pass
+	case CanvasFontKerningNormal:
+		features = append(features, shaping.FontFeature{Tag: opentype.NewTag('k', 'e', 'r', 'n'), Value: 1})
+	case CanvasFontKerningNone:
+		features = append(features, shaping.FontFeature{Tag: opentype.NewTag('k', 'e', 'r', 'n'), Value: 0})
+	default:
+		// pass
+	}
+}
+
+func stretch(s CanvasFontStretch) font.Stretch {
+	switch s {
+	case CanvasFontStretchUltraCondensed:
+		return font.StretchUltraCondensed
+	case CanvasFontStretchExtraCondensed:
+		return font.StretchExtraCondensed
+	case CanvasFontStretchCondensed:
+		return font.StretchCondensed
+	case CanvasFontStretchSemiCondensed:
+		return font.StretchSemiCondensed
+	case CanvasFontStretchNormal:
+		return font.StretchNormal
+	case CanvasFontStretchSemiExpanded:
+		return font.StretchSemiExpanded
+	case CanvasFontStretchExpanded:
+		return font.StretchExpanded
+	case CanvasFontStretchExtraExpanded:
+		return font.StretchExtraExpanded
+	case CanvasFontStretchUltraExpanded:
+		return font.StretchUltraExpanded
+	default:
+		return font.StretchNormal
+	}
+}
+
+func variant(v CanvasFontVariantCaps, features []shaping.FontFeature) {
+	switch v {
+	case CanvasFontVariantCapsNormal:
+		break
+	case CanvasFontVariantCapsSmallCaps:
+		features = append(features, shaping.FontFeature{
+			Tag:   opentype.NewTag('s', 'm', 'c', 'p'),
+			Value: 1,
+		})
+	case CanvasFontVariantCapsAllSmallCaps:
+		features = append(features, shaping.FontFeature{
+			Tag:   opentype.NewTag('c', '2', 's', 'c'),
+			Value: 1,
+		}, shaping.FontFeature{
+			Tag:   opentype.NewTag('s', 'm', 'c', 'p'),
+			Value: 1,
+		})
+	case CanvasFontVariantCapsPetiteCaps:
+		features = append(features, shaping.FontFeature{
+			Tag:   opentype.NewTag('p', 'c', 'a', 'p'),
+			Value: 1,
+		})
+	case CanvasFontVariantCapsAllPetiteCaps:
+		features = append(features, shaping.FontFeature{
+			Tag:   opentype.NewTag('c', '2', 'p', 'c'),
+			Value: 1,
+		}, shaping.FontFeature{
+			Tag:   opentype.NewTag('p', 'c', 'a', 'p'),
+			Value: 1,
+		})
+	case CanvasFontVariantCapsUnicase:
+		features = append(features, shaping.FontFeature{
+			Tag:   opentype.NewTag('u', 'n', 'i', 'c'),
+			Value: 1,
+		})
+	case CanvasFontVariantCapsTitlingCaps:
+		features = append(features, shaping.FontFeature{
+			Tag:   opentype.NewTag('t', 'i', 't', 'l'),
+			Value: 1,
+		})
+	default:
+		// pass
+	}
 }
 
 func RegisterFont(file string, face FontFace) error {

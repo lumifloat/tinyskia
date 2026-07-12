@@ -42,15 +42,15 @@ func TestSheetBezierCurveTo(t *testing.T) {
 	// Start and end points (blue)
 	ctx.SetFillStyleSolidColor(color.RGBA{0, 0, 255, 255}) // blue
 	ctx.BeginPath()
-	ctx.Arc(start.x, start.y, 5, 0, 2*math.Pi, false) // start point
-	ctx.Arc(end.x, end.y, 5, 0, 2*math.Pi, false)     // end point
+	ctx.Arc(start.x, start.y, 5, 0, 2*math.Pi) // start point
+	ctx.Arc(end.x, end.y, 5, 0, 2*math.Pi)     // end point
 	ctx.Fill()
 
 	// Control points (red)
 	ctx.SetFillStyleSolidColor(color.RGBA{255, 0, 0, 255}) // red
 	ctx.BeginPath()
-	ctx.Arc(cp1.x, cp1.y, 5, 0, 2*math.Pi, false) // control point 1
-	ctx.Arc(cp2.x, cp2.y, 5, 0, 2*math.Pi, false) // control point 2
+	ctx.Arc(cp1.x, cp1.y, 5, 0, 2*math.Pi) // control point 1
+	ctx.Arc(cp2.x, cp2.y, 5, 0, 2*math.Pi) // control point 2
 	ctx.Fill()
 
 	outputPath := "sheet_out.png"

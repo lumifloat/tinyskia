@@ -28,12 +28,12 @@ func TestGGGradientRadial(t *testing.T) {
 
 	dc.BeginPath()
 	dc.SetStrokeStyleSolidColor(color.White)
-	dc.Arc(100, 100, 10, 0, 2*math.Pi, false)
+	dc.Arc(100, 100, 10, 0, 2*math.Pi)
 	dc.ClosePath()
 	dc.Stroke()
 
 	dc.BeginPath()
-	dc.Arc(100, 120, 80, 0, 2*math.Pi, false)
+	dc.Arc(100, 120, 80, 0, 2*math.Pi)
 	dc.ClosePath()
 	dc.Stroke()
 

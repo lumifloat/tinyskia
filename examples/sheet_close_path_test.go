@@ -27,11 +27,11 @@ func TestSheetClosePath(t *testing.T) {
 	ctx := canvas.GetContext()
 
 	ctx.BeginPath()
-	ctx.Arc(240, 20, 40, 0, math.Pi, false)
+	ctx.Arc(240, 20, 40, 0, math.Pi)
 	ctx.MoveTo(100, 20)
-	ctx.Arc(60, 20, 40, 0, math.Pi, false)
+	ctx.Arc(60, 20, 40, 0, math.Pi)
 	ctx.MoveTo(215, 80)
-	ctx.Arc(150, 80, 65, 0, math.Pi, false)
+	ctx.Arc(150, 80, 65, 0, math.Pi)
 	ctx.ClosePath()
 	ctx.SetLineWidth(6)
 	ctx.SetStrokeStyleSolidColor(color.RGBA{0, 0, 0, 255}) // black

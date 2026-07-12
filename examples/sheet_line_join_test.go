@@ -24,11 +24,11 @@ func TestSheetLineJoin(t *testing.T) {
 
 	lineJoins := []struct {
 		name string
-		join tinyskia.LineJoin
+		join tinyskia.CanvasLineJoin
 	}{
-		{"round", tinyskia.LineJoinRound},
-		{"bevel", tinyskia.LineJoinBevel},
-		{"miter", tinyskia.LineJoinMiter},
+		{"round", tinyskia.CanvasLineJoinRound},
+		{"bevel", tinyskia.CanvasLineJoinBevel},
+		{"miter", tinyskia.CanvasLineJoinMiter},
 	}
 
 	canvas := tinyskia.NewCanvas(width, height)

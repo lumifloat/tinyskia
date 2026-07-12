@@ -15,12 +15,28 @@ type Path2D struct {
 	builder *path.PathBuilder
 }
 
+// NewPath2D returns a new empty Path2D.
 func NewPath2D() *Path2D {
 	return &Path2D{builder: path.NewPathBuilder()}
 }
 
+// NewPath2DWithPath adds all subpaths of path to output and return output.
+// (In other words, it returns a copy of the argument.)
+func NewPath2DWithPath(p0 *Path2D) *Path2D {
+	if p0 == nil {
+		return NewPath2D()
+	} else {
+		p := &Path2D{builder: path.NewPathBuilder()}
+		p.AddPath(p0)
+		return p
+	}
+}
+
 // AddPath adds to the path the path given by the argument.
 func (p *Path2D) AddPath(p0 *Path2D) {
+	if p0 == nil {
+		return
+	}
 	pp := p0.builder.Finish()
 	if pp != nil {
 		p.builder.PushPath(pp)
@@ -29,6 +45,12 @@ func (p *Path2D) AddPath(p0 *Path2D) {
 
 // AddPathWithTransform adds to the path the path given by the argument, transformed by the given transform.
 func (p *Path2D) AddPathWithTransform(p0 *Path2D, transform *Matrix) {
+	if p0 == nil {
+		return
+	}
+	if transform == nil {
+		transform = NewMatrixIdentity()
+	}
 	pp := p0.builder.Finish()
 	if pp != nil {
 		p.builder.PushPathWithTransform(pp, transform.transform)
@@ -194,22 +216,22 @@ func (p *Path2D) RoundRect(x, y, w, h float64, radii []float64) {
 	p.LineTo(x+w-rx[1], y)
 	if rx[1] > 0 || ry[1] > 0 {
 		radius := math.Max(rx[1], ry[1])
-		p.Arc(x+w-rx[1], y+ry[1], radius, -math.Pi/2, 0, false)
+		p.Arc(x+w-rx[1], y+ry[1], radius, -math.Pi/2, 0)
 	}
 	p.LineTo(x+w, y+h-ry[2])
 	if rx[2] > 0 || ry[2] > 0 {
 		radius := math.Max(rx[2], ry[2])
-		p.Arc(x+w-rx[2], y+h-ry[2], radius, 0, math.Pi/2, false)
+		p.Arc(x+w-rx[2], y+h-ry[2], radius, 0, math.Pi/2)
 	}
 	p.LineTo(x+rx[3], y+h)
 	if rx[3] > 0 || ry[3] > 0 {
 		radius := math.Max(rx[3], ry[3])
-		p.Arc(x+rx[3], y+h-ry[3], radius, math.Pi/2, math.Pi, false)
+		p.Arc(x+rx[3], y+h-ry[3], radius, math.Pi/2, math.Pi)
 	}
 	p.LineTo(x, y+ry[0])
 	if rx[0] > 0 || ry[0] > 0 {
 		radius := math.Max(rx[0], ry[0])
-		p.Arc(x+rx[0], y+ry[0], radius, math.Pi, 3*math.Pi/2, false)
+		p.Arc(x+rx[0], y+ry[0], radius, math.Pi, 3*math.Pi/2)
 	}
 
 	p.ClosePath()
@@ -217,17 +239,32 @@ func (p *Path2D) RoundRect(x, y, w, h float64, radii []float64) {
 
 // Arc adds points to the subpath such that the arc described by the circumference of the circle
 // described by the arguments, starting at the given start angle and ending at the given end angle,
+// is added to the path, connected to the previous point by a straight line.
+func (p *Path2D) Arc(x, y, radius, startAngle, endAngle float64) {
+	p.ArcWithCounterclockwise(x, y, radius, startAngle, endAngle, false)
+}
+
+// ArcWithCounterclockwise adds points to the subpath such that the arc described by the circumference of the circle
+// described by the arguments, starting at the given start angle and ending at the given end angle,
 // going in the given direction (defaulting to clockwise), is added to the path, connected to
 // the previous point by a straight line.
-func (p *Path2D) Arc(x, y, radius, startAngle, endAngle float64, counterclockwise bool) {
-	p.Ellipse(x, y, radius, radius, 0, startAngle, endAngle, counterclockwise)
+func (p *Path2D) ArcWithCounterclockwise(x, y, radius, startAngle, endAngle float64, counterclockwise bool) {
+	p.EllipseWithCounterclockwise(x, y, radius, radius, 0, startAngle, endAngle, counterclockwise)
 }
 
 // Ellipse adds points to the subpath such that the arc described by the circumference of the ellipse
 // described by the arguments, starting at the given start angle and ending at the given end angle,
 // going in the given direction (defaulting to clockwise), is added to the path, connected to
 // the previous point by a straight line.
-func (p *Path2D) Ellipse(x, y, radiusX, radiusY, rotation, startAngle, endAngle float64, counterclockwise bool) {
+func (p *Path2D) Ellipse(x, y, radiusX, radiusY, rotation, startAngle, endAngle float64) {
+	p.EllipseWithCounterclockwise(x, y, radiusX, radiusY, rotation, startAngle, endAngle, false)
+}
+
+// EllipseWithCounterclockwise adds points to the subpath such that the arc described by the circumference of the ellipse
+// described by the arguments, starting at the given start angle and ending at the given end angle,
+// going in the given direction (defaulting to clockwise), is added to the path, connected to
+// the previous point by a straight line.
+func (p *Path2D) EllipseWithCounterclockwise(x, y, radiusX, radiusY, rotation, startAngle, endAngle float64, counterclockwise bool) {
 	sweepAngle := endAngle - startAngle
 
 	for sweepAngle > 2*math.Pi {

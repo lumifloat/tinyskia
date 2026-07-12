@@ -15,19 +15,19 @@ import (
 )
 
 // DrawImage draws the specified image at the specified point.
-func (dc *Context) DrawImage(im image.Image, dx, dy float64) {
+func (ctx *Context) DrawImage(im image.Image, dx, dy float64) {
 	bounds := im.Bounds()
-	dc.DrawImageWithSourceRect(im, 0, 0, float64(bounds.Dx()), float64(bounds.Dy()), dx, dy, 0, 0)
+	ctx.DrawImageWithSourceRect(im, 0, 0, float64(bounds.Dx()), float64(bounds.Dy()), dx, dy, 0, 0)
 }
 
 // DrawImageScaled draws the specified image with scaling.
-func (dc *Context) DrawImageScaled(im image.Image, dx, dy, dw, dh float64) {
+func (ctx *Context) DrawImageScaled(im image.Image, dx, dy, dw, dh float64) {
 	bounds := im.Bounds()
-	dc.DrawImageWithSourceRect(im, 0, 0, float64(bounds.Dx()), float64(bounds.Dy()), dx, dy, dw, dh)
+	ctx.DrawImageWithSourceRect(im, 0, 0, float64(bounds.Dx()), float64(bounds.Dy()), dx, dy, dw, dh)
 }
 
 // DrawImageWithSourceRect draws a portion of the specified image with scaling.
-func (dc *Context) DrawImageWithSourceRect(im image.Image, sx, sy, sw, sh, dx, dy, dw, dh float64) {
+func (ctx *Context) DrawImageWithSourceRect(im image.Image, sx, sy, sw, sh, dx, dy, dw, dh float64) {
 	bounds := im.Bounds()
 	imgWidth := bounds.Dx()
 	imgHeight := bounds.Dy()
@@ -107,23 +107,23 @@ func (dc *Context) DrawImageWithSourceRect(im image.Image, sx, sy, sw, sh, dx, d
 	}
 
 	translateTransform := path.NewTransformFromTranslate(float32(dx), float32(dy))
-	patternShader := imageToPatternShader(subImg, PatternRepeatNone, translateTransform)
+	patternShader := imageToPatternShader(subImg, RepeatModeNoRepeat, translateTransform)
 
-	patternShader.Transform(dc.matrix.transform)
+	patternShader.Transform(ctx.matrix.transform)
 
-	finalTransform := dc.matrix.transform.PreConcat(translateTransform)
+	finalTransform := ctx.matrix.transform.PreConcat(translateTransform)
 
 	paint := &painter.Paint{
 		Shader:          patternShader,
-		BlendMode:       dc.composite,
-		AntiAlias:       dc.antiAlias,
-		Colorspace:      dc.colorspace,
-		ForceHQPipeline: dc.forceHQPipeline,
+		BlendMode:       composite(ctx.globalCompositeOperation),
+		AntiAlias:       ctx.antiAlias,
+		Colorspace:      ctx.colorspace,
+		ForceHQPipeline: ctx.forceHQPipeline,
 	}
 	rectPath := path.NewPathBuilder()
 	rect, _ := path.NewRectFromXYWH(0, 0, float32(dw), float32(dh))
 	rectPath.PushRect(rect)
 	finalPath := rectPath.Finish()
 
-	paint.FillPath(dc.canvas.im, dc.mask, finalPath, finalTransform, scan.FillRuleWinding)
+	paint.FillPath(ctx.canvas.im, ctx.mask, finalPath, finalTransform, scan.FillRuleWinding)
 }

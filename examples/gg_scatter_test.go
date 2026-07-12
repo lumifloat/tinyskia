@@ -32,7 +32,7 @@ func createScatterPoints(n int, size float64) []ScatterPoint {
 // drawCircle draws a circle centered at (x, y) with radius r
 func drawScatterCircle(dc *gg.Context, x, y, r float64) {
 	dc.BeginPath()
-	dc.Arc(x, y, r, 0, 2*math.Pi, false)
+	dc.Arc(x, y, r, 0, 2*math.Pi)
 	dc.ClosePath()
 }
 

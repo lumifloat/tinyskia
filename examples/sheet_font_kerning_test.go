@@ -30,11 +30,11 @@ func TestSheetFontKerning(t *testing.T) {
 	ctx.FillText("AVA Ta We (default)", 5, 30)
 
 	// Font kerning: normal
-	ctx.SetFontKerning(tinyskia.FontKerningNormal)
+	ctx.SetFontKerning(tinyskia.CanvasFontKerningNormal)
 	ctx.FillText("AVA Ta We (normal)", 5, 70)
 
 	// Font kerning: none
-	ctx.SetFontKerning(tinyskia.FontKerningNone)
+	ctx.SetFontKerning(tinyskia.CanvasFontKerningNone)
 	ctx.FillText("AVA Ta We (none)", 5, 110)
 
 	outputPath := "sheet_out.png"

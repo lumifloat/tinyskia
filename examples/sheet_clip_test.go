@@ -29,7 +29,7 @@ func TestSheetClip(t *testing.T) {
 	region := tinyskia.NewPath2D()
 	region.Rect(80, 10, 20, 130)
 	region.Rect(40, 50, 100, 50)
-	ctx.ClipPathWithFillRule(region, tinyskia.FillRuleEvenOdd)
+	ctx.ClipPathWithFillRule(region, tinyskia.CanvasFillRuleEvenodd)
 
 	// Draw clipped content
 	ctx.SetFillStyleSolidColor(color.RGBA{0, 0, 255, 255}) // blue

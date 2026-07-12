@@ -31,7 +31,7 @@ func TestGGSpiral(t *testing.T) {
 		y := S/2 + math.Sin(a)*d
 		r := t * 8
 		dc.BeginPath()
-		dc.Arc(x, y, r, 0, 2*math.Pi, false)
+		dc.Arc(x, y, r, 0, 2*math.Pi)
 		dc.Fill()
 	}
 

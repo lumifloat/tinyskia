@@ -13,7 +13,7 @@ const (
 	// Replaces destination with zero: fully transparent.
 	CompositeOperationClear CompositeOperation = iota
 	// Replaces destination.
-	CompositeOperationSource
+	CompositeOperationCopy
 	// Preserves destination.
 	CompositeOperationDestination
 	// Source over destination.
@@ -35,7 +35,7 @@ const (
 	// Each of source and destination trimmed outside the other.
 	CompositeOperationXor
 	// Sum of colors.
-	CompositeOperationPlus
+	CompositeOperationLighter
 	// Product of premultiplied colors; darkens destination.
 	CompositeOperationModulate
 	// Multiply inverse of pixels, inverting result; brightens destination.

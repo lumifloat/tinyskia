@@ -21,7 +21,7 @@ func TestGGInvertMask(t *testing.T) {
 	dc.SetFillStyleSolidColor(color.RGBA{0, 0, 0, 255})
 	dc.FillRect(0, 0, float64(S), float64(S))
 
-	dc.Arc(512, 512, 384, 0, math.Pi*2, false)
+	dc.Arc(512, 512, 384, 0, math.Pi*2)
 	dc.Clip()
 
 	dc.SetGlobalCompositeOperation(gg.CompositeOperationDestinationOut)

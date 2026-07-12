@@ -32,7 +32,7 @@ func TestGGUnicode(t *testing.T) {
 			y := float64(r*T) + T/2
 
 			char := string(rune(i))
-			dc.SetTextAlign(gg.TextAlignCenter)
+			dc.SetTextAlign(gg.CanvasTextAlignCenter)
 			dc.FillText(char, x, y)
 		}
 	}

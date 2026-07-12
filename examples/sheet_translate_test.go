@@ -31,7 +31,7 @@ func TestSheetTranslate(t *testing.T) {
 	ctx.FillRect(0, 0, 80, 80)
 
 	// Reset current transformation matrix to the identity matrix
-	ctx.SetTransform(1, 0, 0, 1, 0, 0)
+	ctx.SetTransformValues(1, 0, 0, 1, 0, 0)
 
 	// Unmoved square
 	ctx.SetFillStyleSolidColor(color.RGBA{128, 128, 128, 255}) // gray

@@ -25,33 +25,53 @@ func NewCanvas(width, height int) *Canvas {
 	c.context = &Context{
 		canvas: c,
 
+		// CanvasTransform
+		matrix: NewMatrixIdentity(),
+
+		// CanvasCompositing
+		globalAlpha:              1.0,
+		globalCompositeOperation: CompositeOperationSourceOver,
+
+		// CanvasImageSmoothing
+		imageSmoothingEnabled: true,
+		imageSmoothingQuality: ImageSmoothingQualityLow,
+
+		// CanvasFillStrokeStyles
 		fillStyle:   &SolidColor{color: color.RGBA{0, 0, 0, 255}},
 		strokeStyle: &SolidColor{color: color.RGBA{0, 0, 0, 255}},
 
-		matrix: NewMatrixIdentity(),
+		// CanvasShadowStyles
+		shadowOffsetX: 0,
+		shadowOffsetY: 0,
+		shadowBlur:    0,
+		shadowColor:   color.RGBA{0, 0, 0, 255},
 
-		composite: CompositeOperationSourceOver,
-
+		// CanvasPathDrawingStyles
 		lineWidth:      1,
-		lineCap:        LineCapButt,
-		lineJoin:       LineJoinMiter,
+		lineCap:        CanvasLineCapButt,
+		lineJoin:       CanvasLineJoinMiter,
 		miterLimit:     10,
 		lineDash:       []float64{},
 		lineDashOffset: 0,
 
-		path2d: NewPath2D(),
-
+		// CanvasTextDrawingStyles
+		lang: "inherit",
 		font: FontAttr{
 			Family: []string{string(FontGenericSansSerif)},
 			Weight: FontWeightNormal,
 			Style:  FontStyleNormal,
 			Size:   10,
 		},
-		textAlign:   TextAlignStart,
-		direction:   DirectionLTR,
-		fontStretch: FontStretchNormal,
-		fontVariant: FontVariantNormal,
-		fontKerning: FontKerningAuto,
+		textAlign:       CanvasTextAlignStart,
+		direction:       CanvasDirectionLTR,
+		fontKerning:     CanvasFontKerningAuto,
+		fontStretch:     CanvasFontStretchNormal,
+		fontVariantCaps: CanvasFontVariantCapsNormal,
+		textRendering:   CanvasTextRenderingAuto,
+		wordSpacing:     0,
+
+		// CanvasPath
+		path2d: NewPath2D(),
 
 		antiAlias:       true,
 		colorspace:      colorf.ColorSpaceLinear,

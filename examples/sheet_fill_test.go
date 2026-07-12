@@ -37,7 +37,7 @@ func TestSheetFill(t *testing.T) {
 
 	// Fill path with evenodd rule
 	ctx.SetFillStyleSolidColor(color.RGBA{0, 128, 0, 255}) // green
-	ctx.FillPathWithFillRule(region, tinyskia.FillRuleEvenOdd)
+	ctx.FillPathWithFillRule(region, tinyskia.CanvasFillRuleEvenodd)
 
 	outputPath := "sheet_out.png"
 	fi, err := os.Create(outputPath)

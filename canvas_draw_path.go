@@ -16,59 +16,66 @@ import (
 	"github.com/lumifloat/tinyskia/internal/path"
 )
 
+type CanvasFillRule string
+
+const (
+	CanvasFillRuleNonzero CanvasFillRule = "nonzero"
+	CanvasFillRuleEvenodd CanvasFillRule = "evenodd"
+)
+
 // BeginPath resets the current default path.
-func (dc *Context) BeginPath() {
-	dc.path2d.builder = path.NewPathBuilder()
+func (ctx *Context) BeginPath() {
+	ctx.path2d.builder = path.NewPathBuilder()
 }
 
 // Fills the subpaths of the current default path with the current fill style.
-func (dc *Context) Fill() {
-	dc.FillPathWithFillRule(dc.path2d, FillRuleWinding)
+func (ctx *Context) Fill() {
+	ctx.FillPathWithFillRule(ctx.path2d, CanvasFillRuleNonzero)
 }
 
 // FillWithFillRule fills the subpaths of the current default path with the current fill style, obeying the given fill rule.
-func (dc *Context) FillWithFillRule(fillRule FillRule) {
-	dc.FillPathWithFillRule(dc.path2d, fillRule)
+func (ctx *Context) FillWithFillRule(fillRule CanvasFillRule) {
+	ctx.FillPathWithFillRule(ctx.path2d, fillRule)
 }
 
 // FillPath fills the subpaths of the given path with the current fill style.
-func (dc *Context) FillPath(p *Path2D) {
-	dc.FillPathWithFillRule(p, FillRuleWinding)
+func (ctx *Context) FillPath(p *Path2D) {
+	ctx.FillPathWithFillRule(p, CanvasFillRuleNonzero)
 }
 
 // FillPathWithFillRule fills the subpaths of the given path with the current fill style, obeying the given fill rule.
-func (dc *Context) FillPathWithFillRule(p *Path2D, fillRule FillRule) {
+func (ctx *Context) FillPathWithFillRule(p *Path2D, fillRule CanvasFillRule) {
 	pp := p.builder.Finish()
 	if pp == nil {
 		return
 	}
 
 	paint := &painter.Paint{
-		Shader:          toShader(dc.fillStyle, dc.matrix.transform),
-		AntiAlias:       dc.antiAlias,
-		BlendMode:       dc.composite,
-		Colorspace:      dc.colorspace,
-		ForceHQPipeline: dc.forceHQPipeline,
+		Shader:          toShader(ctx.fillStyle, ctx.matrix.transform),
+		AntiAlias:       ctx.antiAlias,
+		BlendMode:       composite(ctx.globalCompositeOperation),
+		Colorspace:      ctx.colorspace,
+		ForceHQPipeline: ctx.forceHQPipeline,
 	}
-	paint.FillPath(dc.canvas.im, dc.mask, pp, dc.matrix.transform, scan.FillRule(fillRule))
+	paint.FillPath(ctx.canvas.im, ctx.mask, pp, ctx.matrix.transform, rule(fillRule))
 }
 
 // Stroke the subpaths of the current default path with the current stroke style.
-func (dc *Context) Stroke() {
-	dc.StrokePath(dc.path2d)
+func (ctx *Context) Stroke() {
+	ctx.StrokePath(ctx.path2d)
 }
 
 // StrokePath the subpaths of the given path with the current stroke style.
-func (dc *Context) StrokePath(p *Path2D) {
+func (ctx *Context) StrokePath(p *Path2D) {
 	pp := p.builder.Finish()
 	if pp == nil {
 		return
 	}
 
 	var strokeDash *path.StrokeDash
-	if len(dc.lineDash) > 0 {
-		dashArray := make([]float32, len(dc.lineDash))
-		for i, d := range dc.lineDash {
+	if len(ctx.lineDash) > 0 {
+		dashArray := make([]float32, len(ctx.lineDash))
+		for i, d := range ctx.lineDash {
 			dashArray[i] = float32(d)
 		}
 
@@ -79,44 +86,44 @@ func (dc *Context) StrokePath(p *Path2D) {
 			dashArray = doubled
 		}
 
-		strokeDash = path.NewStrokeDash(dashArray, float32(dc.lineDashOffset))
+		strokeDash = path.NewStrokeDash(dashArray, float32(ctx.lineDashOffset))
 	}
 
 	stroke := path.Stroke{
-		Width:      float32(dc.lineWidth),
-		LineCap:    path.LineCap(dc.lineCap),
-		LineJoin:   path.LineJoin(dc.lineJoin),
-		MiterLimit: float32(dc.miterLimit),
+		Width:      float32(ctx.lineWidth),
+		LineCap:    cap(ctx.lineCap),
+		LineJoin:   join(ctx.lineJoin),
+		MiterLimit: float32(ctx.miterLimit),
 	}
 
 	paint := &painter.Paint{
-		Shader:          toShader(dc.strokeStyle, dc.matrix.transform),
-		AntiAlias:       dc.antiAlias,
-		BlendMode:       dc.composite,
-		Colorspace:      dc.colorspace,
-		ForceHQPipeline: dc.forceHQPipeline,
+		Shader:          toShader(ctx.strokeStyle, ctx.matrix.transform),
+		AntiAlias:       ctx.antiAlias,
+		BlendMode:       composite(ctx.globalCompositeOperation),
+		Colorspace:      ctx.colorspace,
+		ForceHQPipeline: ctx.forceHQPipeline,
 	}
 
-	paint.StrokePath(dc.canvas.im, dc.mask, pp, dc.matrix.transform, stroke, strokeDash)
+	paint.StrokePath(ctx.canvas.im, ctx.mask, pp, ctx.matrix.transform, stroke, strokeDash)
 }
 
 // Clip further constrains the clipping region to the current default path, using the given fill rule to determine what points are in the path.
-func (dc *Context) Clip() {
-	dc.ClipPathWithFillRule(dc.path2d, FillRuleWinding)
+func (ctx *Context) Clip() {
+	ctx.ClipPathWithFillRule(ctx.path2d, CanvasFillRuleNonzero)
 }
 
 // ClipWithFillRule further constrains the clipping region to the current default path, using the given fill rule to determine what points are in the path.
-func (dc *Context) ClipWithFillRule(fillRule FillRule) {
-	dc.ClipPathWithFillRule(dc.path2d, fillRule)
+func (ctx *Context) ClipWithFillRule(fillRule CanvasFillRule) {
+	ctx.ClipPathWithFillRule(ctx.path2d, fillRule)
 }
 
 // ClipPath further constrains the clipping region to the given path, using the given fill rule to determine what points are in the path.
-func (dc *Context) ClipPath(p *Path2D) {
-	dc.ClipPathWithFillRule(p, FillRuleWinding)
+func (ctx *Context) ClipPath(p *Path2D) {
+	ctx.ClipPathWithFillRule(p, CanvasFillRuleNonzero)
 }
 
 // ClipPathWithFillRule further constrains the clipping region to the given path, using the given fill rule to determine what points are in the path.
-func (dc *Context) ClipPathWithFillRule(p *Path2D, fillRule FillRule) {
+func (ctx *Context) ClipPathWithFillRule(p *Path2D, fillRule CanvasFillRule) {
 	pp := p.builder.Finish()
 	if pp == nil {
 		return
@@ -124,14 +131,25 @@ func (dc *Context) ClipPathWithFillRule(p *Path2D, fillRule FillRule) {
 
 	paint := &painter.Paint{
 		Shader:          shader.NewSolidColor(color.NRGBA{255, 255, 255, 255}),
-		AntiAlias:       dc.antiAlias,
-		BlendMode:       CompositeOperationSource,
-		Colorspace:      dc.colorspace,
-		ForceHQPipeline: dc.forceHQPipeline,
+		AntiAlias:       ctx.antiAlias,
+		BlendMode:       composite(ctx.globalCompositeOperation),
+		Colorspace:      ctx.colorspace,
+		ForceHQPipeline: ctx.forceHQPipeline,
 	}
 
-	mask := image.NewAlpha(image.Rect(0, 0, dc.canvas.GetWidth(), dc.canvas.GetHeight()))
+	mask := image.NewAlpha(image.Rect(0, 0, ctx.canvas.GetWidth(), ctx.canvas.GetHeight()))
 
-	paint.ClipPath(mask, dc.mask, pp, dc.matrix.transform, scan.FillRule(fillRule))
-	dc.mask = mask
+	paint.ClipPath(mask, ctx.mask, pp, ctx.matrix.transform, rule(fillRule))
+	ctx.mask = mask
+}
+
+func rule(r CanvasFillRule) scan.FillRule {
+	switch r {
+	case CanvasFillRuleNonzero:
+		return scan.FillRuleWinding
+	case CanvasFillRuleEvenodd:
+		return scan.FillRuleEvenOdd
+	default:
+		return scan.FillRuleWinding
+	}
 }

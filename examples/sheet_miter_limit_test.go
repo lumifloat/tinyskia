@@ -38,8 +38,8 @@ func TestSheetMiterLimit(t *testing.T) {
 	// Set line style for zigzag
 	ctx.SetStrokeStyleSolidColor(color.RGBA{0, 0, 0, 255}) // black
 	ctx.SetLineWidth(10)
-	ctx.SetLineCap(tinyskia.LineCapButt)
-	ctx.SetLineJoin(tinyskia.LineJoinMiter)
+	ctx.SetLineCap(tinyskia.CanvasLineCapButt)
+	ctx.SetLineJoin(tinyskia.CanvasLineJoinMiter)
 
 	// Test different miterLimit values
 	miterLimits := []float64{2.0, 4.2, 10.0, 20.0}
