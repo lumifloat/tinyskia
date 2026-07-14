@@ -21,6 +21,9 @@ import (
 )
 
 func (p *Paint) FillPath(dst *image.RGBA, mask *image.Alpha, sp *path.Path, transform path.Transform, fillRule scan.FillRule) {
+	if sp == nil || sp.Len() == 0 {
+		return
+	}
 	var tp *path.Path
 	if !transform.IsIdentity() {
 		tp = sp.Transform(transform)
@@ -41,11 +44,12 @@ func (p *Paint) FillPath(dst *image.RGBA, mask *image.Alpha, sp *path.Path, tran
 }
 
 func (p *Paint) StrokePath(dst *image.RGBA, mask *image.Alpha, sp *path.Path, transform path.Transform, stroke path.Stroke, dash *path.StrokeDash) {
+	if sp == nil || sp.Len() == 0 {
+		return
+	}
 	var tp *path.Path
 	if !transform.IsIdentity() {
 		tp = sp.Transform(transform)
-		resScale := path.ComputeResolutionScale(transform)
-		stroke.Width = float32(stroke.Width) * resScale
 	} else {
 		tp = sp
 	}
@@ -73,6 +77,9 @@ func (p *Paint) StrokePath(dst *image.RGBA, mask *image.Alpha, sp *path.Path, tr
 }
 
 func (p *Paint) ClipPath(dst *image.Alpha, mask *image.Alpha, sp *path.Path, transform path.Transform, fillRule scan.FillRule) {
+	if sp == nil || sp.Len() == 0 {
+		return
+	}
 	var tp *path.Path
 	if !transform.IsIdentity() {
 		tp = sp.Transform(transform)
@@ -99,7 +106,8 @@ func (p *Paint) FillTextShapes(dst *image.RGBA, mask *image.Alpha, shapes []shap
 			case font.GlyphColor:
 				DrawTextPaintTable(p, dst, mask, shape.Face, data.Paint, x, y, scale, transform)
 			case font.GlyphOutline:
-				p.FillTextOutline(dst, mask, shape.Face, data, x, y, scale, transform)
+				tf := transform.PreTranslate(float32(x)/64, float32(y)/64).PreScale(scale, scale)
+				p.FillPath(dst, mask, text.Outline(data), tf, scan.FillRuleWinding)
 			}
 			x += glyph.Advance
 		}
@@ -118,7 +126,8 @@ func (p *Paint) StrokeTextShapes(dst *image.RGBA, mask *image.Alpha, shapes []sh
 				p = p.Copy()
 				DrawTextPaintTable(p, dst, mask, shape.Face, data.Paint, x, y, scale, transform)
 			case font.GlyphOutline:
-				p.StrokeTextOutline(dst, mask, shape.Face, data, x, y, scale, transform, stroke, dash)
+				tf := transform.PreTranslate(float32(x)/64, float32(y)/64).PreScale(scale, scale)
+				p.StrokePath(dst, mask, text.Outline(data), tf, stroke, dash)
 			}
 			x += glyph.Advance
 		}
@@ -150,14 +159,16 @@ func DrawTextPaintTable(p *Paint, dst *image.RGBA, mask *image.Alpha, face *font
 				c := cpal[0][layer.PaletteIndex]
 				p.Shader = shader.NewSolidColor(color.RGBA{c.Red, c.Green, c.Blue, c.Alpha})
 			}
-			p.FillTextOutline(dst, mask, face, outline, x, y, scale, transform)
+			tf := transform.PreTranslate(float32(x)/64, float32(y)/64).PreScale(scale, scale)
+			p.FillPath(dst, mask, text.Outline(outline), tf, scan.FillRuleWinding)
 		}
 	case tables.PaintGlyph:
 		outline, ok := face.GlyphData(font.GID(t.GlyphID)).(font.GlyphOutline)
 		if !ok {
 			return
 		}
-		p.FillTextOutline(dst, mask, face, outline, x, y, scale, transform)
+		tf := transform.PreTranslate(float32(x)/64, float32(y)/64).PreScale(scale, scale)
+		p.FillPath(dst, mask, text.Outline(outline), tf, scan.FillRuleWinding)
 	case tables.PaintSolid:
 		cpal := face.Font.CPAL
 		if len(cpal) != 0 && len(cpal[0]) >= int(t.PaletteIndex) {
@@ -189,20 +200,4 @@ func DrawTextPaintTable(p *Paint, dst *image.RGBA, mask *image.Alpha, face *font
 	default:
 		return
 	}
-}
-
-func (p *Paint) FillTextOutline(dst *image.RGBA, mask *image.Alpha, face *font.Face, outline font.GlyphOutline, x, y fixed.Int26_6, scale float32, transform path.Transform) {
-	o := text.Outline(outline, scale, float32(x)/64, float32(y)/64)
-	if o == nil {
-		return
-	}
-	p.FillPath(dst, mask, o, transform, scan.FillRuleWinding)
-}
-
-func (p *Paint) StrokeTextOutline(dst *image.RGBA, mask *image.Alpha, face *font.Face, outline font.GlyphOutline, x, y fixed.Int26_6, scale float32, transform path.Transform, stroke path.Stroke, dash *path.StrokeDash) {
-	o := text.Outline(outline, scale, float32(x)/64, float32(y)/64)
-	if o == nil {
-		return
-	}
-	p.StrokePath(dst, mask, o, transform, stroke, dash)
 }

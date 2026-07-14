@@ -10,7 +10,7 @@ import (
 )
 
 // TODO ADD ITALIC AND BOLD
-func Outline(outline font.GlyphOutline, scale float32, x, y float32) *path.Path {
+func Outline(outline font.GlyphOutline) *path.Path {
 	var pb = path.NewPathBuilder()
 	var hasPath = false
 	for _, s := range outline.Segments {
@@ -20,30 +20,23 @@ func Outline(outline font.GlyphOutline, scale float32, x, y float32) *path.Path 
 				pb.Close()
 			}
 			pb.MoveTo(
-				s.Args[0].X*scale+x,
-				-s.Args[0].Y*scale+y,
+				s.Args[0].X, -s.Args[0].Y,
 			)
 			hasPath = true
 		case opentype.SegmentOpLineTo:
 			pb.LineTo(
-				s.Args[0].X*scale+x,
-				-s.Args[0].Y*scale+y,
+				s.Args[0].X, -s.Args[0].Y,
 			)
 		case opentype.SegmentOpQuadTo:
 			pb.QuadTo(
-				s.Args[0].X*scale+x,
-				-s.Args[0].Y*scale+y,
-				s.Args[1].X*scale+x,
-				-s.Args[1].Y*scale+y,
+				s.Args[0].X, -s.Args[0].Y,
+				s.Args[1].X, -s.Args[1].Y,
 			)
 		case opentype.SegmentOpCubeTo:
 			pb.CubicTo(
-				s.Args[0].X*scale+x,
-				-s.Args[0].Y*scale+y,
-				s.Args[1].X*scale+x,
-				-s.Args[1].Y*scale+y,
-				s.Args[2].X*scale+x,
-				-s.Args[2].Y*scale+y,
+				s.Args[0].X, -s.Args[0].Y,
+				s.Args[1].X, -s.Args[1].Y,
+				s.Args[2].X, -s.Args[2].Y,
 			)
 		}
 	}

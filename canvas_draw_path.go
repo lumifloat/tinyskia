@@ -89,8 +89,9 @@ func (ctx *Context) StrokePath(p *Path2D) {
 		strokeDash = path.NewStrokeDash(dashArray, float32(ctx.lineDashOffset))
 	}
 
+	resScale := path.ComputeResolutionScale(ctx.matrix.transform)
 	stroke := path.Stroke{
-		Width:      float32(ctx.lineWidth),
+		Width:      float32(ctx.lineWidth) * resScale,
 		LineCap:    cap(ctx.lineCap),
 		LineJoin:   join(ctx.lineJoin),
 		MiterLimit: float32(ctx.miterLimit),
