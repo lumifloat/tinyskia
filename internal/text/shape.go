@@ -10,7 +10,7 @@ import (
 )
 
 // TODO ADD ITALIC AND BOLD
-func Outline(outline font.GlyphOutline) *path.Path {
+func Outline(outline font.GlyphOutline, transform path.Transform) *path.Path {
 	var pb = path.NewPathBuilder()
 	var hasPath = false
 	for _, s := range outline.Segments {
@@ -43,13 +43,18 @@ func Outline(outline font.GlyphOutline) *path.Path {
 	if hasPath {
 		pb.Close()
 	}
-	return pb.Finish()
+	if p := pb.Finish(); p != nil {
+		p = p.Transform(transform)
+		return p
+	}
+	return nil
 }
 
 func Shape(input shaping.Input, query fontscan.Query) (shapes []shaping.Output, width fixed.Int26_6) {
 	var segmenter shaping.Segmenter
 
 	FontLock.Lock()
+	FontMap.SetQuery(query)
 	outputs := segmenter.Split(input, FontMap)
 	FontLock.Unlock()
 

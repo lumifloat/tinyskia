@@ -30,12 +30,9 @@ func TestGGMeme(t *testing.T) {
 	y := S/2 + textHeight/2
 
 	dc.SetStrokeStyleSolidColor(color.Black)
-	dc.SetLineWidth(12)
+	dc.SetLineWidth(5)
 	dc.SetLineJoin(gg.CanvasLineJoinRound)
 	dc.StrokeText(s, x, y)
-
-	dc.SetFillStyleSolidColor(color.White)
-	dc.FillText(s, x, y)
 
 	fi, err := os.Create("gg_out.png")
 	if err != nil {

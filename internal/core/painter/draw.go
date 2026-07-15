@@ -47,15 +47,19 @@ func (p *Paint) StrokePath(dst *image.RGBA, mask *image.Alpha, sp *path.Path, tr
 	if sp == nil || sp.Len() == 0 {
 		return
 	}
+
 	var tp *path.Path
+	scale := path.ComputeResolutionScale(transform)
 	if !transform.IsIdentity() {
 		tp = sp.Transform(transform)
+		stroke.Width *= scale
 	} else {
 		tp = sp
 	}
 
+	// TODO
 	if dash != nil {
-		dashedPath := tp.Dash(dash, path.ComputeResolutionScale(transform))
+		dashedPath := tp.Dash(dash, scale)
 		if dashedPath != nil {
 			tp = dashedPath
 		}
@@ -66,7 +70,6 @@ func (p *Paint) StrokePath(dst *image.RGBA, mask *image.Alpha, sp *path.Path, tr
 		return
 	}
 	screen, _ := path.NewScreenIntRectFromXYWH(0, 0, uint32(dst.Rect.Dx()), uint32(dst.Rect.Dy()))
-	scale := path.ComputeResolutionScale(transform)
 	stroker := path.NewPathStroker()
 	ssp := stroker.Stroke(tp, stroke, scale)
 	if p.AntiAlias {
@@ -92,7 +95,11 @@ func (p *Paint) ClipPath(dst *image.Alpha, mask *image.Alpha, sp *path.Path, tra
 		return
 	}
 	screen, _ := path.NewScreenIntRectFromXYWH(0, 0, uint32(dst.Rect.Dx()), uint32(dst.Rect.Dy()))
-	scan.FillPath(tp, int(fillRule), screen, blitter)
+	if p.AntiAlias {
+		scan.FillPathAA(tp, int(scan.FillRuleWinding), screen, blitter)
+	} else {
+		scan.FillPath(tp, int(scan.FillRuleWinding), screen, blitter)
+	}
 }
 
 func (p *Paint) FillTextShapes(dst *image.RGBA, mask *image.Alpha, shapes []shaping.Output, x, y fixed.Int26_6, transform path.Transform) {
@@ -106,8 +113,8 @@ func (p *Paint) FillTextShapes(dst *image.RGBA, mask *image.Alpha, shapes []shap
 			case font.GlyphColor:
 				DrawTextPaintTable(p, dst, mask, shape.Face, data.Paint, x, y, scale, transform)
 			case font.GlyphOutline:
-				tf := transform.PreTranslate(float32(x)/64, float32(y)/64).PreScale(scale, scale)
-				p.FillPath(dst, mask, text.Outline(data), tf, scan.FillRuleWinding)
+				tf := path.NewTransformFromScale(scale, scale).PostTranslate(float32(x)/64, float32(y)/64)
+				p.FillPath(dst, mask, text.Outline(data, tf), transform, scan.FillRuleWinding)
 			}
 			x += glyph.Advance
 		}
@@ -126,8 +133,8 @@ func (p *Paint) StrokeTextShapes(dst *image.RGBA, mask *image.Alpha, shapes []sh
 				p = p.Copy()
 				DrawTextPaintTable(p, dst, mask, shape.Face, data.Paint, x, y, scale, transform)
 			case font.GlyphOutline:
-				tf := transform.PreTranslate(float32(x)/64, float32(y)/64).PreScale(scale, scale)
-				p.StrokePath(dst, mask, text.Outline(data), tf, stroke, dash)
+				tf := path.NewTransformFromScale(scale, scale).PostTranslate(float32(x)/64, float32(y)/64)
+				p.StrokePath(dst, mask, text.Outline(data, tf), transform, stroke, dash)
 			}
 			x += glyph.Advance
 		}
@@ -159,16 +166,16 @@ func DrawTextPaintTable(p *Paint, dst *image.RGBA, mask *image.Alpha, face *font
 				c := cpal[0][layer.PaletteIndex]
 				p.Shader = shader.NewSolidColor(color.RGBA{c.Red, c.Green, c.Blue, c.Alpha})
 			}
-			tf := transform.PreTranslate(float32(x)/64, float32(y)/64).PreScale(scale, scale)
-			p.FillPath(dst, mask, text.Outline(outline), tf, scan.FillRuleWinding)
+			tf := path.NewTransformFromScale(scale, scale).PostTranslate(float32(x)/64, float32(y)/64)
+			p.FillPath(dst, mask, text.Outline(outline, tf), transform, scan.FillRuleWinding)
 		}
 	case tables.PaintGlyph:
 		outline, ok := face.GlyphData(font.GID(t.GlyphID)).(font.GlyphOutline)
 		if !ok {
 			return
 		}
-		tf := transform.PreTranslate(float32(x)/64, float32(y)/64).PreScale(scale, scale)
-		p.FillPath(dst, mask, text.Outline(outline), tf, scan.FillRuleWinding)
+		tf := path.NewTransformFromScale(scale, scale).PostTranslate(float32(x)/64, float32(y)/64)
+		p.FillPath(dst, mask, text.Outline(outline, tf), transform, scan.FillRuleWinding)
 	case tables.PaintSolid:
 		cpal := face.Font.CPAL
 		if len(cpal) != 0 && len(cpal[0]) >= int(t.PaletteIndex) {
