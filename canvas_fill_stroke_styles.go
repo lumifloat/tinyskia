@@ -9,6 +9,7 @@ package tinyskia
 import (
 	"image"
 	"image/color"
+	"image/draw"
 	"math"
 
 	"github.com/lumifloat/tinyskia/internal/core/shader"
@@ -288,58 +289,28 @@ func toShader(style Style, transform path.Transform) shader.Shader {
 		} else {
 			transform = path.NewTransformDefault()
 		}
-		return imageToPatternShader(s.im, s.op, transform)
+		bounds := s.im.Bounds()
+		im := image.NewRGBA(bounds)
+		draw.Draw(im, bounds, s.im, bounds.Min, draw.Src)
+		return shader.NewPattern(im, repeat(s.op), shader.FilterQualityBilinear, 1.0, transform)
 	default:
 		return shader.NewSolidColor(color.NRGBA{0, 0, 0, 255})
 	}
 }
 
-func imageToPatternShader(im image.Image, op RepeatMode, transform path.Transform) shader.Shader {
-	bounds := im.Bounds()
-	width := bounds.Dx()
-	height := bounds.Dy()
-
-	if width <= 0 || height <= 0 {
-		return shader.NewSolidColor(color.NRGBA{0, 0, 0, 0})
-	}
-
-	data := make([]uint8, width*height*4)
-	for y := 0; y < height; y++ {
-		for x := 0; x < width; x++ {
-			c := im.At(bounds.Min.X+x, bounds.Min.Y+y)
-			r, g, b, a := c.RGBA()
-			offset := (y*width + x) * 4
-			data[offset+0] = uint8(r >> 8)
-			data[offset+1] = uint8(g >> 8)
-			data[offset+2] = uint8(b >> 8)
-			data[offset+3] = uint8(a >> 8)
-		}
-	}
-
-	size, _ := path.NewIntSize(uint32(width), uint32(height))
-
-	var spreadMode shader.SpreadMode
+func repeat(op RepeatMode) shader.SpreadMode {
 	switch op {
 	case RepeatModeRepeat:
-		spreadMode = shader.SpreadModeRepeat
+		return shader.SpreadModeRepeat
 	case RepeatModeRepeatX:
 		// TODO tinyskia 不支持单向重复，使用 Repeat 作为近似
-		spreadMode = shader.SpreadModeRepeat
+		return shader.SpreadModeRepeat
 	case RepeatModeRepeatY:
 		// TODO tinyskia 不支持单向重复，使用 Repeat 作为近似
-		spreadMode = shader.SpreadModeRepeat
+		return shader.SpreadModeRepeat
 	case RepeatModeNoRepeat:
-		spreadMode = shader.SpreadModePad
+		return shader.SpreadModePad
 	default:
-		spreadMode = shader.SpreadModeRepeat
+		return shader.SpreadModeRepeat
 	}
-
-	return shader.NewPattern(
-		data,
-		size,
-		spreadMode,
-		shader.FilterQualityBilinear,
-		1.0,
-		transform,
-	)
 }

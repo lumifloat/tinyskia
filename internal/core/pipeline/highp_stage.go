@@ -214,13 +214,12 @@ func (p *HighPipeline) Gather() {
 
 	w := ulpsub(float32(p.src.Rect.Dx()))
 	h := ulpsub(float32(p.src.Rect.Dy()))
-	iw := int32(p.src.Rect.Dx())
 
 	for i := 0; i < 8; i++ {
 		x := f32min(f32max(p.r[i], 0), w)
 		y := f32min(f32max(p.g[i], 0), h)
 
-		offset := (int32(y)*iw + int32(x)) * 4
+		offset := p.src.PixOffset(int(x), int(y))
 
 		p.r[i] = float32(p.src.Pix[offset+0]) * FACTOR
 		p.g[i] = float32(p.src.Pix[offset+1]) * FACTOR

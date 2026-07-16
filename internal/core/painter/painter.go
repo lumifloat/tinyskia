@@ -171,8 +171,7 @@ func (p *Paint) blitter(dst *image.RGBA, mask *image.Alpha) *pipeline.RasterPipe
 
 	var src *image.RGBA
 	if pattern, ok := p.Shader.(*shader.Pattern); ok {
-		src = image.NewRGBA(image.Rect(0, 0, int(pattern.Size.Width()), int(pattern.Size.Height())))
-		src.Pix = pattern.Data
+		src = pattern.Data
 	} else {
 		src = image.NewRGBA(image.Rect(0, 0, 1, 1))
 		src.Pix = []uint8{0, 0, 0, 0}

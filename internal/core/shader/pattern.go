@@ -7,6 +7,8 @@
 package shader
 
 import (
+	"image"
+
 	"github.com/chewxy/math32"
 	"github.com/lumifloat/tinyskia/internal/core/colorf"
 	"github.com/lumifloat/tinyskia/internal/core/pipeline"
@@ -30,18 +32,16 @@ const (
 //
 // Essentially a SkImageShader.
 type Pattern struct {
-	Data      []uint8
-	Size      path.IntSize
+	Data      *image.RGBA
 	quality   FilterQuality
 	spread    SpreadMode
 	opacity   normalized.NormalizedF32
 	transform path.Transform
 }
 
-func NewPattern(data []uint8, size path.IntSize, spread SpreadMode, quality FilterQuality, opacity float32, transform path.Transform) Shader {
+func NewPattern(data *image.RGBA, spread SpreadMode, quality FilterQuality, opacity float32, transform path.Transform) Shader {
 	return &Pattern{
 		Data:      data,
-		Size:      size,
 		quality:   quality,
 		spread:    spread,
 		opacity:   normalized.NewNormalizedF32WithClamped(opacity),
@@ -81,13 +81,13 @@ func (p *Pattern) PushStages(cs colorf.ColorSpace, builder *pipeline.RasterPipel
 	switch quality {
 	case FilterQualityNearest:
 		builder.Ctx.LimitX = pipeline.TileCtx{
-			Scale:    float32(p.Size.Width()),
-			InvScale: 1.0 / float32(p.Size.Width()),
+			Scale:    float32(p.Data.Rect.Dx()),
+			InvScale: 1.0 / float32(p.Data.Rect.Dx()),
 		}
 
 		builder.Ctx.LimitY = pipeline.TileCtx{
-			Scale:    float32(p.Size.Height()),
-			InvScale: 1.0 / float32(p.Size.Height()),
+			Scale:    float32(p.Data.Rect.Dy()),
+			InvScale: 1.0 / float32(p.Data.Rect.Dy()),
 		}
 
 		switch p.spread {
@@ -104,16 +104,16 @@ func (p *Pattern) PushStages(cs colorf.ColorSpace, builder *pipeline.RasterPipel
 	case FilterQualityBilinear:
 		builder.Ctx.Sampler = pipeline.SamplerCtx{
 			SpreadMode: pipeline.SpreadMode(p.spread),
-			InvWidth:   1.0 / float32(p.Size.Width()),
-			InvHeight:  1.0 / float32(p.Size.Height()),
+			InvWidth:   1.0 / float32(p.Data.Rect.Dx()),
+			InvHeight:  1.0 / float32(p.Data.Rect.Dy()),
 		}
 		builder.Push(pipeline.StageBilinear)
 
 	case FilterQualityBicubic:
 		builder.Ctx.Sampler = pipeline.SamplerCtx{
 			SpreadMode: pipeline.SpreadMode(p.spread),
-			InvWidth:   1.0 / float32(p.Size.Width()),
-			InvHeight:  1.0 / float32(p.Size.Height()),
+			InvWidth:   1.0 / float32(p.Data.Rect.Dx()),
+			InvHeight:  1.0 / float32(p.Data.Rect.Dy()),
 		}
 		builder.Push(pipeline.StageBicubic)
 

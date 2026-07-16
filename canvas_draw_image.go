@@ -8,34 +8,31 @@ package tinyskia
 
 import (
 	"image"
+	"image/draw"
+	"math"
 
 	"github.com/lumifloat/tinyskia/internal/core/painter"
 	"github.com/lumifloat/tinyskia/internal/core/scan"
+	"github.com/lumifloat/tinyskia/internal/core/shader"
 	"github.com/lumifloat/tinyskia/internal/path"
 )
 
 // DrawImage draws the specified image at the specified point.
 func (ctx *Context) DrawImage(im image.Image, dx, dy float64) {
 	bounds := im.Bounds()
-	ctx.DrawImageWithSourceRect(im, 0, 0, float64(bounds.Dx()), float64(bounds.Dy()), dx, dy, 0, 0)
+	ctx.DrawImageWithSourceRect(im, float64(bounds.Min.X), float64(bounds.Min.Y),
+		float64(bounds.Max.X), float64(bounds.Max.Y), dx, dy, float64(bounds.Dx()), float64(bounds.Dy()))
 }
 
 // DrawImageScaled draws the specified image with scaling.
 func (ctx *Context) DrawImageScaled(im image.Image, dx, dy, dw, dh float64) {
 	bounds := im.Bounds()
-	ctx.DrawImageWithSourceRect(im, 0, 0, float64(bounds.Dx()), float64(bounds.Dy()), dx, dy, dw, dh)
+	ctx.DrawImageWithSourceRect(im, float64(bounds.Min.X), float64(bounds.Min.Y),
+		float64(bounds.Max.X), float64(bounds.Max.Y), dx, dy, dw, dh)
 }
 
 // DrawImageWithSourceRect draws a portion of the specified image with scaling.
 func (ctx *Context) DrawImageWithSourceRect(im image.Image, sx, sy, sw, sh, dx, dy, dw, dh float64) {
-	bounds := im.Bounds()
-	imgWidth := bounds.Dx()
-	imgHeight := bounds.Dy()
-
-	if imgWidth <= 0 || imgHeight <= 0 {
-		return
-	}
-
 	if sw < 0 {
 		sx += sw
 		sw = -sw
@@ -45,85 +42,58 @@ func (ctx *Context) DrawImageWithSourceRect(im image.Image, sx, sy, sw, sh, dx, 
 		sh = -sh
 	}
 
-	if sx < 0 {
-		sx = 0
-	}
-	if sy < 0 {
-		sy = 0
-	}
-	if sx+sw > float64(imgWidth) {
-		sw = float64(imgWidth) - sx
-	}
-	if sy+sh > float64(imgHeight) {
-		sh = float64(imgHeight) - sy
-	}
-
 	if sw <= 0 || sh <= 0 {
 		return
 	}
 
-	sourceX := int(sx)
-	sourceY := int(sy)
-	sourceWidth := int(sw)
-	sourceHeight := int(sh)
+	bounds := im.Bounds()
+	srcRect := image.Rect(
+		int(math.Floor(sx)),
+		int(math.Floor(sy)),
+		int(math.Ceil(sx+sw)),
+		int(math.Ceil(sy+sh)),
+	).Intersect(bounds)
 
-	if sourceX < bounds.Min.X {
-		sourceX = bounds.Min.X
-	}
-	if sourceY < bounds.Min.Y {
-		sourceY = bounds.Min.Y
-	}
-	if sourceX+sourceWidth > bounds.Max.X {
-		sourceWidth = bounds.Max.X - sourceX
-	}
-	if sourceY+sourceHeight > bounds.Max.Y {
-		sourceHeight = bounds.Max.Y - sourceY
-	}
-
-	if sourceWidth <= 0 || sourceHeight <= 0 {
+	if srcRect.Empty() {
 		return
 	}
 
-	subImg := image.NewRGBA(image.Rect(0, 0, sourceWidth, sourceHeight))
-	for y := 0; y < sourceHeight; y++ {
-		for x := 0; x < sourceWidth; x++ {
-			subImg.Set(x, y, im.At(sourceX+x, sourceY+y))
-		}
-	}
+	srcImg := image.NewRGBA(srcRect)
+	draw.Draw(srcImg, srcImg.Bounds(), im, srcRect.Min, draw.Src)
 
-	subBounds := subImg.Bounds()
-	subWidth := subBounds.Dx()
-	subHeight := subBounds.Dy()
-
-	if subWidth <= 0 || subHeight <= 0 {
-		return
-	}
-
-	if dw <= 0 {
-		dw = float64(subWidth)
-	}
-	if dh <= 0 {
-		dh = float64(subHeight)
-	}
-
-	translateTransform := path.NewTransformFromTranslate(float32(dx), float32(dy))
-	patternShader := imageToPatternShader(subImg, RepeatModeNoRepeat, translateTransform)
-
-	patternShader.Transform(ctx.matrix.transform)
-
-	finalTransform := ctx.matrix.transform.PreConcat(translateTransform)
+	pattern := shader.NewPattern(
+		srcImg,
+		shader.SpreadModeRepeat,
+		shader.FilterQualityBilinear,
+		1.0,
+		ctx.matrix.transform.PreScale(float32(dw/sw), float32(dh/sh)),
+	)
 
 	paint := &painter.Paint{
-		Shader:          patternShader,
+		Shader:          pattern,
 		BlendMode:       composite(ctx.globalCompositeOperation),
 		AntiAlias:       ctx.antiAlias,
 		Colorspace:      ctx.colorspace,
 		ForceHQPipeline: ctx.forceHQPipeline,
 	}
+
+	if dw < 0 {
+		dx += dw
+		dw = -dw
+	}
+	if dh < 0 {
+		dy += dh
+		dh = -dh
+	}
+
+	if dw <= 0 || dh <= 0 {
+		return
+	}
+
 	rectPath := path.NewPathBuilder()
-	rect, _ := path.NewRectFromXYWH(0, 0, float32(dw), float32(dh))
-	rectPath.PushRect(rect)
+	r, _ := path.NewRectFromXYWH(float32(dx), float32(dy), float32(dw), float32(dh))
+	rectPath.PushRect(r)
 	finalPath := rectPath.Finish()
 
-	paint.FillPath(ctx.canvas.im, ctx.mask, finalPath, finalTransform, scan.FillRuleWinding)
+	paint.FillPath(ctx.canvas.im, ctx.mask, finalPath, ctx.matrix.transform, scan.FillRuleWinding)
 }
