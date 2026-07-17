@@ -46,27 +46,24 @@ func (ctx *Context) DrawImageWithSourceRect(im image.Image, sx, sy, sw, sh, dx, 
 		return
 	}
 
-	bounds := im.Bounds()
-	srcRect := image.Rect(
-		int(math.Floor(sx)),
-		int(math.Floor(sy)),
-		int(math.Ceil(sx+sw)),
-		int(math.Ceil(sy+sh)),
-	).Intersect(bounds)
-
-	if srcRect.Empty() {
-		return
-	}
-
-	srcImg := image.NewRGBA(srcRect)
-	draw.Draw(srcImg, srcImg.Bounds(), im, srcRect.Min, draw.Src)
+	rect := image.Rect(
+		int(0),
+		int(0),
+		int(math.Ceil(sw)),
+		int(math.Ceil(sh)),
+	)
+	src := image.NewRGBA(rect)
+	sp := image.Point{int(math.Floor(sx)), int(math.Floor(sy))}
+	draw.Draw(src, rect, im, sp, draw.Src)
 
 	pattern := shader.NewPattern(
-		srcImg,
-		shader.SpreadModeRepeat,
+		src,
+		shader.SpreadModePad,
 		shader.FilterQualityBilinear,
 		1.0,
-		ctx.matrix.transform.PreScale(float32(dw/sw), float32(dh/sh)),
+		ctx.matrix.transform.
+			PreTranslate(float32(dx), float32(dy)).
+			PreScale(float32(dw/sw), float32(dh/sh)),
 	)
 
 	paint := &painter.Paint{
