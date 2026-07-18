@@ -53,12 +53,11 @@ func (ctx *Context) DrawImageWithSourceRect(im image.Image, sx, sy, sw, sh, dx, 
 		int(math.Ceil(sh)),
 	)
 	src := image.NewRGBA(rect)
-	sp := image.Point{int(math.Floor(sx)), int(math.Floor(sy))}
-	draw.Draw(src, rect, im, sp, draw.Src)
+	draw.Draw(src, rect, im, image.Point{int(sx), int(sy)}, draw.Src)
 
 	pattern := shader.NewPattern(
 		src,
-		shader.SpreadModePad,
+		shader.SpreadModeNoRepeat,
 		shader.FilterQualityBilinear,
 		1.0,
 		ctx.matrix.transform.

@@ -20,8 +20,11 @@ type SpreadMode int
 
 const (
 	SpreadModePad SpreadMode = iota
-	SpreadModeReflect
+	SpreadModeNoRepeat
 	SpreadModeRepeat
+	SpreadModeRepeatX
+	SpreadModeRepeatY
+	SpreadModeReflect
 )
 
 const MAX_STAGES = 32
@@ -78,6 +81,8 @@ const (
 	StageTransform
 	StageReflect
 	StageRepeat
+	StageDecal
+	StageCheckDecalMask
 	StageBilinear
 	StageBicubic
 	StagePadX1
@@ -145,6 +150,10 @@ func (c *AAMaskCtx) CopyAtXY(dx, dy, tail int) [2]uint8 {
 	default:
 		return [2]byte{0, 0}
 	}
+}
+
+type DecalCtx struct {
+	Mask [8]float32
 }
 
 type MaskCtx struct {
@@ -353,6 +362,8 @@ func (b *RasterPipelineBuilder) Compile() *RasterPipeline {
 			StageTransform:                      true,
 			StageReflect:                        false,
 			StageRepeat:                         false,
+			StageDecal:                          false,
+			StageCheckDecalMask:                 false,
 			StageBilinear:                       false,
 			StageBicubic:                        false,
 			StagePadX1:                          true,
@@ -403,10 +414,10 @@ func (b *RasterPipelineBuilder) Compile() *RasterPipeline {
 	}
 }
 
-func (p *RasterPipeline) Run(rect image.Rectangle, aaMask *AAMaskCtx, mask *image.Alpha, src *image.RGBA, dst *image.RGBA) {
+func (p *RasterPipeline) Run(rect image.Rectangle, aaMask *AAMaskCtx, decal *DecalCtx, mask *image.Alpha, src *image.RGBA, dst *image.RGBA) {
 	switch k := p.Kind.(type) {
 	case RasterPipelineHigh:
-		StartHighPipeline(k, rect, aaMask, mask, &p.Ctx, src, dst)
+		StartHighPipeline(k, rect, aaMask, decal, mask, &p.Ctx, src, dst)
 	case RasterPipelineLow:
 		StartLowPipeline(k, rect, aaMask, mask, &p.Ctx, dst)
 	}

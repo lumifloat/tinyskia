@@ -251,6 +251,14 @@ func StartLowPipeline(stages []Stage, rect image.Rectangle, aaMask *AAMaskCtx, m
 					// null_fn
 					p.Repeat()
 
+				case StageDecal:
+					// decal
+					p.Decal()
+
+				case StageCheckDecalMask:
+					// check_decal_mask
+					p.CheckDecalMask()
+
 				case StageBilinear:
 					// null_fn
 					p.Bilinear()
@@ -512,6 +520,14 @@ func StartLowPipeline(stages []Stage, rect image.Rectangle, aaMask *AAMaskCtx, m
 				case StageRepeat:
 					// null_fn
 					p.Repeat()
+
+				case StageDecal:
+					// decal
+					p.Decal()
+
+				case StageCheckDecalMask:
+					// check_decal_mask
+					p.CheckDecalMask()
 
 				case StageBilinear:
 					// null_fn

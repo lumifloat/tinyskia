@@ -289,9 +289,11 @@ func toShader(style Style, transform path.Transform) shader.Shader {
 		} else {
 			transform = path.NewTransformDefault()
 		}
+		// TODO
 		bounds := s.im.Bounds()
-		im := image.NewRGBA(bounds)
-		draw.Draw(im, bounds, s.im, bounds.Min, draw.Src)
+		rect := image.Rect(0, 0, bounds.Dx(), bounds.Dy())
+		im := image.NewRGBA(rect)
+		draw.Draw(im, rect, s.im, bounds.Min, draw.Src)
 		return shader.NewPattern(im, repeat(s.op), shader.FilterQualityBilinear, 1.0, transform)
 	default:
 		return shader.NewSolidColor(color.NRGBA{0, 0, 0, 255})
@@ -304,12 +306,12 @@ func repeat(op RepeatMode) shader.SpreadMode {
 		return shader.SpreadModeRepeat
 	case RepeatModeRepeatX:
 		// TODO tinyskia 不支持单向重复，使用 Repeat 作为近似
-		return shader.SpreadModeRepeat
+		return shader.SpreadModeRepeatX
 	case RepeatModeRepeatY:
 		// TODO tinyskia 不支持单向重复，使用 Repeat 作为近似
-		return shader.SpreadModeRepeat
+		return shader.SpreadModeRepeatY
 	case RepeatModeNoRepeat:
-		return shader.SpreadModePad
+		return shader.SpreadModeNoRepeat
 	default:
 		return shader.SpreadModeRepeat
 	}

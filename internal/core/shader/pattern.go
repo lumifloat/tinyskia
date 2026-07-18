@@ -93,13 +93,30 @@ func (p *Pattern) PushStages(cs colorf.ColorSpace, builder *pipeline.RasterPipel
 		switch p.spread {
 		case SpreadModePad:
 			// The gather() stage will clamp for us.
+			builder.Push(pipeline.StageGather)
+		case SpreadModeNoRepeat:
+			builder.Push(pipeline.StageDecal)
+			builder.Push(pipeline.StageGather)
+			builder.Push(pipeline.StageCheckDecalMask)
 		case SpreadModeRepeat:
 			builder.Push(pipeline.StageRepeat)
+			builder.Push(pipeline.StageGather)
+		case SpreadModeRepeatX:
+			builder.Ctx.LimitY = pipeline.TileCtx{}
+			builder.Push(pipeline.StageRepeat)
+			builder.Push(pipeline.StageDecal)
+			builder.Push(pipeline.StageGather)
+			builder.Push(pipeline.StageCheckDecalMask)
+		case SpreadModeRepeatY:
+			builder.Ctx.LimitX = pipeline.TileCtx{}
+			builder.Push(pipeline.StageRepeat)
+			builder.Push(pipeline.StageDecal)
+			builder.Push(pipeline.StageGather)
+			builder.Push(pipeline.StageCheckDecalMask)
 		case SpreadModeReflect:
 			builder.Push(pipeline.StageReflect)
+			builder.Push(pipeline.StageGather)
 		}
-
-		builder.Push(pipeline.StageGather)
 
 	case FilterQualityBilinear:
 		builder.Ctx.Sampler = pipeline.SamplerCtx{

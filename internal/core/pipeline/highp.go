@@ -17,6 +17,7 @@ type HighPipeline struct {
 	dst       *image.RGBA
 	mask      *image.Alpha
 	aaMaskCtx *AAMaskCtx
+	decal     *DecalCtx
 	ctx       *Context
 	r         [HIGH_STAGE_WIDTH]float32
 	g         [HIGH_STAGE_WIDTH]float32
@@ -32,12 +33,13 @@ type HighPipeline struct {
 	stop      bool
 }
 
-func StartHighPipeline(stages []Stage, rect image.Rectangle, aaMask *AAMaskCtx, mask *image.Alpha, ctx *Context, src *image.RGBA, dst *image.RGBA) {
+func StartHighPipeline(stages []Stage, rect image.Rectangle, aaMask *AAMaskCtx, decal *DecalCtx, mask *image.Alpha, ctx *Context, src *image.RGBA, dst *image.RGBA) {
 	var p HighPipeline
 	p.src = src
 	p.dst = dst
 	p.mask = mask
 	p.aaMaskCtx = aaMask
+	p.decal = decal
 	p.ctx = ctx
 
 	for y := rect.Min.Y; y < rect.Max.Y; y++ {
@@ -251,6 +253,14 @@ func StartHighPipeline(stages []Stage, rect image.Rectangle, aaMask *AAMaskCtx, 
 				case StageRepeat:
 					// repeat
 					p.Repeat()
+
+				case StageDecal:
+					// decal
+					p.Decal()
+
+				case StageCheckDecalMask:
+					// check_decal_mask
+					p.CheckDecalMask()
 
 				case StageBilinear:
 					// bilinear
@@ -584,6 +594,14 @@ func StartHighPipeline(stages []Stage, rect image.Rectangle, aaMask *AAMaskCtx, 
 				case StageRepeat:
 					// repeat
 					p.Repeat()
+
+				case StageDecal:
+					// decal
+					p.Decal()
+
+				case StageCheckDecalMask:
+					// check_decal_mask
+					p.CheckDecalMask()
 
 				case StageBilinear:
 					// bilinear

@@ -1304,6 +1304,14 @@ func (p *LowPipeline) Repeat() {
 }
 
 //go:fix inline
+func (p *LowPipeline) Decal() {
+}
+
+//go:fix inline
+func (p *LowPipeline) CheckDecalMask() {
+}
+
+//go:fix inline
 func (p *LowPipeline) Bilinear() {
 	// null_fn
 }

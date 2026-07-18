@@ -41,7 +41,10 @@ func TestSheetGetImageData(t *testing.T) {
 	ctx.DrawImageScaled(img, 0, 0, 233, 320)
 
 	// Get image data from a region
-	imageData := ctx.GetImageData(10, 20, 80, 230)
+	imageData, err := ctx.GetImageData(10, 20, 80, 230)
+	if err != nil {
+		t.Fatalf("Failed to get image data: %v", err)
+	}
 
 	// Put the image data at different positions
 	ctx.PutImageData(imageData, 260, 0)

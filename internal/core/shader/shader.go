@@ -18,14 +18,21 @@ import (
 type SpreadMode int
 
 const (
+
 	// Replicate the edge color if the shader draws outside of its
 	// original bounds.
 	SpreadModePad SpreadMode = iota
+	// Do not repeat the shader's image.
+	SpreadModeNoRepeat
+	// Repeat the shader's image horizontally and vertically.
+	SpreadModeRepeat
+	// Repeat the shader's image horizontally.
+	SpreadModeRepeatX
+	// Repeat the shader's image vertically.
+	SpreadModeRepeatY
 	// Repeat the shader's image horizontally and vertically, alternating
 	// mirror images so that adjacent images always seam.
 	SpreadModeReflect
-	// Repeat the shader's image horizontally and vertically.
-	SpreadModeRepeat
 )
 
 type Shader interface {

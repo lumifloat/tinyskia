@@ -50,7 +50,7 @@ func (b *RasterPipelineBlitter) BlitAntiH(x, y uint32, aa []uint8, runs []uint16
 		default:
 			b.BlitAntiHRp.Ctx.CurrentCoverage = float32(alpha) * (1.0 / 255.0)
 			rect := image.Rect(int(x), int(y), int(x+width), int(y+1))
-			b.BlitAntiHRp.Run(rect, &AAMaskCtx{}, b.Mask, b.Src, b.Dst)
+			b.BlitAntiHRp.Run(rect, &AAMaskCtx{}, &DecalCtx{}, b.Mask, b.Src, b.Dst)
 		}
 
 		x += width
@@ -111,7 +111,7 @@ func (b *RasterPipelineBlitter) BlitRect(rect image.Rectangle) {
 		return
 	}
 
-	b.BlitRectRp.Run(rect, &AAMaskCtx{}, b.Mask, b.Src, b.Dst)
+	b.BlitRectRp.Run(rect, &AAMaskCtx{}, &DecalCtx{}, b.Mask, b.Src, b.Dst)
 }
 
 func (b *RasterPipelineBlitter) BlitMask(mask *image.Alpha, clip image.Rectangle) {
@@ -121,5 +121,5 @@ func (b *RasterPipelineBlitter) BlitMask(mask *image.Alpha, clip image.Rectangle
 		Shift:  int(mask.Rect.Min.X + mask.Rect.Min.Y*mask.Stride),
 	}
 
-	b.BlitMaskRp.Run(clip, &aaMaskCtx, b.Mask, b.Src, b.Dst)
+	b.BlitMaskRp.Run(clip, &aaMaskCtx, &DecalCtx{}, b.Mask, b.Src, b.Dst)
 }

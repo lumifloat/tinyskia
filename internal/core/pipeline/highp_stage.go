@@ -1258,6 +1258,69 @@ func (p *HighPipeline) Repeat() {
 }
 
 //go:fix inline
+func (p *HighPipeline) Decal() {
+	ulpsub := func(v float32) float32 {
+		bits := math32.Float32bits(v)
+		return math32.Float32frombits(bits - 1)
+	}
+
+	w := ulpsub(float32(p.src.Rect.Dx()))
+	h := ulpsub(float32(p.src.Rect.Dy()))
+	if p.r[0] >= 0.0 && p.r[0] <= w && p.g[0] >= 0.0 && p.g[0] <= h {
+		p.decal.Mask[0] = 1.0
+	} else {
+		p.decal.Mask[0] = 0.0
+	}
+	if p.r[1] >= 0.0 && p.r[1] <= w && p.g[1] >= 0.0 && p.g[1] <= h {
+		p.decal.Mask[1] = 1.0
+	} else {
+		p.decal.Mask[1] = 0.0
+	}
+	if p.r[2] >= 0.0 && p.r[2] <= w && p.g[2] >= 0.0 && p.g[2] <= h {
+		p.decal.Mask[2] = 1.0
+	} else {
+		p.decal.Mask[2] = 0.0
+	}
+	if p.r[3] >= 0.0 && p.r[3] <= w && p.g[3] >= 0.0 && p.g[3] <= h {
+		p.decal.Mask[3] = 1.0
+	} else {
+		p.decal.Mask[3] = 0.0
+	}
+	if p.r[4] >= 0.0 && p.r[4] <= w && p.g[4] >= 0.0 && p.g[4] <= h {
+		p.decal.Mask[4] = 1.0
+	} else {
+		p.decal.Mask[4] = 0.0
+	}
+	if p.r[5] >= 0.0 && p.r[5] <= w && p.g[5] >= 0.0 && p.g[5] <= h {
+		p.decal.Mask[5] = 1.0
+	} else {
+		p.decal.Mask[5] = 0.0
+	}
+	if p.r[6] >= 0.0 && p.r[6] <= w && p.g[6] >= 0.0 && p.g[6] <= h {
+		p.decal.Mask[6] = 1.0
+	} else {
+		p.decal.Mask[6] = 0.0
+	}
+	if p.r[7] >= 0.0 && p.r[7] <= w && p.g[7] >= 0.0 && p.g[7] <= h {
+		p.decal.Mask[7] = 1.0
+	} else {
+		p.decal.Mask[7] = 0.0
+	}
+}
+
+//go:fix inline
+func (p *HighPipeline) CheckDecalMask() {
+	p.r[0], p.r[1], p.r[2], p.r[3] = p.r[0]*p.decal.Mask[0], p.r[1]*p.decal.Mask[1], p.r[2]*p.decal.Mask[2], p.r[3]*p.decal.Mask[3]
+	p.r[4], p.r[5], p.r[6], p.r[7] = p.r[4]*p.decal.Mask[4], p.r[5]*p.decal.Mask[5], p.r[6]*p.decal.Mask[6], p.r[7]*p.decal.Mask[7]
+	p.g[0], p.g[1], p.g[2], p.g[3] = p.g[0]*p.decal.Mask[0], p.g[1]*p.decal.Mask[1], p.g[2]*p.decal.Mask[2], p.g[3]*p.decal.Mask[3]
+	p.g[4], p.g[5], p.g[6], p.g[7] = p.g[4]*p.decal.Mask[4], p.g[5]*p.decal.Mask[5], p.g[6]*p.decal.Mask[6], p.g[7]*p.decal.Mask[7]
+	p.b[0], p.b[1], p.b[2], p.b[3] = p.b[0]*p.decal.Mask[0], p.b[1]*p.decal.Mask[1], p.b[2]*p.decal.Mask[2], p.b[3]*p.decal.Mask[3]
+	p.b[4], p.b[5], p.b[6], p.b[7] = p.b[4]*p.decal.Mask[4], p.b[5]*p.decal.Mask[5], p.b[6]*p.decal.Mask[6], p.b[7]*p.decal.Mask[7]
+	p.a[0], p.a[1], p.a[2], p.a[3] = p.a[0]*p.decal.Mask[0], p.a[1]*p.decal.Mask[1], p.a[2]*p.decal.Mask[2], p.a[3]*p.decal.Mask[3]
+	p.a[4], p.a[5], p.a[6], p.a[7] = p.a[4]*p.decal.Mask[4], p.a[5]*p.decal.Mask[5], p.a[6]*p.decal.Mask[6], p.a[7]*p.decal.Mask[7]
+}
+
+//go:fix inline
 func (p *HighPipeline) Bilinear() {
 	for i := 0; i < HIGH_STAGE_WIDTH; i++ {
 		x, y := p.r[i], p.g[i]
@@ -1864,13 +1927,14 @@ func exclusiveReflect(v, limit, invLimit float32) float32 {
 func samplePixel(src *image.RGBA, ctx *SamplerCtx, x, y float32, r, g, b, a *float32) {
 	width := float32(src.Rect.Dx())
 	height := float32(src.Rect.Dy())
+	// TODO complete the remaining spread modes
 	switch ctx.SpreadMode {
-	case 0: // Pad
+	case SpreadModePad, SpreadModeNoRepeat: // Pad
 		// Do nothing
-	case 1: // Reflect
+	case SpreadModeReflect: // Reflect
 		x = exclusiveReflect(x, width, ctx.InvWidth)
 		y = exclusiveReflect(y, height, ctx.InvHeight)
-	case 2: // Repeat
+	case SpreadModeRepeat, SpreadModeRepeatX, SpreadModeRepeatY: // Repeat
 		// repeat: x = x - floor(x * invWidth) * width
 		x = x - math32.Floor(x*ctx.InvWidth)*width
 		y = y - math32.Floor(y*ctx.InvHeight)*height
