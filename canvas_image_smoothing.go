@@ -1,5 +1,7 @@
 package tinyskia
 
+import "github.com/lumifloat/tinyskia/internal/core/shader"
+
 type ImageSmoothingQuality string
 
 const (
@@ -30,4 +32,17 @@ func (ctx *Context) GetImageSmoothingQuality() ImageSmoothingQuality {
 func (ctx *Context) SetImageSmoothingQuality(quality ImageSmoothingQuality) {
 	// TODO
 	ctx.imageSmoothingQuality = quality
+}
+
+func quality(q ImageSmoothingQuality) shader.FilterQuality {
+	switch q {
+	case ImageSmoothingQualityLow:
+		return shader.FilterQualityNearest
+	case ImageSmoothingQualityMedium:
+		return shader.FilterQualityBilinear
+	case ImageSmoothingQualityHigh:
+		return shader.FilterQualityBicubic
+	default:
+		return shader.FilterQualityNearest
+	}
 }

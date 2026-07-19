@@ -46,6 +46,7 @@ func (ctx *Context) GetImageData(sx, sy, sw, sh int) (image.Image, error) {
 		return nil, errors.New("sw and sh must not be 0")
 	}
 
+	// 计算要读取的区域
 	sp := image.Pt(
 		sx+ctx.canvas.im.Rect.Min.X,
 		sy+ctx.canvas.im.Rect.Min.Y,
@@ -54,12 +55,18 @@ func (ctx *Context) GetImageData(sx, sy, sw, sh int) (image.Image, error) {
 	ir := sr.Intersect(ctx.canvas.im.Rect)
 
 	im := image.NewRGBA(image.Rect(0, 0, sr.Dx(), sr.Dy()))
+
+	// 选取区域和画布没有交集直接返回透明纯黑
 	if ir.Empty() {
 		return im, nil
 	}
 
-	offset := image.Pt(ir.Min.X-sr.Min.X, ir.Min.Y-sr.Min.Y)
-
+	// 目标区域的偏移量
+	offset := image.Pt(
+		ir.Min.X-sr.Min.X,
+		ir.Min.Y-sr.Min.Y,
+	)
+	// 需要复制的范围
 	iw := ir.Dx()
 	ih := ir.Dy()
 	for y := 0; y < ih; y++ {
@@ -88,34 +95,36 @@ func (ctx *Context) PutImageDataWithDirtyRect(im image.Image, dx, dy, dirtyX, di
 	)
 	sr := image.Rect(sp.X, sp.Y, sp.X+dirtyWidth, sp.Y+dirtyHeight)
 	ir0 := im.Bounds().Intersect(sr)
+	// 源区域和源图像没有交集直接返回
 	if ir0.Empty() {
 		return nil
 	}
 
-	// 计算要绘制的区域
+	// 计算要目标的区域
 	dp := image.Pt(
-		dx+ctx.canvas.im.Rect.Min.X,
-		dy+ctx.canvas.im.Rect.Min.Y,
+		dx+(ir0.Min.X-im.Bounds().Min.X)+ctx.canvas.im.Rect.Min.X,
+		dy+(ir0.Min.Y-im.Bounds().Min.Y)+ctx.canvas.im.Rect.Min.Y,
 	)
 	dr := image.Rect(dp.X, dp.Y, dp.X+ir0.Dx(), dp.Y+ir0.Dy())
 	ir1 := ctx.canvas.im.Rect.Intersect(dr)
+	// 目标区域和画布没有交集直接返回
 	if ir1.Empty() {
 		return nil
 	}
 
+	// 源区域的偏移量
 	offset := image.Pt(
-		ir0.Min.X+(ir1.Min.X-dr.Min.X),
-		ir0.Min.Y+(ir1.Min.Y-dr.Min.Y),
+		ir0.Min.X-(dr.Min.X-ir1.Min.X),
+		ir0.Min.Y-(dr.Min.Y-ir1.Min.Y),
 	)
-
 	iw := ir1.Dx()
 	ih := ir1.Dy()
 	switch im := im.(type) {
 	case *image.RGBA:
 		for y := 0; y < ih; y++ {
-			s0 := ctx.canvas.im.PixOffset(ir1.Min.X, ir1.Min.Y+y)
-			s1 := im.PixOffset(offset.X, offset.Y+y)
-			copy(ctx.canvas.im.Pix[s0:s0+iw*4], im.Pix[s1:s1+iw*4])
+			s0 := im.PixOffset(offset.X, offset.Y+y)
+			s1 := ctx.canvas.im.PixOffset(ir1.Min.X, ir1.Min.Y+y)
+			copy(ctx.canvas.im.Pix[s1:s1+iw*4], im.Pix[s0:s0+iw*4])
 		}
 	default:
 		draw.Draw(ctx.canvas.im, ir1, im, offset, draw.Src)

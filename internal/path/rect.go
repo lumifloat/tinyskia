@@ -139,15 +139,37 @@ func NewRectFromLTRB(left, top, right, bottom float32) (Rect, bool) {
 		return Rect{}, false
 	}
 
-	if left <= right && top <= bottom {
-		return Rect{left, top, right, bottom}, true
+	if left > right || top > bottom {
+		return Rect{}, false
 	}
-	return Rect{}, false
+	if dx := right - left; dx < math32.SmallestNonzeroFloat32 || dx > math32.MaxFloat32 {
+		return Rect{}, false
+	}
+	if dy := bottom - top; dy < math32.SmallestNonzeroFloat32 || dy > math32.MaxFloat32 {
+		return Rect{}, false
+	}
+	return Rect{left, top, right, bottom}, true
+}
+
+// NewRectFromLTRBStable creates new Rect.
+func NewRectFromLTRBStable(left, top, right, bottom float32) (Rect, bool) {
+	if left > right {
+		left, right = right, left
+	}
+	if top > bottom {
+		top, bottom = bottom, top
+	}
+	return NewRectFromLTRB(left, top, right, bottom)
 }
 
 // NewRectFromXYWH creates new Rect.
 func NewRectFromXYWH(x, y, w, h float32) (Rect, bool) {
 	return NewRectFromLTRB(x, y, x+w, y+h)
+}
+
+// NewRectFromXYWHStable creates new Rect.
+func NewRectFromXYWHStable(x, y, w, h float32) (Rect, bool) {
+	return NewRectFromLTRBStable(x, y, x+w, y+h)
 }
 
 func (r Rect) Left() float32   { return r.left }

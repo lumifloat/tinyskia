@@ -20,76 +20,77 @@ import (
 // DrawImage draws the specified image at the specified point.
 func (ctx *Context) DrawImage(im image.Image, dx, dy float64) {
 	bounds := im.Bounds()
-	ctx.DrawImageWithSourceRect(im, float64(bounds.Min.X), float64(bounds.Min.Y),
-		float64(bounds.Max.X), float64(bounds.Max.Y), dx, dy, float64(bounds.Dx()), float64(bounds.Dy()))
+	ctx.DrawImageWithSourceRect(im, 0, 0,
+		float64(bounds.Dx()), float64(bounds.Dy()), dx, dy, float64(bounds.Dx()), float64(bounds.Dy()))
 }
 
 // DrawImageScaled draws the specified image with scaling.
 func (ctx *Context) DrawImageScaled(im image.Image, dx, dy, dw, dh float64) {
 	bounds := im.Bounds()
-	ctx.DrawImageWithSourceRect(im, float64(bounds.Min.X), float64(bounds.Min.Y),
-		float64(bounds.Max.X), float64(bounds.Max.Y), dx, dy, dw, dh)
+	ctx.DrawImageWithSourceRect(im, 0, 0,
+		float64(bounds.Dx()), float64(bounds.Dy()), dx, dy, dw, dh)
 }
 
 // DrawImageWithSourceRect draws a portion of the specified image with scaling.
 func (ctx *Context) DrawImageWithSourceRect(im image.Image, sx, sy, sw, sh, dx, dy, dw, dh float64) {
-	if sw < 0 {
-		sx += sw
-		sw = -sw
-	}
-	if sh < 0 {
-		sy += sh
-		sh = -sh
-	}
-
-	if sw <= 0 || sh <= 0 {
+	// 计算要读取的区域
+	sp := image.Pt(
+		int(math.Floor(sx))+im.Bounds().Min.X,
+		int(math.Floor(sy))+im.Bounds().Min.Y,
+	)
+	sr := image.Rect(sp.X, sp.Y, sp.X+int(math.Ceil(sw)), sp.Y+int(math.Ceil(sh)))
+	ir := sr.Intersect(im.Bounds())
+	// 源区域和源图像没有交集直接返回
+	if ir.Empty() {
 		return
 	}
 
-	rect := image.Rect(
-		int(0),
-		int(0),
-		int(math.Ceil(sw)),
-		int(math.Ceil(sh)),
-	)
-	src := image.NewRGBA(rect)
-	draw.Draw(src, rect, im, image.Point{int(sx), int(sy)}, draw.Src)
+	// 映射到 RGBA 上
+	pattern := image.NewRGBA(image.Rect(0, 0, sr.Dx(), sr.Dy()))
 
-	pattern := shader.NewPattern(
-		src,
-		shader.SpreadModeNoRepeat,
-		shader.FilterQualityBilinear,
-		1.0,
-		ctx.matrix.transform.
-			PreTranslate(float32(dx), float32(dy)).
-			PreScale(float32(dw/sw), float32(dh/sh)),
+	// 目标区域的偏移量
+	offset := image.Pt(
+		ir.Min.X-sr.Min.X,
+		ir.Min.Y-sr.Min.Y,
 	)
+	switch im := im.(type) {
+	case *image.RGBA:
+		// 需要复制的范围
+		iw := ir.Dx()
+		ih := ir.Dy()
+		for y := 0; y < ih; y++ {
+			s0 := im.PixOffset(ir.Min.X, ir.Min.Y+y)
+			s1 := pattern.PixOffset(offset.X, offset.Y+y)
+			copy(pattern.Pix[s1:s1+iw*4], im.Pix[s0:s0+iw*4])
+		}
+	default:
+		draw.Draw(pattern, image.Rect(offset.X, offset.Y, offset.X+ir.Dx(), offset.Y+ir.Dy()), im, image.Pt(ir.Min.X, ir.Min.Y), draw.Src)
+	}
 
+	// 计算要绘制的区域
+	dr, ok := path.NewRectFromXYWHStable(float32(dx), float32(dy), float32(dw), float32(dh))
+	if !ok {
+		return
+	}
+	builder := path.NewPathBuilder()
+	builder.PushRect(dr)
+	rect := builder.Finish()
+
+	// 绘制
 	paint := &painter.Paint{
-		Shader:          pattern,
+		Shader: shader.NewPattern(
+			pattern,
+			shader.SpreadModeNoRepeat,
+			quality(ctx.imageSmoothingQuality),
+			float32(ctx.globalAlpha),
+			ctx.matrix.transform.
+				PreTranslate(float32(dx), float32(dy)).
+				PreScale(float32(dw)/float32(sr.Dx()), float32(dh)/float32(sr.Dy())),
+		),
 		BlendMode:       composite(ctx.globalCompositeOperation),
 		AntiAlias:       ctx.antiAlias,
 		Colorspace:      ctx.colorspace,
 		ForceHQPipeline: ctx.forceHQPipeline,
 	}
-
-	if dw < 0 {
-		dx += dw
-		dw = -dw
-	}
-	if dh < 0 {
-		dy += dh
-		dh = -dh
-	}
-
-	if dw <= 0 || dh <= 0 {
-		return
-	}
-
-	rectPath := path.NewPathBuilder()
-	r, _ := path.NewRectFromXYWH(float32(dx), float32(dy), float32(dw), float32(dh))
-	rectPath.PushRect(r)
-	finalPath := rectPath.Finish()
-
-	paint.FillPath(ctx.canvas.im, ctx.mask, finalPath, ctx.matrix.transform, scan.FillRuleWinding)
+	paint.FillPath(ctx.canvas.im, ctx.mask, rect, ctx.matrix.transform, scan.FillRuleWinding)
 }
