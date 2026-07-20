@@ -1337,7 +1337,7 @@ func (p *HighPipeline) Bilinear() {
 				sx := x + start + float32(k)
 				sy := y + start + float32(j)
 				var rr, gg, bb, aa float32
-				samplePixel(p.src, &p.ctx.Sampler, sx, sy, &rr, &gg, &bb, &aa)
+				sample(p.src, &p.ctx.Sampler, sx, sy, &rr, &gg, &bb, &aa)
 				w := wx0
 				if k == 1 {
 					w = wx1
@@ -1380,7 +1380,7 @@ func (p *HighPipeline) Bicubic() {
 				sx := x + start + float32(k)
 				sy := y + start + float32(j)
 				var rr, gg, bb, aa float32
-				samplePixel(p.src, &p.ctx.Sampler, sx, sy, &rr, &gg, &bb, &aa)
+				sample(p.src, &p.ctx.Sampler, sx, sy, &rr, &gg, &bb, &aa)
 				w := wx[k] * wy[j]
 				r += w * rr
 				g += w * gg
@@ -1924,19 +1924,35 @@ func exclusiveReflect(v, limit, invLimit float32) float32 {
 	return f32abs((v - limit) - (limit+limit)*math32.Floor((v-limit)*(invLimit*0.5)) - limit)
 }
 
-func samplePixel(src *image.RGBA, ctx *SamplerCtx, x, y float32, r, g, b, a *float32) {
+func sample(src *image.RGBA, ctx *SamplerCtx, x, y float32, r, g, b, a *float32) {
 	width := float32(src.Rect.Dx())
 	height := float32(src.Rect.Dy())
-	// TODO complete the remaining spread modes
 	switch ctx.SpreadMode {
-	case SpreadModePad, SpreadModeNoRepeat: // Pad
+	case SpreadModePad: // Pad
+		if x < 0.0 {
+			x = 0.0
+		}
+		if x > width {
+			x = width
+		}
+		if y < 0.0 {
+			y = 0.0
+		}
+		if y > height {
+			y = height
+		}
+	case SpreadModeNoRepeat: // NoRepeat
 		// Do nothing
 	case SpreadModeReflect: // Reflect
 		x = exclusiveReflect(x, width, ctx.InvWidth)
 		y = exclusiveReflect(y, height, ctx.InvHeight)
-	case SpreadModeRepeat, SpreadModeRepeatX, SpreadModeRepeatY: // Repeat
+	case SpreadModeRepeat: // Repeat
 		// repeat: x = x - floor(x * invWidth) * width
 		x = x - math32.Floor(x*ctx.InvWidth)*width
+		y = y - math32.Floor(y*ctx.InvHeight)*height
+	case SpreadModeRepeatX:
+		x = x - math32.Floor(x*ctx.InvWidth)*width
+	case SpreadModeRepeatY:
 		y = y - math32.Floor(y*ctx.InvHeight)*height
 	}
 	ix := int(x)
