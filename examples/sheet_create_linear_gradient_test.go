@@ -28,7 +28,10 @@ func TestSheetCreateLinearGradient(t *testing.T) {
 	// Create a linear gradient
 	// Gradient start point at x=20, y=0
 	// Gradient end point at x=220, y=0
-	gradient := ctx.CreateLinearGradient(20, 0, 220, 0)
+	gradient, err := ctx.CreateLinearGradient(20, 0, 220, 0)
+	if err != nil {
+		t.Fatalf("Failed to create linear gradient: %v", err)
+	}
 
 	// Add three color stops
 	gradient.AddColorStop(0, color.RGBA{0, 128, 0, 255})     // green

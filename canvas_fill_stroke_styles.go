@@ -11,6 +11,7 @@ import (
 	"image/color"
 	"image/draw"
 	"math"
+	"sort"
 
 	"github.com/lumifloat/tinyskia/internal/core/shader"
 	"github.com/lumifloat/tinyskia/internal/path"
@@ -18,22 +19,27 @@ import (
 
 // SetFillStyle to change the fill style.
 func (ctx *Context) SetFillStyle(style Style) {
+	if style == nil {
+		ctx.fillStyle = &SolidColor{color: color.RGBA{0, 0, 0, 255}}
+	}
 	ctx.fillStyle = style
 }
 
 // SetFillStyleSolidColor to change the fill style to a solid color.
 func (ctx *Context) SetFillStyleSolidColor(c color.Color) {
-	ctx.fillStyle = ctx.CreateSolidColor(c)
+	if s, err := ctx.CreateSolidColor(c); err == nil {
+		ctx.fillStyle = s
+	}
 }
 
 // SetFillStylePattern to change the fill style to a pattern.
 func (ctx *Context) SetFillStylePattern(p Pattern) {
-	ctx.fillStyle = p
+	ctx.SetFillStyle(p)
 }
 
 // SetFillStyleGradient to change the fill style to a gradient.
 func (ctx *Context) SetFillStyleGradient(g Gradient) {
-	ctx.fillStyle = g
+	ctx.SetFillStyle(g)
 }
 
 // GetFillStyle returns the current fill style.
@@ -67,22 +73,27 @@ func (ctx *Context) GetFillStyleGradient() Gradient {
 
 // SetStrokeStyle to change the stroke style.
 func (ctx *Context) SetStrokeStyle(style Style) {
+	if style == nil {
+		ctx.strokeStyle = &SolidColor{color: color.RGBA{0, 0, 0, 255}}
+	}
 	ctx.strokeStyle = style
 }
 
 // SetStrokeStyleSolidColor to change the stroke style to a solid color.
 func (ctx *Context) SetStrokeStyleSolidColor(c color.Color) {
-	ctx.strokeStyle = ctx.CreateSolidColor(c)
+	if s, err := ctx.CreateSolidColor(c); err == nil {
+		ctx.strokeStyle = s
+	}
 }
 
 // SetStrokeStylePattern to change the stroke style to a pattern.
 func (ctx *Context) SetStrokeStylePattern(p Pattern) {
-	ctx.strokeStyle = p
+	ctx.SetStrokeStyle(p)
 }
 
 // SetStrokeStyleGradient to change the stroke style to a gradient.
 func (ctx *Context) SetStrokeStyleGradient(g Gradient) {
-	ctx.strokeStyle = g
+	ctx.SetStrokeStyle(g)
 }
 
 // GetStrokeStyle returns the current stroke style.
@@ -114,16 +125,22 @@ func (ctx *Context) GetStrokeStyleGradient() Gradient {
 	return nil
 }
 
+type Style interface {
+	style() shader.Shader
+}
+
 type SolidColor struct {
 	color color.Color
 }
 
 // CreateSolidColor returns a solid color style.
-func (ctx *Context) CreateSolidColor(c color.Color) *SolidColor {
-	return &SolidColor{color: c}
+func (ctx *Context) CreateSolidColor(c color.Color) (*SolidColor, error) {
+	return &SolidColor{color: c}, nil
 }
 
-func (p *SolidColor) style() {}
+func (p *SolidColor) style() shader.Shader {
+	return shader.NewSolidColor(p.color)
+}
 
 type RepeatMode string
 
@@ -133,6 +150,21 @@ const (
 	RepeatModeRepeatY  = "repeat-y"
 	RepeatModeNoRepeat = "no-repeat"
 )
+
+func (r RepeatMode) convert() shader.SpreadMode {
+	switch r {
+	case RepeatModeRepeat:
+		return shader.SpreadModeRepeat
+	case RepeatModeRepeatX:
+		return shader.SpreadModeRepeatX
+	case RepeatModeRepeatY:
+		return shader.SpreadModeRepeatY
+	case RepeatModeNoRepeat:
+		return shader.SpreadModeNoRepeat
+	default:
+		return shader.SpreadModeRepeat
+	}
+}
 
 type ImagePattern struct {
 	im        image.Image
@@ -145,11 +177,18 @@ type ImagePattern struct {
 // The allowed values for repetition are repeat (both directions),
 // repeat-x (horizontal only), repeat-y (vertical only), and no-repeat (neither).
 // If the repetition argument is empty, the value repeat is used.
-func (ctx *Context) CreatePattern(im image.Image, op RepeatMode) Pattern {
-	return &ImagePattern{im: im, op: op}
+func (ctx *Context) CreatePattern(im image.Image, op RepeatMode) (Pattern, error) {
+	return &ImagePattern{im: im, op: op, transform: NewMatrixIdentity()}, nil
 }
 
-func (p *ImagePattern) style() {}
+func (p *ImagePattern) style() shader.Shader {
+	// TODO
+	bounds := p.im.Bounds()
+	rect := image.Rect(0, 0, bounds.Dx(), bounds.Dy())
+	im := image.NewRGBA(rect)
+	draw.Draw(im, rect, p.im, bounds.Min, draw.Src)
+	return shader.NewPattern(im, p.op.convert(), shader.FilterQualityBilinear, 1.0, p.transform.transform)
+}
 
 type stop struct {
 	pos   float64
@@ -173,6 +212,17 @@ func (s stops) Swap(i, j int) {
 	s[i], s[j] = s[j], s[i]
 }
 
+func (s stops) convert() []shader.GradientStop {
+	sort.Sort(s)
+	stops := make([]shader.GradientStop, len(s))
+	for i, stop := range s {
+		stops[i] = shader.NewGradientStop(
+			float32(stop.pos), stop.color,
+		)
+	}
+	return stops
+}
+
 type LinearGradient struct {
 	x0, y0, x1, y1 float64
 	stops          stops
@@ -180,15 +230,22 @@ type LinearGradient struct {
 
 // CreateLinearGradient returns a CanvasGradient object that represents
 // a linear gradient that paints along the line given by the coordinates represented by the arguments.
-func (ctx *Context) CreateLinearGradient(x0, y0, x1, y1 float64) Gradient {
+func (ctx *Context) CreateLinearGradient(x0, y0, x1, y1 float64) (Gradient, error) {
 	g := &LinearGradient{
 		x0: x0, y0: y0,
 		x1: x1, y1: y1,
 	}
-	return g
+	return g, nil
 }
 
-func (g *LinearGradient) style() {}
+func (g *LinearGradient) style() shader.Shader {
+	p0 := path.Point{X: float32(g.x0), Y: float32(g.y0)}
+	p1 := path.Point{X: float32(g.x1), Y: float32(g.y1)}
+	s := shader.NewLinearGradient(
+		p0, p1, g.stops.convert(), shader.SpreadModePad, path.NewTransformDefault(),
+	)
+	return s
+}
 
 type circle struct {
 	x, y, r float64
@@ -201,7 +258,7 @@ type RadialGradient struct {
 
 // CreateRadialGradient returns a CanvasGradient object that represents
 // a radial gradient that paints along the cone given by the circles represented by the arguments.
-func (ctx *Context) CreateRadialGradient(x0, y0, r0, x1, y1, r1 float64) Gradient {
+func (ctx *Context) CreateRadialGradient(x0, y0, r0, x1, y1, r1 float64) (Gradient, error) {
 	c0 := circle{x0, y0, r0}
 	c1 := circle{x1, y1, r1}
 	cd := circle{x1 - x0, y1 - y0, r1 - r0}
@@ -210,10 +267,17 @@ func (ctx *Context) CreateRadialGradient(x0, y0, r0, x1, y1, r1 float64) Gradien
 		c1: c1,
 		cd: cd,
 	}
-	return g
+	return g, nil
 }
 
-func (g *RadialGradient) style() {}
+func (g *RadialGradient) style() shader.Shader {
+	center0 := path.Point{X: float32(g.c0.x), Y: float32(g.c0.y)}
+	center1 := path.Point{X: float32(g.c1.x), Y: float32(g.c1.y)}
+	s := shader.NewRadialGradient(
+		center0, float32(g.c0.r), center1, float32(g.c1.r), g.stops.convert(), shader.SpreadModePad, path.NewTransformDefault(),
+	)
+	return s
+}
 
 type ConicGradient struct {
 	x, y       float64
@@ -223,96 +287,21 @@ type ConicGradient struct {
 
 // CreateConicGradient returns a CanvasGradient object that represents
 // a conic gradient that paints clockwise along the rotation around the center represented by the arguments.
-func (ctx *Context) CreateConicGradient(startAngle, x, y float64) Gradient {
+func (ctx *Context) CreateConicGradient(startAngle, x, y float64) (Gradient, error) {
 	g := &ConicGradient{
 		x: x, y: y,
 		startAngle: startAngle,
 	}
-	return g
+	return g, nil
 }
 
-func (g *ConicGradient) style() {}
-
-type Style interface {
-	style()
-}
-
-func toShader(style Style, transform path.Transform) shader.Shader {
-	switch s := style.(type) {
-	case *LinearGradient:
-		stops := make([]shader.GradientStop, len(s.stops))
-		for i, s := range s.stops {
-			r, gb, b, a := s.color.RGBA()
-			stops[i] = shader.NewGradientStop(
-				float32(s.pos),
-				color.NRGBA{uint8(r >> 8), uint8(gb >> 8), uint8(b >> 8), uint8(a >> 8)},
-			)
-		}
-
-		p0 := path.Point{X: float32(s.x0), Y: float32(s.y0)}
-		p1 := path.Point{X: float32(s.x1), Y: float32(s.y1)}
-		return shader.NewLinearGradient(p0, p1, stops, shader.SpreadModePad, transform)
-	case *RadialGradient:
-		stops := make([]shader.GradientStop, len(s.stops))
-		for i, s := range s.stops {
-			r, gb, b, a := s.color.RGBA()
-			stops[i] = shader.NewGradientStop(
-				float32(s.pos),
-				color.NRGBA{uint8(r >> 8), uint8(gb >> 8), uint8(b >> 8), uint8(a >> 8)},
-			)
-		}
-
-		center0 := path.Point{X: float32(s.c0.x), Y: float32(s.c0.y)}
-		center1 := path.Point{X: float32(s.c1.x), Y: float32(s.c1.y)}
-		return shader.NewRadialGradient(center0, float32(s.c0.r), center1, float32(s.c1.r), stops, shader.SpreadModePad, transform)
-	case *ConicGradient:
-		stops := make([]shader.GradientStop, len(s.stops))
-		for i, s := range s.stops {
-			r, gb, b, a := s.color.RGBA()
-			stops[i] = shader.NewGradientStop(
-				float32(s.pos),
-				color.NRGBA{uint8(r >> 8), uint8(gb >> 8), uint8(b >> 8), uint8(a >> 8)},
-			)
-		}
-
-		center := path.Point{X: float32(s.x), Y: float32(s.y)}
-		startAngle := float32(s.startAngle * 180.0 / math.Pi)
-		transform = transform.PreRotateAt(startAngle, center.X, center.Y)
-		return shader.NewSweepGradient(center, 0, 360, stops, shader.SpreadModePad, transform)
-	case *SolidColor:
-		r, g, b, a := s.color.RGBA()
-		return shader.NewSolidColor(color.NRGBA{uint8(r >> 8), uint8(g >> 8), uint8(b >> 8), uint8(a >> 8)})
-	case *ImagePattern:
-		var transform path.Transform
-		if s.transform != nil {
-			transform = s.transform.transform
-		} else {
-			transform = path.NewTransformDefault()
-		}
-		// TODO
-		bounds := s.im.Bounds()
-		rect := image.Rect(0, 0, bounds.Dx(), bounds.Dy())
-		im := image.NewRGBA(rect)
-		draw.Draw(im, rect, s.im, bounds.Min, draw.Src)
-		return shader.NewPattern(im, repeat(s.op), shader.FilterQualityBilinear, 1.0, transform)
-	default:
-		return shader.NewSolidColor(color.NRGBA{0, 0, 0, 255})
-	}
-}
-
-func repeat(op RepeatMode) shader.SpreadMode {
-	switch op {
-	case RepeatModeRepeat:
-		return shader.SpreadModeRepeat
-	case RepeatModeRepeatX:
-		// TODO tinyskia 不支持单向重复，使用 Repeat 作为近似
-		return shader.SpreadModeRepeatX
-	case RepeatModeRepeatY:
-		// TODO tinyskia 不支持单向重复，使用 Repeat 作为近似
-		return shader.SpreadModeRepeatY
-	case RepeatModeNoRepeat:
-		return shader.SpreadModeNoRepeat
-	default:
-		return shader.SpreadModeRepeat
-	}
+func (g *ConicGradient) style() shader.Shader {
+	center := path.Point{X: float32(g.x), Y: float32(g.y)}
+	startAngle := float32(g.startAngle * 180.0 / math.Pi)
+	// TODO fix in internal
+	tf := path.NewTransformFromRotateAt(startAngle, center.X, center.Y)
+	s := shader.NewSweepGradient(
+		center, 0, 360, g.stops.convert(), shader.SpreadModePad, tf,
+	)
+	return s
 }

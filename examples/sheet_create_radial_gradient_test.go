@@ -28,7 +28,10 @@ func TestSheetCreateRadialGradient(t *testing.T) {
 	// Create a radial gradient
 	// Inner circle at x=110, y=90 with radius 30
 	// Outer circle at x=100, y=100 with radius 70
-	gradient := ctx.CreateRadialGradient(110, 90, 30, 100, 100, 70)
+	gradient, err := ctx.CreateRadialGradient(110, 90, 30, 100, 100, 70)
+	if err != nil {
+		t.Fatalf("Failed to create radial gradient: %v", err)
+	}
 
 	// Add three color stops
 	gradient.AddColorStop(0, color.RGBA{255, 192, 203, 255})   // pink

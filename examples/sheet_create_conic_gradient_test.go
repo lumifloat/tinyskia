@@ -28,7 +28,10 @@ func TestSheetCreateConicGradient(t *testing.T) {
 	// Create a conic gradient
 	// Start angle is 0
 	// Center position is 100, 100
-	gradient := ctx.CreateConicGradient(0, 100, 100)
+	gradient, err := ctx.CreateConicGradient(0, 100, 100)
+	if err != nil {
+		t.Fatalf("Failed to create conic gradient: %v", err)
+	}
 
 	// Add five color stops
 	gradient.AddColorStop(0, color.RGBA{255, 0, 0, 255})      // red

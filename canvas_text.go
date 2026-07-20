@@ -139,8 +139,12 @@ func (ctx *Context) FillText(s string, x, y float64) {
 		fx -= width / 2.0
 	}
 
+	shader := ctx.fillStyle.style()
+	shader.ApplyOpacity(float32(ctx.globalAlpha))
+	shader.Transform(ctx.matrix.transform)
+
 	paint := &painter.Paint{
-		Shader:          toShader(ctx.fillStyle, ctx.matrix.transform),
+		Shader:          shader,
 		AntiAlias:       ctx.antiAlias,
 		BlendMode:       composite(ctx.globalCompositeOperation),
 		Colorspace:      ctx.colorspace,
@@ -219,8 +223,12 @@ func (ctx *Context) StrokeText(s string, x, y float64) {
 		MiterLimit: float32(ctx.miterLimit),
 	}
 
+	shader := ctx.strokeStyle.style()
+	shader.ApplyOpacity(float32(ctx.globalAlpha))
+	shader.Transform(ctx.matrix.transform)
+
 	paint := &painter.Paint{
-		Shader:          toShader(ctx.strokeStyle, ctx.matrix.transform),
+		Shader:          shader,
 		AntiAlias:       ctx.antiAlias,
 		BlendMode:       composite(ctx.globalCompositeOperation),
 		Colorspace:      ctx.colorspace,

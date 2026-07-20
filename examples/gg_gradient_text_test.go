@@ -36,7 +36,10 @@ func TestGGGradientText(t *testing.T) {
 	y := H/2 + textHeight/2
 
 	// Create gradient
-	grad := dc.CreateLinearGradient(0, 0, W, H)
+	grad, err := dc.CreateLinearGradient(0, 0, W, H)
+	if err != nil {
+		panic(err)
+	}
 	grad.AddColorStop(0, color.RGBA{255, 0, 0, 255})
 	grad.AddColorStop(1, color.RGBA{0, 0, 255, 255})
 

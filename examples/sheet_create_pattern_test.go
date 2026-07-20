@@ -42,7 +42,11 @@ func TestSheetCreatePattern(t *testing.T) {
 	ctx := canvas.GetContext()
 
 	// Create pattern from the offscreen canvas
-	pattern := ctx.CreatePattern(patternCanvas.Image(), tinyskia.RepeatModeRepeat)
+	pattern, err := ctx.CreatePattern(patternCanvas.Image(), tinyskia.RepeatModeNoRepeat)
+	if err != nil {
+		t.Fatalf("Failed to create pattern: %v", err)
+	}
+
 	ctx.SetFillStylePattern(pattern)
 	ctx.FillRect(0, 0, float64(width), float64(height))
 

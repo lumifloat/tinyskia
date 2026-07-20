@@ -17,7 +17,10 @@ func TestGGGradientLinear(t *testing.T) {
 	c := gg.NewCanvas(420, 330)
 	dc := c.GetContext()
 
-	grad := dc.CreateLinearGradient(20, 320, 400, 20)
+	grad, err := dc.CreateLinearGradient(20, 320, 400, 20)
+	if err != nil {
+		panic(err)
+	}
 	grad.AddColorStop(0, color.RGBA{0, 255, 0, 255})
 	grad.AddColorStop(1, color.RGBA{0, 0, 255, 255})
 	grad.AddColorStop(0.5, color.RGBA{255, 0, 0, 255})

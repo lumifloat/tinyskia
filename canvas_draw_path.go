@@ -50,8 +50,12 @@ func (ctx *Context) FillPathWithFillRule(p *Path2D, fillRule CanvasFillRule) {
 		return
 	}
 
+	shader := ctx.fillStyle.style()
+	shader.ApplyOpacity(float32(ctx.globalAlpha))
+	shader.Transform(ctx.matrix.transform)
+
 	paint := &painter.Paint{
-		Shader:          toShader(ctx.fillStyle, ctx.matrix.transform),
+		Shader:          shader,
 		AntiAlias:       ctx.antiAlias,
 		BlendMode:       composite(ctx.globalCompositeOperation),
 		Colorspace:      ctx.colorspace,
@@ -96,8 +100,12 @@ func (ctx *Context) StrokePath(p *Path2D) {
 		MiterLimit: float32(ctx.miterLimit),
 	}
 
+	shader := ctx.strokeStyle.style()
+	shader.ApplyOpacity(float32(ctx.globalAlpha))
+	shader.Transform(ctx.matrix.transform)
+
 	paint := &painter.Paint{
-		Shader:          toShader(ctx.strokeStyle, ctx.matrix.transform),
+		Shader:          shader,
 		AntiAlias:       ctx.antiAlias,
 		BlendMode:       composite(ctx.globalCompositeOperation),
 		Colorspace:      ctx.colorspace,

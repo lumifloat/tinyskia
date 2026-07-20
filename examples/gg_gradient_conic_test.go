@@ -18,12 +18,18 @@ func TestGGGradientConic(t *testing.T) {
 	c := gg.NewCanvas(400, 400)
 	dc := c.GetContext()
 
-	grad1 := dc.CreateConicGradient(0, 200, 200)
+	grad1, err := dc.CreateConicGradient(0, 200, 200)
+	if err != nil {
+		panic(err)
+	}
 	grad1.AddColorStop(0.0, color.Black)
 	grad1.AddColorStop(0.5, color.RGBA{255, 215, 0, 255})
 	grad1.AddColorStop(1.0, color.RGBA{255, 0, 0, 255})
 
-	grad2 := dc.CreateConicGradient(math.Pi/2, 200, 200)
+	grad2, err := dc.CreateConicGradient(math.Pi/2, 200, 200)
+	if err != nil {
+		panic(err)
+	}
 	grad2.AddColorStop(0.00, color.RGBA{255, 0, 0, 255})
 	grad2.AddColorStop(0.16, color.RGBA{255, 255, 0, 255})
 	grad2.AddColorStop(0.33, color.RGBA{0, 255, 0, 255})

@@ -18,7 +18,10 @@ func TestGGGradientRadial(t *testing.T) {
 	c := gg.NewCanvas(200, 200)
 	dc := c.GetContext()
 
-	grad := dc.CreateRadialGradient(100, 100, 10, 100, 120, 80)
+	grad, err := dc.CreateRadialGradient(100, 100, 10, 100, 120, 80)
+	if err != nil {
+		panic(err)
+	}
 	grad.AddColorStop(0, color.RGBA{0, 255, 0, 255})
 	grad.AddColorStop(1, color.RGBA{0, 0, 255, 255})
 

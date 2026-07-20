@@ -6,21 +6,27 @@
 // found in the LICENSE file.
 package tinyskia
 
+import "errors"
+
+var ErrInvalidPatternTransform = errors.New("pattern transform is invalid")
+
 type Pattern interface {
 	Style
-	SetTransform()
-	SetTransformWithMatrix(transform *Matrix)
+	SetTransform() error
+	SetTransformWithMatrix(transform *Matrix) error
 }
 
 // SetTransform resets the pattern's transformation matrix to the identity matrix.
-func (p *ImagePattern) SetTransform() {
+func (p *ImagePattern) SetTransform() error {
 	p.transform = NewMatrixIdentity()
+	return nil
 }
 
 // SetTransformWithMatrix sets the pattern's transform matrix to the specified matrix.
-func (p *ImagePattern) SetTransformWithMatrix(transform *Matrix) {
+func (p *ImagePattern) SetTransformWithMatrix(transform *Matrix) error {
 	if transform == nil {
-		transform = NewMatrixIdentity()
+		return ErrInvalidPatternTransform
 	}
 	p.transform = transform
+	return nil
 }
